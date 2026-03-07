@@ -1,0 +1,25 @@
+body {
+  margin: 0;
+  background: #050814;
+  color: #fff;
+  font-family: system-ui, sans-serif;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  background: #0f172a;
+  border-bottom: 1px solid #1e293b;
+}
+
+.back {
+  color: #60a5fa;
+  text-decoration: none;
+  margin-right: 12px;
+}
+
+#map {
+  width: 100vw;
+  height: calc(100vh - 60px);
+}

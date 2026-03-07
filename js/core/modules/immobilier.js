@@ -1,35 +1,80 @@
-// ===============================
-//  GEOEMPIRE 3 - IMMOBILIER
-// ===============================
+import { entreprises } from "./entreprises.js";
+import { vendreBiens, louerBiensAuto } from "./immobilier_etape3.js";
 
-// Ajouter un bien immobilier
-window.ge_ajouterBien = function (nom, valeur, revenu) {
-    const bien = {
-        id: Date.now(),
-        nom: ge_formatNom(nom),
-        valeur: valeur,
-        revenu: revenu
-    };
+// ID entreprise (temporaire)
+const id = 0;
 
-    entreprise.immobilier = entreprise.immobilier || [];
-    entreprise.immobilier.push(bien);
+// Sélecteurs vente
+const venteQuantite = document.getElementById("vente-quantite");
+const venteSlider = document.getElementById("vente-molette");
+const venteMoletteVal = document.getElementById("vente-molette-val");
+const ventePrixBaseEl = document.getElementById("vente-prix-base");
+const ventePrixFinalEl = document.getElementById("vente-prix-final");
+const venteResultat = document.getElementById("vente-resultat");
 
-    ge_afficherImmobilier();
-    ge_notif("Bien immobilier ajouté", "success");
+// Sélecteurs location
+const locQuantite = document.getElementById("loc-quantite");
+const locSlider = document.getElementById("loc-molette");
+const locMoletteVal = document.getElementById("loc-molette-val");
+const locPrixBaseEl = document.getElementById("loc-prix-base");
+const locPrixFinalEl = document.getElementById("loc-prix-final");
+const locResultat = document.getElementById("loc-resultat");
+
+// Historique
+const historiqueEl = document.getElementById("historique");
+
+// Prix de base = prix d'achat de l'entreprise
+const prixBase = entreprises[id].prixAchat;
+
+// Affichage initial
+ventePrixBaseEl.textContent = prixBase;
+locPrixBaseEl.textContent = prixBase;
+
+// Fonction de calcul du prix final
+function calculPrixFinal(percent) {
+  return Math.round(prixBase * (1 + percent / 100));
+}
+
+// Slider vente
+venteSlider.oninput = () => {
+  const percent = Number(venteSlider.value);
+  venteMoletteVal.textContent = percent + "%";
+  ventePrixFinalEl.textContent = calculPrixFinal(percent);
 };
 
-// Supprimer un bien
-window.ge_supprimerBien = function (id) {
-    entreprise.immobilier = entreprise.immobilier.filter(b => b.id !== id);
-    ge_afficherImmobilier();
-    ge_notif("Bien supprimé", "error");
+// Slider location
+locSlider.oninput = () => {
+  const percent = Number(locSlider.value);
+  locMoletteVal.textContent = percent + "%";
+  locPrixFinalEl.textContent = calculPrixFinal(percent);
 };
 
-// Revenu total immobilier
-window.ge_revenuImmobilier = function () {
-    if (!entreprise.immobilier) return 0;
-    return entreprise.immobilier.reduce((t, b) => t + b.revenu, 0);
+// Bouton vendre
+document.getElementById("btn-vendre").onclick = () => {
+  const q = Number(venteQuantite.value);
+  const m = Number(venteSlider.value);
+
+  const r = vendreBiens(id, q, m, true, gain => {
+    console.log("Argent +", gain);
+  });
+
+  venteResultat.textContent = JSON.stringify(r, null, 2);
+
+  // Historique
+  historiqueEl.textContent += `Vente : ${q} biens à ${m}% → ${JSON.stringify(r)}\n`;
 };
 
-// Affichage
-window.ge_afficher
+// Bouton louer
+document.getElementById("btn-louer").onclick = () => {
+  const q = Number(locQuantite.value);
+  const m = Number(locSlider.value);
+
+  const r = louerBiensAuto(id, q, m, true, gain => {
+    console.log("Argent +", gain);
+  });
+
+  locResultat.textContent = JSON.stringify(r, null, 2);
+
+  // Historique
+  historiqueEl.textContent += `Location : ${q} biens à ${m}% → ${JSON.stringify(r)}\n`;
+};

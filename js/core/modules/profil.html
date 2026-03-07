@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Geo Empire – Profil joueur</title>
+  <link rel="stylesheet" href="profil.css">
+</head>
+
+<body>
+  <header class="topbar">
+    <a href="index.html" class="back">← Retour</a>
+    <h1>Profil du joueur</h1>
+  </header>
+
+  <main class="container">
+
+    <!-- IDENTITÉ -->
+    <section class="panel">
+      <h2>Identité</h2>
+
+      <label>Prénom :</label>
+      <input id="prenom" type="text">
+
+      <label>Nom :</label>
+      <input id="nom" type="text">
+
+      <label>Âge :</label>
+      <input id="age" type="number" min="10" max="99">
+
+      <label>Sexe :</label>
+      <select id="sexe">
+        <option value="Homme">Homme</option>
+        <option value="Femme">Femme</option>
+        <option value="Autre">Autre</option>
+      </select>
+
+      <label>Photo de profil :</label>
+      <input id="photo" type="file" accept="image/*">
+
+      <button id="btn-save-identite">Enregistrer</button>
+    </section>
+
+    <!-- NIVEAU -->
+    <section class="panel">
+      <h2>Niveau de jeu</h2>
+
+      <p>Niveau : <span id="niveau">1</span></p>
+      <p>XP : <span id="xp">0</span> / <span id="xp-max">100</span></p>
+
+      <div class="xp-bar">
+        <div id="xp-bar-fill"></div>
+      </div>
+    </section>
+
+    <!-- DATE D'INSCRIPTION -->
+    <section class="panel">
+      <h2>Date d'inscription</h2>
+      <p><span id="date-inscription"></span></p>
+    </section>
+
+    <!-- MESSAGERIE -->
+    <section class="panel">
+      <h2>Messagerie</h2>
+
+      <div id="messages" class="messages"></div>
+
+      <input id="message-input" type="text" placeholder="Écrire un message...">
+      <button id="btn-send-message">Envoyer</button>
+    </section>
+
+    <!-- DISCORD -->
+    <section class="panel">
+      <h2>Discord</h2>
+      <input id="discord" type="text" placeholder="Lien Discord">
+      <button id="btn-save-discord">Enregistrer</button>
+    </section>
+
+    <!-- CLASSEMENT -->
+    <section class="panel">
+      <h2>Classement</h2>
+      <p>Rang actuel : <span id="classement">Non classé</span></p>
+    </section>
+
+  </main>
+
+  <script type="module" src="profil.js"></script>
+</body>
+</html>

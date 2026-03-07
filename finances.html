@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Geo Empire – Finances</title>
+  <link rel="stylesheet" href="finances.css">
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <h1>Finances</h1>
+      <div class="topbar-actions">
+        <button id="btn-prevision" class="btn primary">
+          Comptes prévisionnels (J+1)
+        </button>
+        <button id="btn-export" class="btn secondary">
+          Export Excel (Prestige)
+        </button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <!-- COLONNE GAUCHE : TRÉSORERIE -->
+      <section class="panel">
+        <h2>Trésorerie</h2>
+
+        <div class="kpi-row">
+          <div class="kpi">
+            <span class="kpi-label">Solde actuel</span>
+            <span id="t-solde-actuel" class="kpi-value">0 Ø</span>
+          </div>
+          <div class="kpi">
+            <span class="kpi-label">Revenus du mois</span>
+            <span id="t-revenus-mois" class="kpi-value">0 Ø</span>
+          </div>
+          <div class="kpi">
+            <span class="kpi-label">Solde mois prochain</span>
+            <span id="t-solde-prochain" class="kpi-value">0 Ø</span>
+          </div>
+        </div>
+
+        <div class="panel-sub">
+          <h3>Crédits</h3>
+          <div class="line">
+            <span>Loyers</span>
+            <span id="t-credits-loyers">0 Ø</span>
+          </div>
+        </div>
+
+        <div class="panel-sub">
+          <h3>Débits</h3>
+          <div class="line"><span>Primes des directeurs</span><span id="t-debits-primes">0 Ø</span></div>
+          <div class="line"><span>Charges foncières</span><span id="t-debits-charges-foncieres">0 Ø</span></div>
+          <div class="line"><span>Impôt foncier</span><span id="t-debits-impot-foncier">0 Ø</span></div>
+          <div class="line"><span>Impôt sur les primes</span><span id="t-debits-impot-primes">0 Ø</span></div>
+          <div class="line"><span>Assurances</span><span id="t-debits-assurances">0 Ø</span></div>
+          <div class="line"><span>Mensualités des prêts</span><span id="t-debits-prets">0 Ø</span></div>
+          <div class="line"><span>Versements comptes épargne</span><span id="t-debits-epargne">0 Ø</span></div>
+          <div class="line"><span>Dividendes</span><span id="t-debits-dividendes">0 Ø</span></div>
+          <div class="line"><span>Frais de gestion</span><span id="t-debits-frais-gestion">0 Ø</span></div>
+          <div class="line"><span>Agios sur découvert</span><span id="t-debits-agios">0 Ø</span></div>
+        </div>
+
+        <div class="panel-sub prevision">
+          <h3>Prévision J+1</h3>
+          <div class="line"><span>Trésorerie actuelle</span><span id="p-treso-actuelle">0 Ø</span></div>
+          <div class="line"><span>Produits du jour</span><span id="p-produits-jour">0 Ø</span></div>
+          <div class="line"><span>Charges du jour</span><span id="p-charges-jour">0 Ø</span></div>
+          <div class="line"><span>Trésorerie prévue demain</span><span id="p-treso-demain">0 Ø</span></div>
+        </div>
+      </section>
+
+      <!-- COLONNE CENTRE : RÉSULTAT -->
+      <section class="panel">
+        <h2>Résultat</h2>
+
+        <div class="panel-sub">
+          <h3>Charges</h3>
+          <div class="line"><span>Exploitation</span><span id="r-ch-exploitation">0 Ø</span></div>
+          <div class="line"><span>Charges</span><span id="r-ch-charges">0 Ø</span></div>
+          <div class="line"><span>Assurance</span><span id="r-ch-assurance">0 Ø</span></div>
+          <div class="line"><span>Financières</span><span id="r-ch-financieres">0 Ø</span></div>
+          <div class="line"><span>Autres</span><span id="r-ch-autres">0 Ø</span></div>
+          <div class="line"><span>Impôt foncier</span><span id="r-ch-impot-foncier">0 Ø</span></div>
+          <div class="line total"><span>Total Charges</span><span id="r-ch-total">0 Ø</span></div>
+        </div>
+
+        <div class="panel-sub">
+          <h3>Produits</h3>
+          <div class="line"><span>Exploitation</span><span id="r-pr-exploitation">0 Ø</span></div>
+          <div class="line"><span>Financier</span><span id="r-pr-financier">0 Ø</span></div>
+          <div class="line"><span>Autres</span><span id="r-pr-autres">0 Ø</span></div>
+          <div class="line total"><span>Total Produits</span><span id="r-pr-total">0 Ø</span></div>
+        </div>
+
+        <div class="panel-sub">
+          <h3>Résultat</h3>
+          <div class="line"><span>Résultat avant impôts</span><span id="r-avant-impots">0 Ø</span></div>
+          <div class="line"><span>Montant imposable</span><span id="r-imposable">0 Ø</span></div>
+          <div class="line"><span>Résultat NET</span><span id="r-net">0 Ø</span></div>
+          <div class="line"><span>Dividendes (avec taxes)</span><span id="r-dividendes">0 Ø</span></div>
+          <div class="line total"><span>Bénéfices ou pertes</span><span id="r-benefices-pertes">0 Ø</span></div>
+        </div>
+      </section>
+
+      <!-- COLONNE DROITE : BILAN -->
+      <section class="panel">
+        <h2>Bilan</h2>
+
+        <div class="panel-sub">
+          <h3>Actif</h3>
+          <h4>Immobilisés</h4>
+          <div class="line"><span>Immobilier</span><span id="b-act-immobilier">0 Ø</span></div>
+          <div class="line"><span>Travaux</span><span id="b-act-travaux">0 Ø</span></div>
+          <div class="line"><span>Comptes épargne</span><span id="b-act-epargne">0 Ø</span></div>
+          <div class="line total"><span>Total immobilisés</span><span id="b-act-total-immobilises">0 Ø</span></div>
+
+          <h4>Circulant</h4>
+          <div class="line"><span>Loyers</span><span id="b-act-loyers">0 Ø</span></div>
+          <div class="line"><span>Livret I</span><span id="b-act-livret">0 Ø</span></div>
+          <div class="line"><span>Compte courant</span><span id="b-act-compte-courant">0 Ø</span></div>
+          <div class="line"><span>Intérêt à payer</span><span id="b-act-interet">0 Ø</span></div>
+          <div class="line total"><span>Total circulant</span><span id="b-act-total-circulant">0 Ø</span></div>
+
+          <div class="line total global"><span>Total Actif</span><span id="b-act-total">0 Ø</span></div>
+        </div>
+
+        <div class="panel-sub">
+          <h3>Passif</h3>
+          <h4>Capitaux propres</h4>
+          <div class="line"><span>Capital</span><span id="b-pas-capital">0 Ø</span></div>
+          <div class="line"><span>Plus/moins-values latentes immo.</span><span id="b-pas-latentes-immo">0 Ø</span></div>
+          <div class="line"><span>Plus/moins-values latentes stock</span><span id="b-pas-latentes-stock">0 Ø</span></div>
+          <div class="line"><span>Bénéfices/pertes reportés</span><span id="b-pas-reportes">0 Ø</span></div>
+          <div class="line total"><span>Total capitaux propres</span><span id="b-pas-total-cp">0 Ø</span></div>
+
+          <h4>Dettes</h4>
+          <div class="line"><span>Solde restant dû des emprunts</span><span id="b-pas-emprunts">0 Ø</span></div>
+          <div class="line"><span>Mensualités des emprunts</span><span id="b-pas-mensualites">0 Ø</span></div>
+          <div class="line"><span>Dette d’exploitation</span><span id="b-pas-exploitation">0 Ø</span></div>
+          <div class="line"><span>Autres dettes</span><span id="b-pas-autres">0 Ø</span></div>
+          <div class="line total"><span>Total dettes</span><span id="b-pas-total-dettes">0 Ø</span></div>
+
+          <div class="line total global"><span>Total Passif</span><span id="b-pas-total">0 Ø</span></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module">
+    import {
+      joueur,
+      mettreAJourTresorerie,
+      mettreAJourBilan,
+      mettreAJourResultat,
+      simulerComptesPrevisionnelsDemain,
+      genererDonneesExcel
+    } from './finances_etape4.js';
+
+    function formatMontant(v) {
+      return `${v.toLocaleString('fr-FR')} Ø`;
+    }
+
+    function rafraichirTresorerie() {
+      const t = mettreAJourTresorerie();
+      document.getElementById('t-solde-actuel').textContent = formatMontant(t.soldeActuel);
+      document.getElementById('t-revenus-mois').textContent = formatMontant(t.revenusDuMois);
+      document.getElementById('t-solde-prochain').textContent = formatMontant(t.soldeMoisProchain);
+      document.getElementById('t-credits-loyers').textContent = formatMontant(t.credits.loyers);
+
+      const d = t.debits;
+      document.getElementById('t-debits-primes').textContent = formatMontant(d.primesDirecteurs);
+      document.getElementById('t-debits-charges-foncieres').textContent = formatMontant(d.chargesFoncieres);
+      document.getElementById('t-debits-impot-foncier').textContent = formatMontant(d.impotFoncier);
+      document.getElementById('t-debits-impot-primes').textContent = formatMontant(d.impotPrimes);
+      document.getElementById('t-debits-assurances').textContent = formatMontant(d.assurances);
+      document.getElementById('t-debits-prets').textContent = formatMontant(d.mensualitesPrets);
+      document.getElementById('t-debits-epargne').textContent = formatMontant(d.versementsEpargne);
+      document.getElementById('t-debits-dividendes').textContent = formatMontant(d.dividendes);
+      document.getElementById('t-debits-frais-gestion').textContent = formatMontant(d.fraisGestion);
+      document.getElementById('t-debits-agios').textContent = formatMontant(d.agiosDecouvert);
+    }
+
+    function rafraichirResultat() {
+      const r = mettreAJourResultat();
+
+      const ch = r.charges;
+      document.getElementById('r-ch-exploitation').textContent = formatMontant(ch.exploitation);
+      document.getElementById('r-ch-charges').textContent = formatMontant(ch.charges);
+      document.getElementById('r-ch-assurance').textContent = formatMontant(ch.assurance);
+      document.getElementById('r-ch-financieres').textContent = formatMontant(ch.financieres);
+      document.getElementById('r-ch-autres').textContent = formatMontant(ch.autres);
+      document.getElementById('r-ch-impot-foncier').textContent = formatMontant(ch.impotFoncier);
+      document.getElementById('r-ch-total').textContent = formatMontant(ch.totalCharges);
+
+      const pr = r.produits;
+      document.getElementById('r-pr-exploitation').textContent = formatMontant(pr.exploitation);
+      document.getElementById('r-pr-financier').textContent = formatMontant(pr.financier);
+      document.getElementById('r-pr-autres').textContent = formatMontant(pr.autres);
+      document.getElementById('r-pr-total').textContent = formatMontant(pr.totalProduits);
+
+      document.getElementById('r-avant-impots').textContent = formatMontant(r.resultatAvantImpots);
+      document.getElementById('r-imposable').textContent = formatMontant(r.montantImposable);
+      document.getElementById('r-net').textContent = formatMontant(r.resultatNet);
+      document.getElementById('r-dividendes').textContent = formatMontant(r.dividendesAvecTaxes);
+      document.getElementById('r-benefices-pertes').textContent = formatMontant(r.beneficesOuPertes);
+    }
+
+    function rafraichirBilan() {
+      const b = mettreAJourBilan();
+
+      const a = b.actif;
+      document.getElementById('b-act-immobilier').textContent = formatMontant(a.immobilises.immobilier);
+      document.getElementById('b-act-travaux').textContent = formatMontant(a.immobilises.travaux);
+      document.getElementById('b-act-epargne').textContent = formatMontant(a.immobilises.comptesEpargne);
+      document.getElementById('b-act-total-immobilises').textContent = formatMontant(a.immobilises.totalImmobilises);
+
+      document.getElementById('b-act-loyers').textContent = formatMontant(a.circulant.loyers);
+      document.getElementById('b-act-livret').textContent = formatMontant(a.circulant.livretsI);
+      document.getElementById('b-act-compte-courant').textContent = formatMontant(a.circulant.compteCourant);
+      document.getElementById('b-act-interet').textContent = formatMontant(a.circulant.interetAPayer);
+      document.getElementById('b-act-total-circulant').textContent = formatMontant(a.circulant.totalCirculant);
+      document.getElementById('b-act-total').textContent = formatMontant(a.totalActif);
+
+      const p = b.passif;
+      const cp = p.capitauxPropres;
+      document.getElementById('b-pas-capital').textContent = formatMontant(cp.capital);
+      document.getElementById('b-pas-latentes-immo').textContent = formatMontant(cp.plusMoinsLatentesImmo);
+      document.getElementById('b-pas-latentes-stock').textContent = formatMontant(cp.plusMoinsLatentesStock);
+      document.getElementById('b-pas-reportes').textContent = formatMontant(cp.beneficesPerteReportes);
+      document.getElementById('b-pas-total-cp').textContent = formatMontant(cp.totalCapitauxPropres);
+
+      const d = p.dettes;
+      document.getElementById('b-pas-emprunts').textContent = formatMontant(d.soldeRestantEmprunts);
+      document.getElementById('b-pas-mensualites').textContent = formatMontant(d.mensualitesEmprunts);
+      document.getElementById('b-pas-exploitation').textContent = formatMontant(d.detteExploitation);
+      document.getElementById('b-pas-autres').textContent = formatMontant(d.autresDettes);
+      document.getElementById('b-pas-total-dettes').textContent = formatMontant(d.totalDettes);
+      document.getElementById('b-pas-total').textContent = formatMontant(p.totalPassif);
+    }
+
+    function rafraichirPrevision() {
+      const p = simulerComptesPrevisionnelsDemain();
+      document.getElementById('p-treso-actuelle').textContent = formatMontant(p.tresorerieActuelle);
+      document.getElementById('p-produits-jour').textContent = formatMontant(p.produitsJour);
+      document.getElementById('p-charges-jour').textContent = formatMontant(p.chargesJour);
+      document.getElementById('p-treso-demain').textContent = formatMontant(p.tresoreriePrevueDemain);
+    }
+
+    function exporterExcel() {
+      const data = genererDonneesExcel();
+      // Ici tu feras ton export CSV/XLSX côté front (pack Prestige)
+      console.log('Export Excel (Prestige) :', data);
+    }
+
+    document.getElementById('btn-prevision').addEventListener('click', () => {
+      rafraichirPrevision();
+    });
+
+    document.getElementById('btn-export').addEventListener('click', () => {
+      exporterExcel();
+    });
+
+    // Initialisation
+    rafraichirTresorerie();
+    rafraichirResultat();
+    rafraichirBilan();
+    rafraichirPrevision();
+  </script>
+</body>
+</html>

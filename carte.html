@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Geo Empire – Carte</title>
+
+  <link rel="stylesheet" href="carte.css">
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+</head>
+
+<body>
+  <header class="topbar">
+    <a href="index.html" class="back">← Retour</a>
+    <h1>Carte GPS</h1>
+  </header>
+
+  <main class="container">
+    <section class="panel">
+      <h2>Position actuelle</h2>
+      <p>Latitude : <span id="lat">0</span></p>
+      <p>Longitude : <span id="lng">0</span></p>
+    </section>
+
+    <section class="panel">
+      <h2>Carte</h2>
+      <div id="map"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Entreprises proches</h2>
+      <div id="liste-entreprises"></div>
+    </section>
+  </main>
+
+  <script type="module" src="modules/gps.js"></script>
+</body>
+</html>

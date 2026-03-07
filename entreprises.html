@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Geo Empire – Entreprises</title>
+  <link rel="stylesheet" href="entreprises.css">
+</head>
+
+<body>
+  <header class="topbar">
+    <a href="index.html" class="back">← Retour</a>
+    <h1>Gestion de l'entreprise</h1>
+  </header>
+
+  <main class="container">
+
+    <!-- IDENTITÉ -->
+    <section class="panel">
+      <h2>Identité</h2>
+
+      <label>Nom de l'entreprise :</label>
+      <input id="nom" type="text" placeholder="Nom de l'entreprise">
+
+      <label>Discord :</label>
+      <input id="discord" type="text" placeholder="Lien Discord">
+
+      <label>Description :</label>
+      <textarea id="description" placeholder="Description de l'entreprise"></textarea>
+
+      <button id="btn-save-identite">Enregistrer</button>
+    </section>
+
+    <!-- POSTES -->
+    <section class="panel">
+      <h2>Postes</h2>
+
+      <label>Nouveau poste :</label>
+      <input id="poste" type="text" placeholder="Nom du poste">
+
+      <button id="btn-add-poste">Ajouter le poste</button>
+
+      <h3>Liste des postes :</h3>
+      <div id="liste-postes"></div>
+    </section>
+
+  </main>
+
+  <script type="module" src="entreprises.js"></script>
+</body>
+</html>

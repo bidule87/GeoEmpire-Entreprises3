@@ -1,83 +1,23 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <title>GeoEmpire Entreprises 3</title>
-    <link rel="stylesheet" href="style.css">
-
-    <!-- Leaflet -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <meta charset="UTF-8">
+  <title>Geo Empire – Menu Principal</title>
+  <link rel="stylesheet" href="css/index.css">
 </head>
 
 <body>
+  <div class="menu-container">
+    <h1 class="title">GEO EMPIRE</h1>
 
-    <!-- Notifications -->
-    <div id="notif-zone"></div>
-
-    <!-- Bilan rapide -->
-    <section id="bilan-rapide"></section>
-
-    <!-- Menu -->
-    <section>
-        <button onclick="ouvrirPage('patrimoine')">Patrimoine</button>
-        <button onclick="ouvrirPage('immobilier')">Immobilier</button>
-        <button onclick="ouvrirPage('assurances')">Assurances</button>
-        <button onclick="ouvrirPage('shop')">Boutique</button>
-        <button onclick="ouvrirPage('braquage')">Braquage</button>
-        <button onclick="ouvrirPage('gps')">GPS</button>
-        <button onclick="ouvrirPage('bilan')">Bilan complet</button>
-    </section>
-
-    <!-- Pages -->
-    <section id="patrimoine" class="page" style="display:none;">
-        <h2>PATRIMOINE</h2>
-        <div id="contenu-patrimoine"></div>
-    </section>
-
-    <section id="immobilier" class="page" style="display:none;">
-        <h2>IMMOBILIER</h2>
-        <div id="contenu-immobilier"></div>
-    </section>
-
-    <section id="assurances" class="page" style="display:none;">
-        <h2>ASSURANCES</h2>
-        <div id="contenu-assurances"></div>
-    </section>
-
-    <section id="shop" class="page" style="display:none;">
-        <h2>BOUTIQUE</h2>
-        <div id="shop-items"></div>
-    </section>
-
-    <section id="braquage" class="page" style="display:none;">
-        <h2>BRAQUAGE</h2>
-        <div id="braquage-zone"></div>
-    </section>
-
-    <section id="gps" class="page" style="display:none;">
-        <h2>GPS</h2>
-        <p id="gps-status">Chargement GPS...</p>
-        <div id="map"></div>
-    </section>
-
-    <section id="bilan" class="page" style="display:none;">
-        <h2>BILAN COMPLET</h2>
-        <div id="bilan-complet"></div>
-    </section>
-
-    <!-- CORE -->
-    <script src="js/core/core.js"></script>
-
-    <!-- MODULES (CORRIGÉ POUR TON DOSSIER js/core/) -->
-    <script src="js/core/patrimoine.js"></script>
-    <script src="js/core/immobilier.js"></script>
-    <script src="js/core/assurances.js"></script>
-    <script src="js/core/boutique.js"></script>
-    <script src="js/core/gtoken.js"></script>
-    <script src="js/core/gps.js"></script>
-    <script src="js/core/braquage.js"></script>
-    <script src="js/core/bilan.js"></script>
-
+    <div class="menu-grid">
+      <a href="finances.html" class="menu-btn finances">Finances</a>
+      <a href="immobilier.html" class="menu-btn immobilier">Immobilier</a>
+      <a href="entreprises.html" class="menu-btn entreprises">Entreprises</a>
+      <a href="carte.html" class="menu-btn carte">Carte (GPS)</a>
+      <a href="prestige.html" class="menu-btn prestige">Prestige</a>
+      <a href="profil.html" class="menu-btn profil">Profil</a>
+    </div>
+  </div>
 </body>
 </html>

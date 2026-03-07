@@ -1,57 +1,86 @@
-// ===============================
-//  GEOEMPIRE 3 - GPS
-// ===============================
+import { entreprises } from "./entreprises.js";
 
-let ge_map = null;
-let ge_marker = null;
+// Sélecteurs
+const latEl = document.getElementById("lat");
+const lngEl = document.getElementById("lng");
+const listeEl = document.getElementById("liste-entreprises");
 
 // Initialisation de la carte
-window.ge_initMap = function () {
-    if (ge_map) return;
+const map = L.map("map").setView([46.8, 2.4], 6);
 
-    ge_map = L.map('map').setView([46.8, 2.2], 6); // Vue France
+// Fond de carte
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  maxZoom: 19
+}).addTo(map);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19
-    }).addTo(ge_map);
+// Marqueur joueur
+let markerJoueur = null;
 
-    ge_marker = L.marker([46.8, 2.2]).addTo(ge_map);
-};
+// Fonction pour mettre à jour la position
+export function majPosition(lat, lng) {
+  latEl.textContent = lat.toFixed(6);
+  lngEl.textContent = lng.toFixed(6);
 
-// Mise à jour de la position GPS
-window.ge_updateGPS = function () {
-    const zone = document.getElementById("gps-status");
+  if (!markerJoueur) {
+    markerJoueur = L.marker([lat, lng]).addTo(map);
+  } else {
+    markerJoueur.setLatLng([lat, lng]);
+  }
 
-    if (!navigator.geolocation) {
-        zone.innerText = "GPS non supporté.";
-        return;
+  map.setView([lat, lng], 15);
+
+  afficherEntreprises(lat, lng);
+}
+
+// Affichage des entreprises proches
+function afficherEntreprises(lat, lng) {
+  listeEl.innerHTML = "";
+
+  entreprises.forEach((e, index) => {
+    if (!e.lat || !e.lng) return;
+
+    const distance = calcDistance(lat, lng, e.lat, e.lng);
+
+    if (distance <= 1.5) { // 1.5 km
+      const div = document.createElement("div");
+      div.className = "entreprise-item";
+      div.textContent = `${e.nom} – ${distance.toFixed(2)} km`;
+      listeEl.appendChild(div);
+
+      L.marker([e.lat, e.lng])
+        .addTo(map)
+        .bindPopup(`<b>${e.nom}</b><br>${distance.toFixed(2)} km`);
     }
+  });
+}
 
-    zone.innerText = "Recherche GPS...";
+// Calcul distance (km)
+function calcDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
 
-    navigator.geolocation.getCurrentPosition(
-        pos => {
-            const lat = pos.coords.latitude;
-            const lon = pos.coords.longitude;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * Math.PI / 180) *
+    Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) ** 2;
 
-            entreprise.position = { lat, lon };
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
 
-            zone.innerText = `Position : ${lat.toFixed(5)}, ${lon.toFixed(5)}`;
-
-            if (ge_map && ge_marker) {
-                ge_map.setView([lat, lon], 16);
-                ge_marker.setLatLng([lat, lon]);
-            }
-        },
-        err => {
-            zone.innerText = "Impossible d'obtenir la position.";
-        }
-    );
-};
-
-// Lancement automatique
-window.addEventListener("load", () => {
-    ge_initMap();
-    ge_updateGPS();
-    setInterval(ge_updateGPS, 5000);
-});
+// GPS navigateur
+if ("geolocation" in navigator) {
+  navigator.geolocation.watchPosition(
+    pos => {
+      majPosition(pos.coords.latitude, pos.coords.longitude);
+    },
+    err => {
+      console.error("Erreur GPS :", err);
+      alert("Impossible d'obtenir la position GPS.");
+    },
+    { enableHighAccuracy: true }
+  );
+} else {
+  alert("GPS non supporté.");
+}

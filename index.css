@@ -1,0 +1,55 @@
+body {
+  margin: 0;
+  padding: 0;
+  background: radial-gradient(circle at top, #0a0f1f, #000);
+  font-family: system-ui, sans-serif;
+  color: #fff;
+}
+
+.menu-container {
+  max-width: 900px;
+  margin: 60px auto;
+  text-align: center;
+}
+
+.title {
+  font-size: 42px;
+  font-weight: 700;
+  margin-bottom: 40px;
+  letter-spacing: 4px;
+  background: linear-gradient(90deg, #4facfe, #00f2fe);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.menu-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+}
+
+.menu-btn {
+  display: block;
+  padding: 18px;
+  border-radius: 12px;
+  font-size: 20px;
+  font-weight: 600;
+  text-decoration: none;
+  color: #fff;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.15);
+  transition: 0.2s;
+}
+
+.menu-btn:hover {
+  transform: translateY(-4px);
+  background: rgba(255,255,255,0.12);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+}
+
+.finances { border-left: 4px solid #4facfe; }
+.immobilier { border-left: 4px solid #fbbf24; }
+.entreprises { border-left: 4px solid #34d399; }
+.carte { border-left: 4px solid #a855f7; }
+.prestige { border-left: 4px solid #f43f5e; }
+.profil { border-left: 4px solid #22d3ee; }
