@@ -1,274 +1,313 @@
-// ======================================================
-//  GEO EMPIRE — MODULE BOUTIQUE (VERSION FINALE)
-//  Compatible Codespaces / GitHub / Modules internes
-//  Design : Bleu futuriste (CodePen original conservé)
-// ======================================================
+// ==========================
+// ETAT DU JOUEUR
+// ==========================
 
-// =====================
-//  ÉTAT GLOBAL BOUTIQUE
-// =====================
-export const boutiqueState = {
-    gTokens: 0,
-    crowns: 0,
-    gpsRadius: 5,
-    prestigeOwned: false,
-    jumpCharges: 0,
-    moveCards: 0,
-    locksBonus: 0,
-    autoManager: false,
-    autoMarketing: false,
-    autoPrimes: false
+const state = {
+  gTokens: 0,
+  crowns: 0,
+  gpsRadius: 5,
+  prestigeOwned: false
 };
 
-// =====================
-//  SAUVEGARDE
-// =====================
-function saveBoutique() {
-    localStorage.setItem("geoEmpireBoutique", JSON.stringify(boutiqueState));
-    renderBoutiqueState();
-}
+// ==========================
+// LISTE DES PACKS
+// ==========================
 
-function loadBoutique() {
-    const raw = localStorage.getItem("geoEmpireBoutique");
-    if (!raw) return;
-    try {
-        Object.assign(boutiqueState, JSON.parse(raw));
-    } catch {}
-}
-
-loadBoutique();
-
-// =====================
-//  PACKS OFFICIELS
-// =====================
 const packs = [
-    {
-        id: "prestige",
-        name: "Pack Prestige",
-        tag: "Le pack ultime",
-        price: "9.99 €",
-        oneTime: true,
-        effectsText: [
-            "Rayon GPS étendu à 20 km",
-            "Achats illimités de biens",
-            "Assurance spéciale (Holding / Filiales / Banque / Monuments)",
-            "Priorité absolue à minuit",
-            "Actions de masse (Achat/Vente/Location)",
-            "Export Excel / Sheets",
-            "Bonus de vente via la molette",
-            "Bonus de location via la molette",
-            "+10 000 G‑Tokens",
-            "+10 Crowns",
-            "+9 cadenas sur toutes les entités",
-            "Statut PDG / actionnaires"
-        ],
-        apply() {
-            if (boutiqueState.prestigeOwned) return "Pack déjà possédé.";
 
-            boutiqueState.prestigeOwned = true;
-            boutiqueState.gpsRadius = 20;
-            boutiqueState.gTokens += 10000;
-            boutiqueState.crowns += 10;
-            boutiqueState.locksBonus += 9;
+{
+id:"prestige",
+name:"Pack Prestige",
+subtitle:"Le pack ultime",
+price:"9.99 €",
+oneTime:true,
 
-            saveBoutique();
-            return "Pack Prestige activé.";
-        }
-    },
+lines:[
+"Rayon GPS étendu à 20 km",
+"Achats illimités de biens",
+"Assurance spéciale",
+"Priorité absolue à minuit",
+"Actions de masse",
+"Export Excel / Sheets",
+"Bonus de vente",
+"Bonus de location",
+"+10 000 G-Tokens",
+"+10 Crowns",
+"+9 cadenas"
+]
 
-    // =====================
-    //  PACK AUTO‑MANAGER
-    // =====================
-    {
-        id: "automanager",
-        name: "Pack Auto‑Manager",
-        tag: "Gestion Automatique",
-        price: "9.99 €",
-        oneTime: true,
-        effectsText: [
-            "Calcul automatique des primes",
-            "Gestion automatique du marketing",
-            "Optimisation automatique à minuit",
-            "Assistant IA interne"
-        ],
-        apply() {
-            if (boutiqueState.autoManager) return "Pack Auto‑Manager déjà activé.";
+},
 
-            boutiqueState.autoManager = true;
-            boutiqueState.autoMarketing = true;
-            boutiqueState.autoPrimes = true;
+{
+id:"autoManagers",
+name:"Pack Auto-Managers",
+subtitle:"Prime & Marketing",
+price:"9.99 €",
 
-            saveBoutique();
-            return "Pack Auto‑Manager activé.";
-        }
-    },
+lines:[
+"Prime automatique pour les managers",
+"Boost marketing des entreprises"
+]
 
-    // =====================
-    //  PACKS GPS
-    // =====================
-    {
-        id: "gps5km",
-        name: "Pack GPS 5 km",
-        tag: "Extension Zone",
-        price: "2.99 €",
-        oneTime: true,
-        effectsText: ["Augmente le rayon GPS à 5 km"],
-        apply() {
-            if (boutiqueState.gpsRadius >= 5) return "Rayon déjà étendu.";
-            boutiqueState.gpsRadius = 5;
-            saveBoutique();
-            return "Rayon GPS étendu à 5 km.";
-        }
-    },
-    {
-        id: "gps10km",
-        name: "Pack GPS 10 km",
-        tag: "Double Zone",
-        price: "4.99 €",
-        oneTime: true,
-        effectsText: ["Augmente le rayon GPS à 10 km"],
-        apply() {
-            if (boutiqueState.gpsRadius >= 10) return "Rayon déjà étendu.";
-            boutiqueState.gpsRadius = 10;
-            saveBoutique();
-            return "Rayon GPS étendu à 10 km.";
-        }
-    },
-    {
-        id: "gps20km",
-        name: "Pack GPS 20 km",
-        tag: "Max Zone",
-        price: "9.99 €",
-        oneTime: true,
-        effectsText: ["Augmente le rayon GPS à 20 km"],
-        apply() {
-            if (boutiqueState.gpsRadius >= 20) return "Rayon déjà étendu.";
-            boutiqueState.gpsRadius = 20;
-            saveBoutique();
-            return "Rayon GPS étendu à 20 km.";
-        }
-    },
+},
 
-    // =====================
-    //  PACK G‑TOKEN
-    // =====================
-    {
-        id: "gtoken",
-        name: "Pack G‑Tokens",
-        tag: "Valeur & Action",
-        price: "4.99 €",
-        oneTime: false,
-        effectsText: [
-            "+10 000 G‑Tokens",
-            "Injection libre (Holding / Filiale / Banque)",
-            "Effet actionnaire : boost du patrimoine"
-        ],
-        apply() {
-            boutiqueState.gTokens += 10000;
-            saveBoutique();
-            return "+10 000 G‑Tokens ajoutés.";
-        }
-    },
+{
+id:"gps5",
+name:"Pack GPS 5 km",
+subtitle:"Extension Zone",
+price:"2.99 €",
 
-    // =====================
-    //  PACK CROWNS
-    // =====================
-    {
-        id: "crowns",
-        name: "Pack Crowns",
-        tag: "Chance Royale",
-        price: "4.99 €",
-        oneTime: false,
-        effectsText: ["+10 Crowns", "Pour la Loterie Royale (coffres)"],
-        apply() {
-            boutiqueState.crowns += 10;
-            saveBoutique();
-            return "+10 Crowns ajoutées.";
-        }
-    },
+lines:["Augmente le rayon GPS à 5 km"]
+},
 
-    // =====================
-    //  PACK JUMP
-    // =====================
-    {
-        id: "jump",
-        name: "Pack Jump (10)",
-        tag: "Mobilité globale",
-        price: "5.99 €",
-        oneTime: false,
-        effectsText: ["10 téléportations GPS", "Permet de briser la limite des 5 km"],
-        apply() {
-            boutiqueState.jumpCharges += 10;
-            saveBoutique();
-            return "+10 téléportations ajoutées.";
-        }
-    },
+{
+id:"gps10",
+name:"Pack GPS 10 km",
+subtitle:"Double Zone",
+price:"4.99 €",
 
-    // =====================
-    //  PACK DÉMÉNAGEMENT
-    // =====================
-    {
-        id: "move",
-        name: "Pack Déménagement",
-        tag: "Migration",
-        price: "6.99 €",
-        oneTime: false,
-        effectsText: [
-            "10 cartes Déménagement",
-            "Changement de ville instantané"
-        ],
-        apply() {
-            boutiqueState.moveCards += 10;
-            saveBoutique();
-            return "+10 cartes Déménagement ajoutées.";
-        }
-    }
+lines:["Augmente le rayon GPS à 10 km"]
+},
+
+{
+id:"gps20",
+name:"Pack GPS 20 km",
+subtitle:"Max Zone",
+price:"9.99 €",
+
+lines:["Augmente le rayon GPS à 20 km"]
+},
+
+{
+id:"gtokens",
+name:"Pack G-Tokens",
+subtitle:"Valeur & Action",
+price:"4.99 €",
+
+lines:["+10 000 G-Tokens"]
+},
+
+{
+id:"crowns",
+name:"Pack Crowns",
+subtitle:"Chance Royale",
+price:"4.99 €",
+
+lines:["+10 Crowns"]
+}
+
 ];
 
-// =====================
-//  RENDU DES STATUTS
-// =====================
-function renderBoutiqueState() {
-    document.getElementById("gtokens").textContent = boutiqueState.gTokens;
-    document.getElementById("crowns").textContent = boutiqueState.crowns;
-    document.getElementById("gps-radius").textContent = boutiqueState.gpsRadius;
+// ==========================
+// VARIABLES
+// ==========================
+
+let packsContainer;
+let statusEl;
+
+
+// ==========================
+// CODE PRESTIGE
+// ==========================
+
+function validerCodePrestige(){
+
+const input=document.getElementById("prestige-code").value.trim()
+
+const codesValides=[
+"GEO-9999",
+"PRESTIGE-2025",
+"EMPIRE-VIP"
+]
+
+if(!codesValides.includes(input)){
+
+showStatus("Code invalide")
+return
+
 }
 
-// =====================
-//  RENDU DE LA BOUTIQUE
-// =====================
-export function afficherBoutique() {
-    const container = document.getElementById("packs");
-    container.innerHTML = "";
+applyPack(packs.find(p=>p.id==="prestige"))
 
-    packs.forEach((pack) => {
-        const card = document.createElement("div");
-        card.className = "pack-card";
-
-        const title = `<div class="pack-title">${pack.name}</div>`;
-        const tag = `<div class="pack-tag">${pack.tag}</div>`;
-        const price = `<div class="pack-price">${pack.price}</div>`;
-        const effects = `<div class="pack-effects">${pack.effectsText.map(t => "• " + t).join("<br>")}</div>`;
-
-        const owned = (pack.oneTime && boutiqueState[pack.id + "Owned"])
-            ? `<div class="badge-owned">Déjà possédé</div>`
-            : "";
-
-        const button = `<button class="pack-button" data-pack="${pack.id}" ${owned ? "disabled" : ""}>Acheter</button>`;
-
-        card.innerHTML = title + tag + price + effects + owned + button;
-        container.appendChild(card);
-    });
-
-    document.querySelectorAll(".pack-button").forEach(btn => {
-        btn.addEventListener("click", () => {
-            const id = btn.getAttribute("data-pack");
-            const pack = packs.find(p => p.id === id);
-            const msg = pack.apply();
-            document.getElementById("status").textContent = msg;
-            afficherBoutique();
-        });
-    });
-
-    renderBoutiqueState();
 }
+
+
+// ==========================
+// RENDER PACKS
+// ==========================
+
+function renderPacks(){
+
+packsContainer.innerHTML=""
+
+packs.forEach(pack=>{
+
+const div=document.createElement("div")
+div.className="pack-card"
+
+const linesHtml=pack.lines
+.map(l=>"<li>"+l+"</li>")
+.join("")
+
+div.innerHTML=`
+
+<h3>${pack.name}</h3>
+
+<div class="subtitle">
+${pack.subtitle}
+</div>
+
+<div class="pack-price">
+${pack.price}
+</div>
+
+<ul>
+${linesHtml}
+</ul>
+
+<button class="btn-buy">
+Acheter
+</button>
+
+`
+
+const button=div.querySelector(".btn-buy")
+
+if(pack.oneTime && state.prestigeOwned){
+
+button.disabled=true
+button.textContent="Déjà acheté"
+
+}
+
+button.addEventListener("click",()=>{
+
+applyPack(pack)
+
+})
+
+packsContainer.appendChild(div)
+
+})
+
+}
+
+
+// ==========================
+// APPLICATION DES PACKS
+// ==========================
+
+function applyPack(pack){
+
+switch(pack.id){
+
+case "prestige":
+
+if(state.prestigeOwned){
+
+showStatus("Pack déjà possédé")
+return
+
+}
+
+state.gpsRadius=20
+state.gTokens+=10000
+state.crowns+=10
+state.prestigeOwned=true
+
+break
+
+
+case "autoManagers":
+
+showStatus("Prime automatique & marketing activés !")
+break
+
+
+case "gps5":
+
+state.gpsRadius=Math.max(state.gpsRadius,5)
+break
+
+
+case "gps10":
+
+state.gpsRadius=Math.max(state.gpsRadius,10)
+break
+
+
+case "gps20":
+
+state.gpsRadius=Math.max(state.gpsRadius,20)
+break
+
+
+case "gtokens":
+
+state.gTokens+=10000
+break
+
+
+case "crowns":
+
+state.crowns+=10
+break
+
+}
+
+renderState()
+
+showStatus(pack.name+" activé !")
+
+renderPacks()
+
+}
+
+
+// ==========================
+// RENDER STATE
+// ==========================
+
+function renderState(){
+
+document.getElementById("gtokens").textContent=state.gTokens
+
+document.getElementById("crowns").textContent=state.crowns
+
+document.getElementById("gps-radius").textContent=state.gpsRadius
+
+}
+
+
+// ==========================
+// MESSAGE TEMPORAIRE
+// ==========================
+
+function showStatus(msg){
+
+statusEl.textContent=msg
+
+setTimeout(()=>{
+
+statusEl.textContent=""
+
+},3000)
+
+}
+
+
+// ==========================
+// INIT
+// ==========================
+
+document.addEventListener("DOMContentLoaded",()=>{
+
+packsContainer=document.getElementById("packs")
+
+statusEl=document.getElementById("status")
+
+renderState()
+
+renderPacks()
+
+})

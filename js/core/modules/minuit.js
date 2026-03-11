@@ -1,133 +1,173 @@
 // ======================================================
-//  GEO EMPIRE — MODULE MINUIT (VERSION FINALE)
-//  Exécution des ordres, loyers, primes, auto‑manager
+//  GEO EMPIRE — MINUIT (VERSION FINALE)
+//  Loyers réels, charges, impôts, primes, patrimoine
 // ======================================================
 
-import { boutiqueState } from "./boutique.js";
-import { patrimoineState, updatePatrimoine } from "./patrimoine.js";
-import { empire } from "./empire.js"; 
-// empire = { holding: {...}, filiales: {...}, biens: [...] }
+import { getEntreprise, setEntreprise, entreprises } from "./entreprises.js";
+import { joueurs } from "./finances_etape4.js";
 
-// =====================
+// ======================================================
 //  FONCTION PRINCIPALE
-// =====================
+// ======================================================
 export function executerMinuit() {
 
     console.log("=== MINUIT : Mise à jour journalière ===");
 
-    // 1. Exécuter les ordres (vente / location)
-    executerOrdres();
+    // 1. Loyers réels des biens possédés
+    appliquerLoyers();
 
-    // 2. Calculer les loyers
-    calculerLoyers();
+    // 2. Charges + impôts des biens possédés
+    appliquerChargesEtImpots();
 
-    // 3. Calculer les primes
-    calculerPrimes();
+    // 3. Primes PDG / DG / DC
+    appliquerPrimesDirecteurs();
 
-    // 4. Mise à jour du patrimoine
-    updatePatrimoine();
+    // 4. Impôt sur le bénéfice (tous les dimanches)
+    appliquerImpotsHebdomadaires();
 
-    // 5. Sauvegarde globale
-    sauvegarderMinuit();
+    // 5. Mise à jour du patrimoine total
+    mettreAJourPatrimoine();
+
+    // 6. Sauvegarde
+    setEntreprise(getEntreprise());
 
     console.log("=== MINUIT TERMINÉ ===");
 }
 
-// =====================
-//  1. ORDRES DIFFÉRÉS
-// =====================
-function executerOrdres() {
+// ======================================================
+// 1. LOYERS RÉELS
+// ======================================================
+function appliquerLoyers() {
+    const entreprise = getEntreprise();
 
-    empire.biens.forEach(bien => {
+    Object.values(entreprises).forEach(bien => {
 
-        if (!bien.ordre) return;
+        const revenuNet = (bien.loyer || 0) - (bien.charges || 0) - (bien.impots || 0);
 
-        // Vente
-        if (bien.ordre.type === "vente") {
-            let prix = appliquerBonusVente(bien.valeur);
-            ajouterCash(bien.proprietaire, prix);
-            bien.estVendu = true;
-        }
+        if (revenuNet > 0) {
 
-        // Location
-        if (bien.ordre.type === "location") {
-            bien.estLoue = true;
-            bien.loyerActuel = appliquerBonusLocation(bien.loyerBase);
-        }
+            entreprise.patrimoine += revenuNet;
 
-        bien.ordre = null;
-    });
-}
-
-// =====================
-//  2. LOYERS
-// =====================
-function calculerLoyers() {
-
-    empire.biens.forEach(bien => {
-        if (bien.estLoue) {
-            ajouterCash(bien.proprietaire, bien.loyerActuel);
+            // Historique
+            entreprise.historique.push({
+                date: Date.now(),
+                type: "loyer",
+                details: bien.nom,
+                montant: revenuNet
+            });
         }
     });
+
+    setEntreprise(entreprise);
 }
 
-// =====================
-//  3. PRIMES (10%)
-// =====================
-function calculerPrimes() {
+// ======================================================
+// 2. CHARGES + IMPÔTS
+// ======================================================
+function appliquerChargesEtImpots() {
+    const entreprise = getEntreprise();
 
-    let patrimoineBoosté = patrimoineState.patrimoineBoosté;
+    Object.values(entreprises).forEach(bien => {
 
-    let prime = patrimoineBoosté * 0.10;
+        const charges = bien.charges || 0;
+        const impots = bien.impots || 0;
+        const total = charges + impots;
 
-    // Auto‑Manager → optimisation automatique
-    if (boutiqueState.autoPrimes) {
-        prime = optimiserPrime(prime);
-    }
+        if (total > 0) {
 
-    // Débit entreprise → crédit joueur
-    empire.holding.cash -= prime;
-    patrimoineState.cashPersonnel += prime;
+            entreprise.patrimoine -= total;
+
+            // Historique
+            entreprise.historique.push({
+                date: Date.now(),
+                type: "charge",
+                details: bien.nom,
+                montant: -total
+            });
+        }
+    });
+
+    setEntreprise(entreprise);
 }
 
-// =====================
-//  BONUS PRESTIGE
-// =====================
-function appliquerBonusVente(prix) {
-    if (boutiqueState.prestigeOwned) {
-        return prix * 1.20; // +20%
-    }
-    return prix;
+// ======================================================
+// 3. PRIMES DIRECTEURS (PDG / DG / DC)
+// ======================================================
+function appliquerPrimesDirecteurs() {
+    const entreprise = getEntreprise();
+    const primes = entreprise.primes || { pdg: 0, dg: 0, dc: 0 };
+
+    const primePDG = Number(primes.pdg) || 0;
+    const primeDG  = Number(primes.dg)  || 0;
+    const primeDC  = Number(primes.dc)  || 0;
+
+    const total = primePDG + primeDG + primeDC;
+    if (total <= 0) return;
+
+    // Débiter l’entreprise
+    entreprise.patrimoine -= total;
+
+    // Créditer les comptes joueurs
+    joueurs.pdg.tresorerie += primePDG;
+    joueurs.dg.tresorerie  += primeDG;
+    joueurs.dc.tresorerie  += primeDC;
+
+    // Historique
+    entreprise.historique.push({
+        date: Date.now(),
+        type: "prime",
+        details: "Primes PDG / DG / DC",
+        montant: -total
+    });
+
+    // Reset
+    entreprise.primes = { pdg: 0, dg: 0, dc: 0 };
+
+    setEntreprise(entreprise);
 }
 
-function appliquerBonusLocation(loyer) {
-    if (boutiqueState.prestigeOwned) {
-        return loyer * 1.15; // +15%
-    }
-    return loyer;
+// ======================================================
+// 4. IMPÔT SUR LE BÉNÉFICE (tous les dimanches minuit)
+// ======================================================
+function appliquerImpotsHebdomadaires() {
+    const maintenant = new Date();
+    const jour = maintenant.getDay(); // 0 = dimanche
+
+    if (jour !== 0) return;
+
+    const entreprise = getEntreprise();
+
+    const benefice = entreprise.patrimoine;
+
+    if (benefice <= 0) return;
+
+    const impot = Math.floor(benefice * 0.20);
+
+    entreprise.patrimoine -= impot;
+
+    entreprise.historique.push({
+        date: Date.now(),
+        type: "impot",
+        details: "Impôt hebdomadaire (20%)",
+        montant: -impot
+    });
+
+    setEntreprise(entreprise);
 }
 
-// =====================
-//  AUTO‑MANAGER
-// =====================
-function optimiserPrime(prime) {
-    return prime * 1.05; // +5% optimisation IA
-}
+// ======================================================
+// 5. MISE À JOUR DU PATRIMOINE TOTAL
+// ======================================================
+function mettreAJourPatrimoine() {
+    const entreprise = getEntreprise();
 
-// =====================
-//  AJOUTER CASH
-// =====================
-function ajouterCash(entite, montant) {
-    if (entite === "holding") {
-        empire.holding.cash += montant;
-    } else {
-        empire.filiales[entite].cash += montant;
-    }
-}
+    let total = 0;
 
-// =====================
-//  SAUVEGARDE
-// =====================
-function sauvegarderMinuit() {
-    localStorage.setItem("geoEmpireMinuit", Date.now());
+    Object.values(entreprises).forEach(bien => {
+        total += bien.prixAchat || 0;
+    });
+
+    entreprise.patrimoine = total;
+
+    setEntreprise(entreprise);
 }

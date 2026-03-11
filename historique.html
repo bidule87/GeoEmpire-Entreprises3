@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Historique financier</title>
+    <link rel="stylesheet" href="/menu.css">
+    <!-- tes autres CSS -->
+</head>
+
+<body>
+
+    <!-- HEADER VIOLET -->
+    <div class="menu-container">
+        <h1 class="title">GEO EMPIRE</h1>
+
+        <div class="menu-grid">
+            <a href="finances.html" class="menu-btn finances">Finances</a>
+            <a href="immobilier.html" class="menu-btn immobilier">Immobilier</a>
+            <a href="entreprises.html" class="menu-btn entreprises">Entreprises</a>
+            <a href="carte.html" class="menu-btn carte">Carte (GPS)</a>
+            <a href="prestige.html" class="menu-btn prestige">Prestige</a>
+            <a href="profil.html" class="menu-btn profil">Profil</a>
+            <a href="boutique.html" class="menu-btn prestige">Boutique</a>
+        </div>
+    </div>
+
+    <main>
+
+        <h1>Historique financier</h1>
+
+        <table id="table-historique">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Détails</th>
+                    <th>Montant</th>
+                </tr>
+            </thead>
+            <tbody id="historique-tbody"></tbody>
+        </table>
+
+        <!-- Ton bouton était en dehors du HTML → replacé ici -->
+        <button id="btn-export" class="btn secondary" disabled>Export Excel / Sheets</button>
+
+    </main>
+
+    <script type="module" src="/js/core/modules/historique.js"></script>
+
+</body>
+</html>

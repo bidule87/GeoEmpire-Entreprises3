@@ -1,55 +1,81 @@
+/* --- CONFIGURATION GÉNÉRALE --- */
 body {
-  margin: 0;
-  padding: 0;
-  background: radial-gradient(circle at top, #0a0f1f, #000);
-  font-family: system-ui, sans-serif;
-  color: #fff;
+    margin: 0;
+    padding: 0;
+    background: radial-gradient(circle at top, #001529 0%, #000000 100%);
+    font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+    color: #fff;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    overflow-x: hidden;
 }
 
 .menu-container {
-  max-width: 900px;
-  margin: 60px auto;
-  text-align: center;
+    width: 100%;
+    max-width: 900px;
+    margin: 60px auto;
+    text-align: center;
+    padding: 20px;
 }
 
+/* --- TITRE --- */
 .title {
-  font-size: 42px;
-  font-weight: 700;
-  margin-bottom: 40px;
-  letter-spacing: 4px;
-  background: linear-gradient(90deg, #4facfe, #00f2fe);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+    font-size: 52px;
+    font-weight: 900;
+    margin-bottom: 50px;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    background: linear-gradient(180deg, #fff 0%, #4facfe 50%, #00f2fe 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 15px rgba(79, 172, 254, 0.5));
 }
 
+/* --- GRILLE --- */
 .menu-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 18px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
 }
 
+/* --- BOUTONS --- */
 .menu-btn {
-  display: block;
-  padding: 18px;
-  border-radius: 12px;
-  font-size: 20px;
-  font-weight: 600;
-  text-decoration: none;
-  color: #fff;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.15);
-  transition: 0.2s;
+    display: block;
+    padding: 25px 18px;
+    border-radius: 4px 12px 12px 4px;
+    font-size: 20px;
+    font-weight: 600;
+    text-decoration: none;
+    text-transform: uppercase;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 .menu-btn:hover {
-  transform: translateY(-4px);
-  background: rgba(255,255,255,0.12);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+    transform: translateX(10px);
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.5);
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
 }
 
-.finances { border-left: 4px solid #4facfe; }
-.immobilier { border-left: 4px solid #fbbf24; }
-.entreprises { border-left: 4px solid #34d399; }
-.carte { border-left: 4px solid #a855f7; }
-.prestige { border-left: 4px solid #f43f5e; }
-.profil { border-left: 4px solid #22d3ee; }
+/* --- BORDURES ÉLECTRIQUES --- */
+.finances { border-left: 5px solid #4facfe; box-shadow: inset 10px 0 15px -10px #4facfe; }
+.immobilier { border-left: 5px solid #fbbf24; box-shadow: inset 10px 0 15px -10px #fbbf24; }
+.entreprises { border-left: 5px solid #34d399; box-shadow: inset 10px 0 15px -10px #34d399; }
+.carte { border-left: 5px solid #a855f7; box-shadow: inset 10px 0 15px -10px #a855f7; }
+.prestige { border-left: 5px solid #f43f5e; box-shadow: inset 10px 0 15px -10px #f43f5e; }
+.boutique { border-left: 5px solid #ff00ff; box-shadow: inset 10px 0 15px -10px #ff00ff; }
+.profil { border-left: 5px solid #22d3ee; box-shadow: inset 10px 0 15px -10px #22d3ee; }
+
+/* Glow spécifique au survol */
+.menu-btn:hover.finances { box-shadow: 0 0 25px rgba(79, 172, 254, 0.5); }
+.menu-btn:hover.immobilier { box-shadow: 0 0 25px rgba(251, 191, 36, 0.5); }
+.menu-btn:hover.entreprises { box-shadow: 0 0 25px rgba(52, 211, 153, 0.5); }
+.menu-btn:hover.carte { box-shadow: 0 0 25px rgba(168, 85, 247, 0.5); }
+.menu-btn:hover.prestige { box-shadow: 0 0 25px rgba(244, 63, 94, 0.5); }
+.menu-btn:hover.boutique { box-shadow: 0 0 25px rgba(255, 0, 255, 0.5); }
+.menu-btn:hover.profil { box-shadow: 0 0 25px rgba(34, 211, 238, 0.5); }

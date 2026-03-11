@@ -1,73 +1,182 @@
+/* ===========================
+   BASE
+=========================== */
+
 body {
   margin: 0;
   background: #050814;
   color: #fff;
-  font-family: system-ui, sans-serif;
+  font-family: 'Montserrat', system-ui, sans-serif;
 }
 
-.topbar {
-  display: flex;
-  align-items: center;
-  padding: 12px;
-  background: #0f172a;
-  border-bottom: 1px solid #1e293b;
-}
-
-.back {
-  color: #60a5fa;
-  text-decoration: none;
-  margin-right: 12px;
-}
-
-.container {
-  max-width: 900px;
-  margin: 20px auto;
-  padding: 10px;
-}
-
-.panel {
-  background: #0f172a;
-  border: 1px solid #1e293b;
-  border-radius: 10px;
-  padding: 16px;
+.banner {
+  width: 100%;
+  height: 80px;
+  background: linear-gradient(90deg, #0ea5e9, #3b82f6);
   margin-bottom: 20px;
 }
 
-.panel h2 {
-  margin-bottom: 10px;
+.immobilier-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 20px;
 }
 
-input {
-  width: 100%;
-  padding: 8px;
-  margin: 6px 0;
-  border-radius: 6px;
-  border: 1px solid #334155;
-  background: #1e293b;
-  color: #fff;
-}
+/* ===========================
+   BOUTON RETOUR
+=========================== */
 
-button {
-  width: 100%;
-  padding: 10px;
+.back-btn {
   background: #3b82f6;
+  color: white;
   border: none;
+  padding: 10px 18px;
   border-radius: 6px;
-  color: #fff;
-  font-weight: 600;
   cursor: pointer;
-  margin-top: 8px;
+  font-weight: 600;
+  margin-bottom: 20px;
 }
 
-button:hover {
+.back-btn:hover {
   background: #2563eb;
 }
 
-.result, .historique {
-  margin-top: 12px;
+/* ===========================
+   TITRE PRINCIPAL
+=========================== */
+
+h1 {
+  text-align: center;
+  font-size: 32px;
+  margin-bottom: 25px;
+  color: #60a5fa;
+  letter-spacing: 1px;
+}
+
+/* ===========================
+   ONGLET NAVIGATION
+=========================== */
+
+.onglets-nav {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 25px;
+}
+
+.onglet-btn {
+  padding: 10px 20px;
   background: #1e293b;
-  padding: 10px;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  color: #cbd5e1;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.2s;
+}
+
+.onglet-btn:hover {
+  background: #334155;
+}
+
+.onglet-btn.actif {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: white;
+}
+
+/* ===========================
+   CONTENU DES ONGLETS
+=========================== */
+
+.onglet-contenu {
+  display: none;
+  background: #0f172a;
+  border: 1px solid #1e293b;
+  padding: 20px;
+  border-radius: 10px;
+}
+
+.onglet-contenu.actif {
+  display: block;
+}
+
+/* ===========================
+   TABLEAUX (pour modules)
+=========================== */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
+
+th, td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #1e293b;
+}
+
+th {
+  background: #1e293b;
+  color: #60a5fa;
+  font-weight: 600;
+}
+
+tr:hover {
+  background: #1e293b;
+}
+
+/* ===========================
+   BOUTONS D’ACTION
+=========================== */
+
+.action-btn {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  margin-right: 6px;
+}
+
+.btn-acheter {
+  background: #22c55e;
+  color: white;
+}
+
+.btn-acheter:hover {
+  background: #16a34a;
+}
+
+.btn-louer {
+  background: #3b82f6;
+  color: white;
+}
+
+.btn-louer:hover {
+  background: #2563eb;
+}
+
+.btn-vendre {
+  background: #ef4444;
+  color: white;
+}
+
+.btn-vendre:hover {
+  background: #dc2626;
+}
+
+/* ===========================
+   ZONE DE STATUT
+=========================== */
+
+.status {
+  margin-top: 20px;
+  padding: 12px;
+  background: #1e293b;
   border-radius: 6px;
   font-size: 14px;
-  white-space: pre-wrap;
+  color: #93c5fd;
+  display: none;
 }

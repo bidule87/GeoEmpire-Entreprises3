@@ -1,0 +1,36 @@
+document.addEventListener("DOMContentLoaded", () => {
+
+    // Sélection du tableau
+    const tbody = document.getElementById("biens-tbody");
+    if (!tbody) {
+        console.warn("⚠️ biens-tbody introuvable dans proprietes.html");
+        return;
+    }
+
+    // Exemple : récupération des biens (à adapter selon ton système)
+    import("/js/core/modules/entreprises.js").then(module => {
+        const entreprises = module.entreprises || {};
+
+        tbody.innerHTML = "";
+
+        Object.values(entreprises).forEach(bien => {
+            const tr = document.createElement("tr");
+
+            tr.innerHTML = `
+                <td>${bien.nom || "?"}</td>
+                <td>${bien.categorie || "?"}</td>
+                <td>${bien.prixAchat?.toLocaleString("fr-FR") || 0} €</td>
+                <td>${bien.loyer?.toLocaleString("fr-FR") || 0} €</td>
+                <td>${bien.chargesSociales?.toLocaleString("fr-FR") || 0} €</td>
+                <td>${bien.impots?.toLocaleString("fr-FR") || 0} €</td>
+                <td>${(bien.loyer - bien.chargesSociales - bien.impots).toLocaleString("fr-FR")} €</td>
+                <td><button class="btn-action">Vendre</button></td>
+            `;
+
+            tbody.appendChild(tr);
+        });
+    }).catch(err => {
+        console.error("Erreur lors du chargement des biens :", err);
+    });
+
+});

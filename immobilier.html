@@ -1,63 +1,49 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>Geo Empire – Immobilier</title>
-  <link rel="stylesheet" href="immobilier.css">
+    <meta charset="UTF-8">
+    <title>Immobilier – Geo Empire</title>
+
+    <!-- CSS principal -->
+    <link rel="stylesheet" href="/menu.css">
+    <link rel="stylesheet" href="/immobilier.css">
+
+    <!-- Police premium -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;700&display=swap" rel="stylesheet">
 </head>
 
 <body>
-  <header class="topbar">
-    <a href="index.html" class="back">← Retour</a>
-    <h1>Immobilier</h1>
-  </header>
 
-  <main class="container">
+<div class="banner"></div>
 
-    <!-- VENTE -->
-    <section class="panel">
-      <h2>Vente</h2>
+<div class="immobilier-container">
 
-      <label>Quantité :</label>
-      <input id="vente-quantite" type="number" placeholder="Quantité à vendre">
+    <!-- Bouton retour -->
+    <button class="back-btn" onclick="location.href='index.html'">Retour</button>
 
-      <label>Molette : <span id="vente-molette-val">0%</span></label>
-      <input id="vente-molette" type="range" min="-20" max="20" value="0">
+    <h1>IMMOBILIER GEO EMPIRE</h1>
 
-      <p>Prix de base : <span id="vente-prix-base">0</span> €</p>
-      <p>Prix final : <span id="vente-prix-final">0</span> €</p>
+    <!-- NAVIGATION DES ONGLETS -->
+    <nav class="onglets-nav">
+        <button class="onglet-btn actif" data-onglet="proprietes">Propriétés</button>
+        <button class="onglet-btn" data-onglet="acheter">Acheter</button>
+        <button class="onglet-btn" data-onglet="assurance">Assurance</button>
+        <button class="onglet-btn" data-onglet="renovation">Rénovation</button>
+    </nav>
 
-      <button id="btn-vendre">Vendre</button>
+    <!-- CONTENU DES ONGLETS -->
+    <section id="proprietes" class="onglet-contenu actif"></section>
+    <section id="acheter" class="onglet-contenu"></section>
+    <section id="assurance" class="onglet-contenu"></section>
+    <section id="renovation" class="onglet-contenu"></section>
 
-      <div id="vente-resultat" class="result"></div>
-    </section>
+    <!-- Zone de statut -->
+    <div id="immo-status" class="status"></div>
 
-    <!-- LOCATION -->
-    <section class="panel">
-      <h2>Location automatique</h2>
+</div>
 
-      <label>Quantité :</label>
-      <input id="loc-quantite" type="number" placeholder="Quantité à louer">
+<!-- CHARGEMENT DU BON FICHIER JS -->
+<script type="module" src="/immobilier.js"></script>
 
-      <label>Molette : <span id="loc-molette-val">0%</span></label>
-      <input id="loc-molette" type="range" min="-20" max="20" value="0">
-
-      <p>Prix de base : <span id="loc-prix-base">0</span> €</p>
-      <p>Prix final : <span id="loc-prix-final">0</span> €</p>
-
-      <button id="btn-louer">Louer automatiquement</button>
-
-      <div id="loc-resultat" class="result"></div>
-    </section>
-
-    <!-- HISTORIQUE -->
-    <section class="panel">
-      <h2>Historique</h2>
-      <div id="historique" class="historique"></div>
-    </section>
-
-  </main>
-
-  <script type="module" src="immobilier.js"></script>
 </body>
 </html>

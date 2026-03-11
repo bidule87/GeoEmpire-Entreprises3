@@ -1,50 +1,66 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>Geo Empire – Entreprises</title>
-  <link rel="stylesheet" href="entreprises.css">
+    <meta charset="UTF-8">
+    <title>Geo Empire - Entreprises</title>
+    <link rel="stylesheet" href="/menu.css">
 </head>
-
 <body>
-  <header class="topbar">
-    <a href="index.html" class="back">← Retour</a>
-    <h1>Gestion de l'entreprise</h1>
-  </header>
 
-  <main class="container">
+    <div class="menu-container">
+        <h1 class="title">GEO EMPIRE</h1>
 
-    <!-- IDENTITÉ -->
-    <section class="panel">
-      <h2>Identité</h2>
+        <div class="menu-grid">
+            <a href="finances.html" class="menu-btn finances">Finances</a>
+            <a href="immobilier.html" class="menu-btn immobilier">Immobilier</a>
+            <a href="entreprises.html" class="menu-btn entreprises">Entreprises</a>
+            <a href="carte.html" class="menu-btn carte">Carte (GPS)</a>
+            <a href="prestige.html" class="menu-btn prestige">Prestige</a>
+            <a href="profil.html" class="menu-btn profil">Profil</a>
+            <a href="boutique.html" class="menu-btn prestige">Boutique</a>
+        </div>
+    </div>
 
-      <label>Nom de l'entreprise :</label>
-      <input id="nom" type="text" placeholder="Nom de l'entreprise">
+    <main style="padding: 20px;">
+        <h1>Mon entreprise</h1>
 
-      <label>Discord :</label>
-      <input id="discord" type="text" placeholder="Lien Discord">
+        <section class="panel-entreprises">
+            <h2>Rôle</h2>
+            <label for="role-select">Votre rôle :</label>
+            <select id="role-select">
+                <option value="pdg">PDG</option>
+                <option value="dg">Directeur Général</option>
+                <option value="dc">Directeur Commercial</option>
+            </select>
+        </section>
 
-      <label>Description :</label>
-      <textarea id="description" placeholder="Description de l'entreprise"></textarea>
+        <section class="panel-entreprises">
+            <h2>Photo de l’entreprise</h2>
+            <input type="file" id="photo-entreprise-input" accept="image/*">
+            <div style="margin-top: 10px;">
+                <img id="photo-entreprise-preview" src="" alt="Photo de l’entreprise" style="max-width:200px; border-radius: 8px; display:none;">
+            </div>
+        </section>
 
-      <button id="btn-save-identite">Enregistrer</button>
-    </section>
+        <section class="panel-entreprises">
+            <h2>Primes</h2>
+            <div class="prime-input-group">
+                <label>Prime PDG (€) :</label>
+                <input type="number" id="prime-pdg" min="0" step="1">
+            </div>
+            <div class="prime-input-group">
+                <label>Prime DG (€) :</label>
+                <input type="number" id="prime-dg" min="0" step="1">
+            </div>
+            <div class="prime-input-group">
+                <label>Prime DC (€) :</label>
+                <input type="number" id="prime-dc" min="0" step="1">
+            </div>
+            <p id="info-primes" style="margin-top: 10px; color: #4facfe;"></p>
+        </section>
+    </main>
 
-    <!-- POSTES -->
-    <section class="panel">
-      <h2>Postes</h2>
+    <script type="module" src="/js/core/modules/entreprises.js"></script>
 
-      <label>Nouveau poste :</label>
-      <input id="poste" type="text" placeholder="Nom du poste">
-
-      <button id="btn-add-poste">Ajouter le poste</button>
-
-      <h3>Liste des postes :</h3>
-      <div id="liste-postes"></div>
-    </section>
-
-  </main>
-
-  <script type="module" src="entreprises.js"></script>
 </body>
 </html>

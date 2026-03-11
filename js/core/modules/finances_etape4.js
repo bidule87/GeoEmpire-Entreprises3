@@ -1,33 +1,29 @@
-// =======================================
-// GEO EMPIRE — ÉTAPE 4 (FINAL)
-// Trésorerie, Bilan, Résultat,
-// Prévision J+1, Export Excel-compatible.
-// =======================================
-
 import { entreprises } from "./entreprises.js";
-import { calculRevenuNet } from "./immobilier.js";
 
-// =====================
-// OBJET JOUEUR / FINANCES
-// =====================
+/* ============================================================
+   FONCTION INTERNE : calculRevenuNet
+   (remplace totalement l'import de immobilier.js)
+   ============================================================ */
+function calculRevenuNet(bien) {
+    return (bien.loyer || 0) - (bien.chargesSociales || 0) - (bien.impots || 0);
+}
+
+/* ============================================================
+   ÉTAT DU JOUEUR
+   ============================================================ */
 export const joueur = {
     tresorerie: 0,
-    primes: 0,
-    gTokens: 0,
-    prestigeOwned: false,
 
     tresorerieVue: {
         soldeActuel: 0,
         revenusDuMois: 0,
         soldeMoisProchain: 0,
-        credits: {
-            loyers: 0
-        },
+        credits: { loyers: 0 },
         debits: {
             primesDirecteurs: 0,
+            impotPrimes: 0,
             chargesFoncieres: 0,
             impotFoncier: 0,
-            impotPrimes: 0,
             assurances: 0,
             mensualitesPrets: 0,
             versementsEpargne: 0,
@@ -49,24 +45,19 @@ export const joueur = {
                 loyers: 0,
                 livretsI: 0,
                 compteCourant: 0,
-                interetAPayer: 0,
                 totalCirculant: 0
             },
             totalActif: 0
         },
+
         passif: {
             capitauxPropres: {
                 capital: 0,
-                plusMoinsLatentesImmo: 0,
-                plusMoinsLatentesStock: 0,
                 beneficesPerteReportes: 0,
                 totalCapitauxPropres: 0
             },
             dettes: {
                 soldeRestantEmprunts: 0,
-                mensualitesEmprunts: 0,
-                detteExploitation: 0,
-                autresDettes: 0,
                 totalDettes: 0
             },
             totalPassif: 0
@@ -74,190 +65,154 @@ export const joueur = {
     },
 
     resultat: {
-        charges: {
-            exploitation: 0,
-            charges: 0,
-            assurance: 0,
-            financieres: 0,
-            autres: 0,
-            impotFoncier: 0,
-            totalCharges: 0
-        },
-        produits: {
-            exploitation: 0,
-            financier: 0,
-            autres: 0,
-            totalProduits: 0
-        },
-        affectations: {
-            produits: 0,
-            charges: 0
-        },
-        resultatAvantImpots: 0,
-        montantImposable: 0,
+        charges: { exploitation: 0, totalCharges: 0 },
+        produits: { exploitation: 0, totalProduits: 0 },
         resultatNet: 0,
-        dividendesAvecTaxes: 0,
         beneficesOuPertes: 0
     }
 };
 
-// =====================
-// TRÉSORERIE
-// =====================
+/* ============================================================
+   TRÉSORERIE
+   ============================================================ */
 export function mettreAJourTresorerie() {
     const t = joueur.tresorerieVue;
-
     let loyers = 0;
-    Object.values(entreprises).forEach(b => {
-        const net = calculRevenuNet(b);
+
+    Object.values(entreprises).forEach(e => {
+        const net = calculRevenuNet(e);
         if (net > 0) loyers += net;
     });
+
     t.credits.loyers = loyers;
+    t.debits.impotPrimes = t.debits.primesDirecteurs * 0.20;
 
-    const d = t.debits;
-    const totalDebits =
-        d.primesDirecteurs +
-        d.chargesFoncieres +
-        d.impotFoncier +
-        d.impotPrimes +
-        d.assurances +
-        d.mensualitesPrets +
-        d.versementsEpargne +
-        d.dividendes +
-        d.fraisGestion +
-        d.agiosDecouvert;
-
-    const revenusDuMois = loyers - totalDebits;
+    const totalDebits = Object.values(t.debits).reduce((a, b) => a + b, 0);
 
     t.soldeActuel = joueur.tresorerie;
-    t.revenusDuMois = revenusDuMois;
-    t.soldeMoisProchain = t.soldeActuel + revenusDuMois;
+    t.revenusDuMois = loyers - totalDebits;
+    t.soldeMoisProchain = t.soldeActuel + t.revenusDuMois;
 
     return t;
 }
 
-// =====================
-// BILAN
-// =====================
+/* ============================================================
+   BILAN
+   ============================================================ */
 export function mettreAJourBilan() {
     const b = joueur.bilan;
-
-    let immobilier = 0;
-    let travaux = 0;
+    let immo = 0;
 
     Object.values(entreprises).forEach(e => {
-        immobilier += e.prixAchat * e.quantite;
-        travaux += e.travaux || 0;
+        immo += (e.prixAchat * e.quantite);
     });
 
-    b.actif.immobilises.immobilier = immobilier;
-    b.actif.immobilises.travaux = travaux;
-    b.actif.immobilises.comptesEpargne = 0;
+    b.actif.immobilises.immobilier = immo;
     b.actif.immobilises.totalImmobilises =
-        immobilier + travaux;
+        immo +
+        b.actif.immobilises.travaux +
+        b.actif.immobilises.comptesEpargne;
 
-    b.actif.circulant.loyers = 0;
-    b.actif.circulant.livretsI = 0;
     b.actif.circulant.compteCourant = joueur.tresorerie;
-    b.actif.circulant.interetAPayer = 0;
-    b.actif.circulant.totalCirculant =
-        b.actif.circulant.compteCourant;
 
     b.actif.totalActif =
         b.actif.immobilises.totalImmobilises +
-        b.actif.circulant.totalCirculant;
+        b.actif.circulant.compteCourant;
 
-    const cp = b.passif.capitauxPropres;
-    cp.capital = b.actif.totalActif;
-    cp.plusMoinsLatentesImmo = 0;
-    cp.plusMoinsLatentesStock = 0;
-    cp.beneficesPerteReportes = joueur.resultat.resultatNet;
-    cp.totalCapitauxPropres =
-        cp.capital +
-        cp.plusMoinsLatentesImmo +
-        cp.plusMoinsLatentesStock +
-        cp.beneficesPerteReportes;
-
-    const dettes = b.passif.dettes;
-    dettes.soldeRestantEmprunts = 0;
-    dettes.mensualitesEmprunts = 0;
-    dettes.detteExploitation = 0;
-    dettes.autresDettes = 0;
-    dettes.totalDettes = 0;
-
-    b.passif.totalPassif = cp.totalCapitauxPropres;
+    b.passif.capitauxPropres.capital = b.actif.totalActif;
+    b.passif.totalPassif = b.actif.totalActif;
 
     return b;
 }
 
-// =====================
-// RÉSULTAT
-// =====================
+/* ============================================================
+   RÉSULTAT
+   ============================================================ */
 export function mettreAJourResultat() {
     const r = joueur.resultat;
+    const t = mettreAJourTresorerie();
 
-    let totalCharges = 0;
-    let totalProduits = 0;
+    r.produits.totalProduits = t.credits.loyers;
+    r.charges.totalCharges = Object.values(t.debits).reduce((a, b) => a + b, 0);
 
-    Object.values(entreprises).forEach(e => {
-        const net = calculRevenuNet(e);
-        if (net > 0) totalProduits += net;
-        else totalCharges += Math.abs(net);
-    });
-
-    r.charges.exploitation = totalCharges;
-    r.charges.totalCharges = totalCharges;
-
-    r.produits.exploitation = totalProduits;
-    r.produits.totalProduits = totalProduits;
-
-    r.affectations.produits = totalProduits;
-    r.affectations.charges = totalCharges;
-
-    r.resultatAvantImpots = totalProduits - totalCharges;
-    r.montantImposable = 0;
-    r.resultatNet = r.resultatAvantImpots;
-    r.dividendesAvecTaxes = 0;
+    r.resultatNet = r.produits.totalProduits - r.charges.totalCharges;
     r.beneficesOuPertes = r.resultatNet;
 
     return r;
 }
 
-// =====================
-// PRÉVISION J+1
-// =====================
+/* ============================================================
+   PRÉVISIONNEL J+1
+   ============================================================ */
 export function simulerComptesPrevisionnelsDemain() {
-    const tresoDepart = joueur.tresorerie;
-
-    let chargesJour = 0;
-    let produitsJour = 0;
+    let produits = 0;
+    let charges = 0;
 
     Object.values(entreprises).forEach(e => {
         const net = calculRevenuNet(e);
-        if (net > 0) produitsJour += net;
-        else chargesJour += Math.abs(net);
-
-        chargesJour += (e.charges || 0) + (e.impots || 0);
+        if (net > 0) produits += net;
+        else charges += Math.abs(net);
     });
 
-    const tresoPrevue = tresoDepart + produitsJour - chargesJour;
-
     return {
-        tresorerieActuelle: tresoDepart,
-        produitsJour,
-        chargesJour,
-        tresoreriePrevueDemain: tresoPrevue
+        tresorerieActuelle: joueur.tresorerie,
+        produitsJour: produits,
+        chargesJour: charges,
+        tresoreriePrevueDemain: joueur.tresorerie + produits - charges
     };
 }
 
-// =====================
-// EXPORT EXCEL (Prestige)
-// =====================
+/* ============================================================
+   EXPORT EXCEL (CSV)
+   ============================================================ */
 export function genererDonneesExcel() {
-    return {
-        tresorerie: mettreAJourTresorerie(),
-        bilan: mettreAJourBilan(),
-        resultat: mettreAJourResultat(),
-        prevision: simulerComptesPrevisionnelsDemain()
-    };
+    const lignes = [];
+
+    lignes.push("Section;Libellé;Valeur");
+
+    // Trésorerie
+    lignes.push(`Trésorerie;Solde actuel;${joueur.tresorerieVue.soldeActuel}`);
+    lignes.push(`Trésorerie;Revenus du mois;${joueur.tresorerieVue.revenusDuMois}`);
+    lignes.push(`Trésorerie;Solde mois prochain;${joueur.tresorerieVue.soldeMoisProchain}`);
+    lignes.push(`Trésorerie;Crédits loyers;${joueur.tresorerieVue.credits.loyers}`);
+
+    Object.entries(joueur.tresorerieVue.debits).forEach(([cle, val]) => {
+        lignes.push(`Trésorerie;Débit ${cle};${val}`);
+    });
+
+    // Bilan actif
+    lignes.push(`Bilan actif;Immobilier;${joueur.bilan.actif.immobilises.immobilier}`);
+    lignes.push(`Bilan actif;Travaux;${joueur.bilan.actif.immobilises.travaux}`);
+    lignes.push(`Bilan actif;Comptes épargne;${joueur.bilan.actif.immobilises.comptesEpargne}`);
+    lignes.push(`Bilan actif;Total immobilisés;${joueur.bilan.actif.immobilises.totalImmobilises}`);
+    lignes.push(`Bilan actif;Compte courant;${joueur.bilan.actif.circulant.compteCourant}`);
+    lignes.push(`Bilan actif;Total actif;${joueur.bilan.actif.totalActif}`);
+
+    // Bilan passif
+    lignes.push(`Bilan passif;Capital;${joueur.bilan.passif.capitauxPropres.capital}`);
+    lignes.push(`Bilan passif;Bénéfices/pertes reportés;${joueur.bilan.passif.capitauxPropres.beneficesPerteReportes}`);
+    lignes.push(`Bilan passif;Total capitaux propres;${joueur.bilan.passif.capitauxPropres.totalCapitauxPropres}`);
+    lignes.push(`Bilan passif;Dettes emprunts;${joueur.bilan.passif.dettes.soldeRestantEmprunts}`);
+    lignes.push(`Bilan passif;Total dettes;${joueur.bilan.passif.dettes.totalDettes}`);
+    lignes.push(`Bilan passif;Total passif;${joueur.bilan.passif.totalPassif}`);
+
+    // Résultat
+    lignes.push(`Résultat;Produits d'exploitation;${joueur.resultat.produits.exploitation}`);
+    lignes.push(`Résultat;Total produits;${joueur.resultat.produits.totalProduits}`);
+    lignes.push(`Résultat;Charges d'exploitation;${joueur.resultat.charges.exploitation}`);
+    lignes.push(`Résultat;Total charges;${joueur.resultat.charges.totalCharges}`);
+    lignes.push(`Résultat;Résultat net;${joueur.resultat.resultatNet}`);
+    lignes.push(`Résultat;Bénéfices ou pertes;${joueur.resultat.beneficesOuPertes}`);
+
+    const csv = lignes.join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "GeoEmpire_Finances.csv";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
 }

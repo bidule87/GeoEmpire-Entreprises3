@@ -1,0 +1,51 @@
+body {
+    margin: 0;
+    background: #000;
+    font-family: Arial, sans-serif;
+    color: white;
+}
+
+/* TITRE */
+.title {
+    text-align: center;
+    font-size: 42px;
+    margin-top: 30px;
+    background: linear-gradient(90deg, #00bfff, #1e90ff, #00bfff);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* CONTENEUR DU MENU */
+.menu-container {
+    text-align: center;
+    padding: 20px;
+}
+
+/* GRILLE DES BOUTONS */
+.menu-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+    max-width: 900px;
+    margin: 40px auto;
+}
+
+/* BOUTONS */
+.menu-btn {
+    display: block;
+    padding: 18px;
+    background: linear-gradient(135deg, #0077cc, #00aaff);
+    border-radius: 12px;
+    text-decoration: none;
+    color: white;
+    font-size: 20px;
+    font-weight: bold;
+    box-shadow: 0 0 12px rgba(0, 150, 255, 0.4);
+    transition: 0.2s;
+}
+
+.menu-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 22px rgba(0, 180, 255, 0.7);
+}
