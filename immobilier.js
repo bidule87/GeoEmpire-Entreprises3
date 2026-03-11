@@ -6,11 +6,11 @@
 // ------------------------------
 // IMPORTS DES MODULES
 // ------------------------------
-import { initAcheter } from "/js/core/modules/acheter.js";
-import { initAssurance } from "/js/core/modules/assurance.js";
-import { initRenovation } from "/js/core/modules/renovation.js";
-import { initProprietes } from "/js/core/modules/proprietes.js";
-import { initImmoCore } from "/js/core/modules/immo-core.js";
+import { initAcheter } from "./acheter.js";
+import { initAssurance } from "./assurance.js";
+import { initRenovation } from "./renovation.js";
+import { initProprietes } from "./proprietes.js";
+import { initImmoCore } from "./immo-core.js";
 
 // On expose les fonctions au window pour que les onglets puissent les appeler
 window.initAcheter = initAcheter;
