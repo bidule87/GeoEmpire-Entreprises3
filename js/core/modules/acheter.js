@@ -1,9 +1,19 @@
+// =======================================
+// GEO EMPIRE — MODULE ACHETER
+// Compatible geoData + entrepriseCore
+// =======================================
+
 import { 
     getEntreprise, 
-    sauvegarderEntreprise, 
     ajouterBienEntreprise 
-} from "./entreprises.js";
-import { immoState, refreshSiNecessaire } from "./immo-core.js";
+} from "../core/entrepriseCore.js";
+
+import { 
+    getData, 
+    saveData 
+} from "../geoData.js";
+
+import { immoState, refreshSiNecessaire } from "../core/modules/immo-core.js";
 
 export function initAcheter() {
     refreshSiNecessaire();
@@ -11,7 +21,7 @@ export function initAcheter() {
 }
 
 function afficherBiensDisponibles() {
-    const container = document.getElementById("acheter"); // ✔ corrigé
+    const container = document.getElementById("acheter");
     container.innerHTML = "";
 
     for (const categorie in immoState.styles) {
@@ -62,7 +72,9 @@ function genererPrix(style) {
 }
 
 function gererAchat(categorie, style, prix, quantiteDisponible, typeAchat) {
-    const entreprise = getEntreprise();
+    const data = getData();
+    const entreprise = data.entreprise;
+
     let quantiteAchetee = 0;
 
     if (typeAchat === "max-stock") {
@@ -83,10 +95,22 @@ function gererAchat(categorie, style, prix, quantiteDisponible, typeAchat) {
         return;
     }
 
+    // Débiter l'argent
+    entreprise.argent -= coutTotal;
+
+    // Ajouter les biens
     ajouterBienEntreprise(categorie, style, quantiteAchetee, prix);
 
+    // Retirer du stock
     immoState.quantites[categorie][style] -= quantiteAchetee;
     localStorage.setItem("immoState", JSON.stringify(immoState));
 
+    // Sauvegarde
+    saveData();
+
+    // Rafraîchir l'affichage
     afficherBiensDisponibles();
+
+    // Mettre à jour le bilan
+    if (window.ge_afficherBilan) window.ge_afficherBilan();
 }
