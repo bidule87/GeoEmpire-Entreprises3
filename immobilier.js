@@ -6,18 +6,18 @@
 // ------------------------------
 // IMPORTS DES MODULES EXISTANTS
 // ------------------------------
-import { initAcheter } from "./js/core/modules/acheter.js";
-import { initAssurance } from "./js/core/modules/assurance.js";
-import { initRenovation } from "./js/core/modules/renovation.js";
-import { initProprietes } from "./js/core/modules/proprietes.js";
-import { initImmoCore } from "./js/core/modules/immo-core.js";
+import { initAcheter } from "../core/modules/acheter.js";
+import { initAssurance } from "../core/modules/assurance.js";
+import { initRenovation } from "../core/modules/renovation.js";
+import { initProprietes } from "../core/modules/proprietes.js";
+import { initImmoCore } from "../core/modules/immo-core.js";
 
 // ------------------------------
 // IMPORTS DES NOUVEAUX MODULES
 // ------------------------------
-import { initEntreprise } from "./js/core/modules/entreprise.js";
-import { initPersonnel } from "./js/core/modules/personnel.js";
-import { initCession } from "./js/core/modules/cession.js";
+import { initEntreprise } from "../core/modules/entreprise.js";
+import { initPersonnel } from "../core/modules/personnel.js";
+import { initCession } from "../core/modules/cession.js";
 
 // Exposer les fonctions au window
 window.initAcheter = initAcheter;
@@ -31,14 +31,14 @@ window.initCession = initCession;
 // ------------------------------
 // AFFICHAGE DU BUDGET GLOBAL
 // ------------------------------
-import { getEntreprise } from "./js/core/entreprises.js";
+import { getEntreprise } from "../core/entrepriseCore.js";
 
 function afficherBudget() {
     const e = getEntreprise();
     const zone = document.getElementById("budget-global");
 
     if (zone) {
-        zone.textContent = "Budget : " + e.budget.toLocaleString() + " €";
+        zone.textContent = "Budget : " + e.argent.toLocaleString() + " €";
     }
 }
 
