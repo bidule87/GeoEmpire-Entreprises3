@@ -1,7 +1,14 @@
+// =======================================
+// GEO EMPIRE — MODULE RENOVATION
+// Compatible geoData + entrepriseCore
+// =======================================
+
 import { 
     getEntreprise, 
     sauvegarderEntreprise 
-} from "./entreprises.js";
+} from "../core/entrepriseCore.js";
+
+import { saveData } from "../geoData.js";
 
 const RENOVATIONS = {
     1: { nom: "Rénové", bonus: 0.10, cout: 0.05 },
@@ -17,7 +24,7 @@ export function initRenovation() {
 
 function afficherBiensARenover() {
     const entreprise = getEntreprise();
-    const container = document.getElementById("renovation"); // ✔ corrigé
+    const container = document.getElementById("renovation");
     container.innerHTML = "";
 
     for (const categorie in entreprise.biens) {
@@ -53,6 +60,7 @@ function afficherBiensARenover() {
     }
 
     sauvegarderEntreprise(entreprise);
+    saveData();
 }
 
 function genererBoutonsRenovation(bien) {
@@ -103,6 +111,7 @@ document.addEventListener("click", e => {
     };
 
     sauvegarderEntreprise(entreprise);
+    saveData();
 
     alert(`Rénovation niveau ${niveau} appliquée à ${style}`);
 });
