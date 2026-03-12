@@ -1,4 +1,4 @@
-import { entreprises } from "./entreprises.js";
+import { getData } from "../geoData.js";
 
 /* ============================================================
    FONCTION INTERNE : calculRevenuNet
@@ -79,9 +79,14 @@ export function mettreAJourTresorerie() {
     const t = joueur.tresorerieVue;
     let loyers = 0;
 
-    Object.values(entreprises).forEach(e => {
-        const net = calculRevenuNet(e);
-        if (net > 0) loyers += net;
+    const data = getData();
+    const biens = data.entreprise.biens;
+
+    Object.values(biens).forEach(styles => {
+        Object.values(styles).forEach(bien => {
+            const net = calculRevenuNet(bien);
+            if (net > 0) loyers += net;
+        });
     });
 
     t.credits.loyers = loyers;
@@ -103,8 +108,13 @@ export function mettreAJourBilan() {
     const b = joueur.bilan;
     let immo = 0;
 
-    Object.values(entreprises).forEach(e => {
-        immo += (e.prixAchat * e.quantite);
+    const data = getData();
+    const biens = data.entreprise.biens;
+
+    Object.values(biens).forEach(styles => {
+        Object.values(styles).forEach(bien => {
+            immo += (bien.prixAchat * (bien.quantite || 1));
+        });
     });
 
     b.actif.immobilises.immobilier = immo;
@@ -148,10 +158,15 @@ export function simulerComptesPrevisionnelsDemain() {
     let produits = 0;
     let charges = 0;
 
-    Object.values(entreprises).forEach(e => {
-        const net = calculRevenuNet(e);
-        if (net > 0) produits += net;
-        else charges += Math.abs(net);
+    const data = getData();
+    const biens = data.entreprise.biens;
+
+    Object.values(biens).forEach(styles => {
+        Object.values(styles).forEach(bien => {
+            const net = calculRevenuNet(bien);
+            if (net > 0) produits += net;
+            else charges += Math.abs(net);
+        });
     });
 
     return {
