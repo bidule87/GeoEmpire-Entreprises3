@@ -1,9 +1,9 @@
 // ======================================================
-//  GEO EMPIRE — MINUIT (VERSION FINALE)
+//  GEO EMPIRE — MINUIT (VERSION ADAPTÉE GEO DATA)
 //  Loyers réels, charges, impôts, primes, patrimoine
 // ======================================================
 
-import { getEntreprise, setEntreprise, entreprises } from "./entreprises.js";
+import { getData, saveData } from "../geoData.js";
 import { joueurs } from "./finances_etape4.js";
 
 // ======================================================
@@ -29,7 +29,7 @@ export function executerMinuit() {
     mettreAJourPatrimoine();
 
     // 6. Sauvegarde
-    setEntreprise(getEntreprise());
+    saveData();
 
     console.log("=== MINUIT TERMINÉ ===");
 }
@@ -38,63 +38,72 @@ export function executerMinuit() {
 // 1. LOYERS RÉELS
 // ======================================================
 function appliquerLoyers() {
-    const entreprise = getEntreprise();
+    const data = getData();
+    const entreprise = data.entreprise;
+    const biens = entreprise.biens;
 
-    Object.values(entreprises).forEach(bien => {
+    Object.values(biens).forEach(styles => {
+        Object.values(styles).forEach(bien => {
 
-        const revenuNet = (bien.loyer || 0) - (bien.charges || 0) - (bien.impots || 0);
+            const revenuNet = (bien.loyer || 0) - (bien.charges || 0) - (bien.impots || 0);
 
-        if (revenuNet > 0) {
+            if (revenuNet > 0) {
 
-            entreprise.patrimoine += revenuNet;
+                entreprise.patrimoine += revenuNet;
 
-            // Historique
-            entreprise.historique.push({
-                date: Date.now(),
-                type: "loyer",
-                details: bien.nom,
-                montant: revenuNet
-            });
-        }
+                // Historique
+                entreprise.historique.push({
+                    date: Date.now(),
+                    type: "loyer",
+                    details: bien.nom || "Bien",
+                    montant: revenuNet
+                });
+            }
+        });
     });
 
-    setEntreprise(entreprise);
+    saveData();
 }
 
 // ======================================================
 // 2. CHARGES + IMPÔTS
 // ======================================================
 function appliquerChargesEtImpots() {
-    const entreprise = getEntreprise();
+    const data = getData();
+    const entreprise = data.entreprise;
+    const biens = entreprise.biens;
 
-    Object.values(entreprises).forEach(bien => {
+    Object.values(biens).forEach(styles => {
+        Object.values(styles).forEach(bien => {
 
-        const charges = bien.charges || 0;
-        const impots = bien.impots || 0;
-        const total = charges + impots;
+            const charges = bien.charges || 0;
+            const impots = bien.impots || 0;
+            const total = charges + impots;
 
-        if (total > 0) {
+            if (total > 0) {
 
-            entreprise.patrimoine -= total;
+                entreprise.patrimoine -= total;
 
-            // Historique
-            entreprise.historique.push({
-                date: Date.now(),
-                type: "charge",
-                details: bien.nom,
-                montant: -total
-            });
-        }
+                // Historique
+                entreprise.historique.push({
+                    date: Date.now(),
+                    type: "charge",
+                    details: bien.nom || "Bien",
+                    montant: -total
+                });
+            }
+        });
     });
 
-    setEntreprise(entreprise);
+    saveData();
 }
 
 // ======================================================
 // 3. PRIMES DIRECTEURS (PDG / DG / DC)
 // ======================================================
 function appliquerPrimesDirecteurs() {
-    const entreprise = getEntreprise();
+    const data = getData();
+    const entreprise = data.entreprise;
     const primes = entreprise.primes || { pdg: 0, dg: 0, dc: 0 };
 
     const primePDG = Number(primes.pdg) || 0;
@@ -123,7 +132,7 @@ function appliquerPrimesDirecteurs() {
     // Reset
     entreprise.primes = { pdg: 0, dg: 0, dc: 0 };
 
-    setEntreprise(entreprise);
+    saveData();
 }
 
 // ======================================================
@@ -135,7 +144,8 @@ function appliquerImpotsHebdomadaires() {
 
     if (jour !== 0) return;
 
-    const entreprise = getEntreprise();
+    const data = getData();
+    const entreprise = data.entreprise;
 
     const benefice = entreprise.patrimoine;
 
@@ -152,22 +162,26 @@ function appliquerImpotsHebdomadaires() {
         montant: -impot
     });
 
-    setEntreprise(entreprise);
+    saveData();
 }
 
 // ======================================================
 // 5. MISE À JOUR DU PATRIMOINE TOTAL
 // ======================================================
 function mettreAJourPatrimoine() {
-    const entreprise = getEntreprise();
+    const data = getData();
+    const entreprise = data.entreprise;
+    const biens = entreprise.biens;
 
     let total = 0;
 
-    Object.values(entreprises).forEach(bien => {
-        total += bien.prixAchat || 0;
+    Object.values(biens).forEach(styles => {
+        Object.values(styles).forEach(bien => {
+            total += bien.prixAchat || 0;
+        });
     });
 
     entreprise.patrimoine = total;
 
-    setEntreprise(entreprise);
+    saveData();
 }
