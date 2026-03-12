@@ -1,38 +1,69 @@
-// ===============================
-//  GEOEMPIRE 3 - ACTIONNAIRES
-// ===============================
+// =======================================
+//  GEO EMPIRE — ACTIONNAIRES (NOUVEAU SYSTEME)
+// =======================================
 
-// Ajouter un actionnaire
+import { getEntreprise, sauvegarderEntreprise } from "../core/entrepriseCore.js";
+import { getData, saveData } from "../geoData.js";
+
+// ===============================
+//  AJOUTER UN ACTIONNAIRE
+// ===============================
 window.ge_ajouterActionnaire = function (nom, pourcentage) {
+    const data = getData();
+    const e = data.entreprise;
+
+    if (!e.actionnaires) e.actionnaires = [];
+
     const a = {
         id: Date.now(),
         nom: ge_formatNom(nom),
         pourcentage: pourcentage
     };
 
-    entreprise.actionnaires.push(a);
+    e.actionnaires.push(a);
+
+    sauvegarderEntreprise(e);
+    saveData();
+
     ge_afficherActionnaires();
     ge_notif("Actionnaire ajouté", "success");
 };
 
-// Supprimer un actionnaire
+// ===============================
+//  SUPPRIMER UN ACTIONNAIRE
+// ===============================
 window.ge_supprimerActionnaire = function (id) {
-    entreprise.actionnaires = entreprise.actionnaires.filter(a => a.id !== id);
+    const data = getData();
+    const e = data.entreprise;
+
+    e.actionnaires = e.actionnaires.filter(a => a.id !== id);
+
+    sauvegarderEntreprise(e);
+    saveData();
+
     ge_afficherActionnaires();
     ge_notif("Actionnaire supprimé", "error");
 };
 
-// Valeur totale des parts
+// ===============================
+//  TOTAL DES PARTS
+// ===============================
 window.ge_totalParts = function () {
-    return entreprise.actionnaires.reduce((t, a) => t + a.pourcentage, 0);
+    const e = getEntreprise();
+    if (!e.actionnaires) return 0;
+
+    return e.actionnaires.reduce((t, a) => t + a.pourcentage, 0);
 };
 
-// Affichage
+// ===============================
+//  AFFICHAGE
+// ===============================
 window.ge_afficherActionnaires = function () {
     const zone = document.getElementById("contenu-actionnaires");
     if (!zone) return;
 
-    if (entreprise.actionnaires.length === 0) {
+    const e = getEntreprise();
+    if (!e.actionnaires || e.actionnaires.length === 0) {
         zone.innerHTML = "<p>Aucun actionnaire pour le moment.</p>";
         return;
     }
@@ -42,7 +73,7 @@ window.ge_afficherActionnaires = function () {
 
     html += `<div class="actionnaires-liste">`;
 
-    entreprise.actionnaires.forEach(a => {
+    e.actionnaires.forEach(a => {
         html += `
             <div class="actionnaire-item">
                 <div class="nom">${a.nom}</div>
