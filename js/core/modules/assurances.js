@@ -3,7 +3,12 @@
 // Liste des biens non assurés + action Assurer
 // =======================================
 
-import { getEntreprise } from "./entreprises.js";
+import { 
+    getEntreprise, 
+    sauvegarderEntreprise 
+} from "../core/entrepriseCore.js";
+
+import { saveData } from "../geoData.js";
 
 // =======================================
 // INITIALISATION DU MODULE
@@ -90,7 +95,13 @@ window.initAssurance = function () {
         // ACTION : ASSURER
         // ------------------------------
         tr.querySelector(".btn-acheter").addEventListener("click", () => {
+
             bien.assure = true;
+
+            // Sauvegarde
+            sauvegarderEntreprise(entreprise);
+            saveData();
+
             showStatus(`Bien assuré : ${bien.nom}`);
             tr.remove();
         });
