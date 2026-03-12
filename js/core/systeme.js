@@ -1,47 +1,48 @@
 // ===============================
 //  GEOEMPIRE ENTREPRISES 3
-//  SYSTEME CENTRAL
+//  SYSTEME CENTRAL (VERSION GEO DATA)
 // ===============================
 
-// Objet principal de l'entreprise
-window.entreprise = {
-    nom: "Empire",
-    tresorerie: 5000,
-    tokens: 0,
-    crowns: 0,
+import { getData, saveData, addArgent, removeArgent } from "./geoData.js";
 
-    patrimoine: [],
-    roles: [],
-    actionnaires: [],
+// ===============================
+//  BARRE DU HAUT
+// ===============================
+export function ge_afficherBilan() {
+    const e = getData().entreprise;
 
-    position: null
-};
+    document.getElementById("solde").innerText = e.argent.toLocaleString();
+    document.getElementById("tokens").innerText = e.tokens || 0;
+    document.getElementById("crowns").innerText = e.crowns || 0;
+}
 
-// Mise à jour de la barre du haut
-window.ge_afficherBilan = function () {
-    document.getElementById("solde").innerText = entreprise.tresorerie.toLocaleString();
-    document.getElementById("tokens").innerText = entreprise.tokens;
-    document.getElementById("crowns").innerText = entreprise.crowns;
-};
-
-// Ajouter de l'argent
-window.ge_ajouterArgent = function (montant) {
-    entreprise.tresorerie += montant;
+// ===============================
+//  AJOUTER ARGENT
+// ===============================
+export function ge_ajouterArgent(montant) {
+    addArgent(montant);
     ge_afficherBilan();
-};
+}
 
-// Retirer de l'argent
-window.ge_retirerArgent = function (montant) {
-    if (entreprise.tresorerie < montant) return false;
-    entreprise.tresorerie -= montant;
+// ===============================
+//  RETIRER ARGENT
+// ===============================
+export function ge_retirerArgent(montant) {
+    const e = getData().entreprise;
+
+    if (e.argent < montant) return false;
+
+    removeArgent(montant);
     ge_afficherBilan();
     return true;
-};
+}
 
-// Initialisation globale
-window.ge_initialiser = function () {
+// ===============================
+//  INITIALISATION
+// ===============================
+export function ge_initialiser() {
     ge_afficherBilan();
-    console.log("GeoEmpire 3 initialisé.");
-};
+    console.log("GeoEmpire 3 initialisé (version geoData).");
+}
 
 window.onload = ge_initialiser;
