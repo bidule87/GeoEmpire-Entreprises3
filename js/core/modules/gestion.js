@@ -1,55 +1,156 @@
+// ======================================================
+//  GEO EMPIRE — MODULE GESTION (VENTE / LOCATION)
+//  Compatible geoData.js + marketing.js
+// ======================================================
+
 import { 
-    getEntreprise, 
-    calculerValeurEntreprise, 
-    peutCederEntreprise, 
-    vendreEntreprise, 
-    mettreEnCessation 
-} from "../entreprises.js";
+    getData, 
+    saveData, 
+    removeBien 
+} from "../geoData.js";
 
-export function initCession() {
-    const zone = document.getElementById("cession");
-    const e = getEntreprise();
-
-    const valeur = calculerValeurEntreprise();
-    const dispo = peutCederEntreprise();
-
-    let joursRestants = 0;
-    if (!dispo) {
-        const tempsPasse = Date.now() - e.dateCreation;
-        const tempsTotal = 30 * 24 * 60 * 60 * 1000;
-        joursRestants = Math.ceil((tempsTotal - tempsPasse) / (24 * 60 * 60 * 1000));
-    }
+// ======================================================
+//  INITIALISATION DE L'AFFICHAGE
+// ======================================================
+export function initGestion() {
+    const zone = document.getElementById("gestion");
+    const data = getData();
+    const biens = data.entreprise.biens;
 
     zone.innerHTML = `
-        <h2>Vente / Cession de l'entreprise</h2>
+        <h2>Gestion — Vente / Location</h2>
 
-        <p><strong>Valeur totale :</strong> ${valeur.toLocaleString()} €</p>
+        <div class="gestion-container">
+            ${Object.entries(biens).map(([categorie, styles]) => `
+                <div class="gestion-categorie">
+                    <h3>${categorie}</h3>
 
-        <div class="cession-bloc">
+                    ${Object.entries(styles).map(([style, bien]) => `
+                        <div class="gestion-item">
 
-            <button id="btn-vendre" class="action-btn btn-vendre" ${!dispo ? "disabled" : ""}>
-                Vendre l'entreprise
-            </button>
+                            <div class="gestion-nom">${style}</div>
 
-            <button id="btn-cessation" class="action-btn btn-vendre" ${!dispo ? "disabled" : ""}>
-                Mettre en cessation
-            </button>
+                            <div class="gestion-infos">
+                                <div>Quantité : ${bien.quantite}</div>
+                                <div>Prix moyen : ${bien.prixAchatMoyen.toLocaleString()} €</div>
+                            </div>
 
-            ${!dispo ? `<p style="color:#f87171;">Disponible dans ${joursRestants} jours</p>` : ""}
+                            <div class="gestion-actions">
+
+                                <label>Quantité :</label>
+                                <input type="number" 
+                                       class="input-quantite" 
+                                       data-cat="${categorie}" 
+                                       data-style="${style}" 
+                                       min="1" 
+                                       max="${bien.quantite}" 
+                                       value="1">
+
+                                <button class="btn-tous" 
+                                        data-cat="${categorie}" 
+                                        data-style="${style}" 
+                                        data-max="${bien.quantite}">
+                                    Tous
+                                </button>
+
+                                <label>Prix :</label>
+                                <input type="range" 
+                                       class="slider-prix" 
+                                       data-cat="${categorie}" 
+                                       data-style="${style}"
+                                       min="-30" 
+                                       max="30" 
+                                       value="0">
+
+                                <span class="prix-affiche" 
+                                      id="prix-${categorie}-${style}">
+                                      0%
+                                </span>
+
+                                <button class="btn-vendre" 
+                                        data-cat="${categorie}" 
+                                        data-style="${style}">
+                                    Vendre
+                                </button>
+
+                            </div>
+
+                        </div>
+                    `).join("")}
+
+                </div>
+            `).join("")}
         </div>
     `;
 
-    if (dispo) {
-        document.getElementById("btn-vendre").onclick = () => {
-            const gain = vendreEntreprise();
-            alert("Entreprise vendue ! Vous récupérez " + gain.toLocaleString() + " €");
-            location.reload();
-        };
+    // ===============================
+    //  BOUTON "TOUS"
+    // ===============================
+    document.querySelectorAll(".btn-tous").forEach(btn => {
+        btn.onclick = () => {
+            const cat = btn.dataset.cat;
+            const style = btn.dataset.style;
+            const max = Number(btn.dataset.max);
 
-        document.getElementById("btn-cessation").onclick = () => {
-            mettreEnCessation();
-            alert("Entreprise mise en cessation.");
-            location.reload();
+            const input = document.querySelector(
+                `.input-quantite[data-cat="${cat}"][data-style="${style}"]`
+            );
+
+            input.value = max;
         };
-    }
+    });
+
+    // ===============================
+    //  SLIDER PRIX
+    // ===============================
+    document.querySelectorAll(".slider-prix").forEach(slider => {
+        slider.oninput = () => {
+            const cat = slider.dataset.cat;
+            const style = slider.dataset.style;
+
+            const val = Number(slider.value);
+
+            document.getElementById(`prix-${cat}-${style}`).textContent =
+                (val > 0 ? "+" : "") + val + "%";
+        };
+    });
+
+    // ===============================
+    //  VENTE
+    // ===============================
+    document.querySelectorAll(".btn-vendre").forEach(btn => {
+        btn.onclick = () => {
+            const cat = btn.dataset.cat;
+            const style = btn.dataset.style;
+
+            const input = document.querySelector(
+                `.input-quantite[data-cat="${cat}"][data-style="${style}"]`
+            );
+
+            const slider = document.querySelector(
+                `.slider-prix[data-cat="${cat}"][data-style="${style}"]`
+            );
+
+            const quantite = Number(input.value);
+            const ajustement = Number(slider.value);
+
+            const data = getData();
+            const bien = data.entreprise.biens[cat][style];
+
+            if (!bien || quantite <= 0 || quantite > bien.quantite) return;
+
+            // Prix final invisible pour le joueur
+            const prixBase = bien.prixAchatMoyen;
+            const prixFinal = Math.floor(prixBase * (1 + ajustement / 100));
+
+            // Créditer l'entreprise
+            data.entreprise.argent += prixFinal * quantite;
+
+            // Retirer les biens
+            removeBien(cat, style, quantite);
+
+            saveData();
+            initGestion();
+        };
+    });
 }
