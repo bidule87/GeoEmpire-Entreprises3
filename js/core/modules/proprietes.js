@@ -1,15 +1,38 @@
-function afficherAssurance() {
-    // Fonction vide pour éviter l'erreur
-}
 import { getEntreprise } from "./entreprises.js";
 
 export function initProprietes() {
     afficherProprietes();
 }
 
+/* ===========================
+   PLACEHOLDERS POUR ÉVITER LES ERREURS
+=========================== */
+
+function afficherAssurance(bien) {
+    // Retourne du HTML vide pour l'instant
+    return `
+        <div class="assurance-placeholder">
+            Assurance : ${bien.assurance ? bien.assurance : "Aucune"}
+        </div>
+    `;
+}
+
+function afficherRenovation(bien) {
+    // Retourne du HTML vide pour l'instant
+    return `
+        <div class="renovation-placeholder">
+            Rénovation : ${bien.renovation ? bien.renovation.niveau : "Aucune"}
+        </div>
+    `;
+}
+
+/* ===========================
+   AFFICHAGE DES PROPRIÉTÉS
+=========================== */
+
 function afficherProprietes() {
     const entreprise = getEntreprise();
-    const container = document.getElementById("proprietes"); // ✔ corrigé
+    const container = document.getElementById("proprietes");
     container.innerHTML = "";
 
     for (const categorie in entreprise.biens) {
