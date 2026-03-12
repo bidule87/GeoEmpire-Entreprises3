@@ -9,7 +9,6 @@ export function initProprietes() {
 =========================== */
 
 function afficherAssurance(bien) {
-    // Retourne du HTML vide pour l'instant
     return `
         <div class="assurance-placeholder">
             Assurance : ${bien.assurance ? bien.assurance : "Aucune"}
@@ -18,7 +17,6 @@ function afficherAssurance(bien) {
 }
 
 function afficherRenovation(bien) {
-    // Retourne du HTML vide pour l'instant
     return `
         <div class="renovation-placeholder">
             Rénovation : ${bien.renovation ? bien.renovation.niveau : "Aucune"}
@@ -69,8 +67,8 @@ function afficherProprietes() {
                 </div>
 
                 <div class="bien-actions">
-                    <button onclick="location.href='assurance.html'">Assurer</button>
-                    <button onclick="location.href='renovation.html'">Rénover</button>
+                    <button onclick="ouvrirOnglet('assurance')">Assurer</button>
+                    <button onclick="ouvrirOnglet('renovation')">Rénover</button>
                 </div>
             `;
 
