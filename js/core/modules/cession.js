@@ -1,10 +1,17 @@
+// =======================================
+// GEO EMPIRE — MODULE CESSION
+// Compatible geoData + entrepriseCore
+// =======================================
+
 import { 
     getEntreprise, 
     calculerValeurEntreprise, 
     peutCederEntreprise, 
     vendreEntreprise, 
     mettreEnCessation 
-} from "../entreprises.js";
+} from "../core/entrepriseCore.js";
+
+import { saveData } from "../geoData.js";
 
 export function initCession() {
     const zone = document.getElementById("cession");
@@ -42,12 +49,14 @@ export function initCession() {
     if (dispo) {
         document.getElementById("btn-vendre").onclick = () => {
             const gain = vendreEntreprise();
+            saveData();
             alert("Entreprise vendue ! Vous récupérez " + gain.toLocaleString() + " €");
             location.reload();
         };
 
         document.getElementById("btn-cessation").onclick = () => {
             mettreEnCessation();
+            saveData();
             alert("Entreprise mise en cessation.");
             location.reload();
         };
