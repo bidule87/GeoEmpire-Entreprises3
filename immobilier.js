@@ -4,7 +4,7 @@
 // =======================================
 
 // ------------------------------
-// IMPORTS DES MODULES
+// IMPORTS DES MODULES EXISTANTS
 // ------------------------------
 import { initAcheter } from "./js/core/modules/acheter.js";
 import { initAssurance } from "./js/core/modules/assurance.js";
@@ -12,18 +12,45 @@ import { initRenovation } from "./js/core/modules/renovation.js";
 import { initProprietes } from "./js/core/modules/proprietes.js";
 import { initImmoCore } from "./js/core/modules/immo-core.js";
 
-// On expose les fonctions au window pour que les onglets puissent les appeler
+// ------------------------------
+// IMPORTS DES NOUVEAUX MODULES
+// ------------------------------
+import { initEntreprise } from "./js/core/modules/entreprise.js";
+import { initPersonnel } from "./js/core/modules/personnel.js";
+import { initCession } from "./js/core/modules/cession.js";
+
+// Exposer les fonctions au window
 window.initAcheter = initAcheter;
 window.initAssurance = initAssurance;
 window.initRenovation = initRenovation;
 window.initProprietes = initProprietes;
+window.initEntreprise = initEntreprise;
+window.initPersonnel = initPersonnel;
+window.initCession = initCession;
+
+// ------------------------------
+// AFFICHAGE DU BUDGET GLOBAL
+// ------------------------------
+import { getEntreprise } from "./js/core/entreprises.js";
+
+function afficherBudget() {
+    const e = getEntreprise();
+    const zone = document.getElementById("budget-global");
+
+    if (zone) {
+        zone.textContent = "Budget : " + e.budget.toLocaleString() + " €";
+    }
+}
+
+// Mise à jour automatique
+setInterval(afficherBudget, 500);
 
 // ------------------------------
 // INITIALISATION GLOBALE
 // ------------------------------
 document.addEventListener("DOMContentLoaded", () => {
 
-    // Initialisation du système immobilier (chargement des données, etc.)
+    // Initialisation du système immobilier
     initImmoCore();
 
     // ------------------------------
@@ -68,6 +95,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
             case "renovation":
                 initRenovation();
+                break;
+
+            case "entreprise":
+                initEntreprise();
+                break;
+
+            case "personnel":
+                initPersonnel();
+                break;
+
+            case "cession":
+                initCession();
                 break;
         }
     }
