@@ -6,6 +6,10 @@ import {
     calculerValeurEntreprise 
 } from "../entreprises.js";
 
+// AJOUT — Import des modules Marketing + Gestion
+import { initMarketing } from "./marketing.js";
+import { initGestion } from "./gestion.js";
+
 export function initEntreprise() {
     const zone = document.getElementById("entreprise");
     const e = getEntreprise();
@@ -62,4 +66,13 @@ export function initEntreprise() {
 
         reader.readAsDataURL(file);
     };
+
+    // AJOUT — Initialisation automatique des modules Marketing + Gestion
+    if (document.getElementById("marketing")) {
+        initMarketing();
+    }
+
+    if (document.getElementById("gestion")) {
+        initGestion();
+    }
 }
