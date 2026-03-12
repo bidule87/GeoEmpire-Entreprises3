@@ -1,20 +1,8 @@
 // ===============================
-//  GEOEMPIRE 3 - CORE SYSTEM
+//  GEOEMPIRE 3 - CORE SYSTEM (VERSION GEO DATA)
 // ===============================
 
-// Données de l'entreprise
-window.entreprise = {
-    nom: "Mon Entreprise",
-    tresorerie: 1000,
-    tokens: 0,
-    crowns: 0,
-    patrimoine: [],
-    immobilier: [],
-    assurances: [],
-    roles: [],
-    actionnaires: [],
-    position: null
-};
+import { getData, addArgent, removeArgent } from "./geoData.js";
 
 // ===============================
 //  FORMATAGE
@@ -30,13 +18,15 @@ window.ge_formatNom = n => n.charAt(0).toUpperCase() + n.slice(1);
 // ===============================
 
 window.ge_ajouterArgent = function (n) {
-    entreprise.tresorerie += n;
+    addArgent(n);
     ge_afficherBilan();
 };
 
 window.ge_retirerArgent = function (n) {
-    if (entreprise.tresorerie < n) return false;
-    entreprise.tresorerie -= n;
+    const e = getData().entreprise;
+    if (e.argent < n) return false;
+
+    removeArgent(n);
     ge_afficherBilan();
     return true;
 };
@@ -74,13 +64,14 @@ window.ouvrirPage = function (id) {
 // ===============================
 
 window.ge_afficherBilan = function () {
+    const e = getData().entreprise;
     const zone = document.getElementById("bilan-rapide");
     if (!zone) return;
 
     zone.innerHTML = `
-        <p><strong>Ø</strong> ${ge_formatArgent(entreprise.tresorerie)}</p>
-        <p><strong>GT</strong> ${ge_formatTokens(entreprise.tokens)}</p>
-        <p><strong>👑</strong> ${ge_formatCrowns(entreprise.crowns)}</p>
+        <p><strong>Ø</strong> ${ge_formatArgent(e.argent)}</p>
+        <p><strong>GT</strong> ${ge_formatTokens(e.tokens || 0)}</p>
+        <p><strong>👑</strong> ${ge_formatCrowns(e.crowns || 0)}</p>
     `;
 };
 
