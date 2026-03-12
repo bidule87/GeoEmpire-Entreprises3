@@ -1,4 +1,9 @@
-import { getEntreprise } from "./entreprises.js";
+// =======================================
+// GEO EMPIRE — MODULE PROPRIÉTÉS
+// Compatible geoData + entrepriseCore
+// =======================================
+
+import { getEntreprise } from "../core/entrepriseCore.js";
 
 export function initProprietes() {
     afficherProprietes();
@@ -11,7 +16,7 @@ export function initProprietes() {
 function afficherAssurance(bien) {
     return `
         <div class="assurance-placeholder">
-            Assurance : ${bien.assurance ? bien.assurance : "Aucune"}
+            Assurance : ${bien.assure ? "Oui" : "Aucune"}
         </div>
     `;
 }
