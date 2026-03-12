@@ -9,10 +9,14 @@ body {
   font-family: 'Montserrat', system-ui, sans-serif;
 }
 
-.banner {
+/* BANDEAU IMMOBILIER PREMIUM */
+.bandeau-geo {
   width: 100%;
-  height: 80px;
-  background: linear-gradient(90deg, #0ea5e9, #3b82f6);
+  height: 400px;
+  background-image: url("https://i.postimg.cc/NMJjXdVb/Copilot-20260312-161105.png");
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
   margin-bottom: 20px;
 }
 
