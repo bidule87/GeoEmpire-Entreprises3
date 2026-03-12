@@ -1,179 +1,65 @@
-// =======================================
-//  MODULE ENTREPRISES — VERSION ÉTENDUE
-// =======================================
+import { 
+    getEntreprise, 
+    sauvegarderEntreprise, 
+    changerNomEntreprise, 
+    changerPhotoEntreprise, 
+    calculerValeurEntreprise 
+} from "../entreprises.js";
 
-// 1 an de jeu = 1 mois réel
-const DUREE_CESSION = 30 * 24 * 60 * 60 * 1000; // 30 jours en ms
+export function initEntreprise() {
+    const zone = document.getElementById("entreprise");
+    const e = getEntreprise();
 
-const ENTREPRISE_PAR_DEFAUT = {
-    nom: "Ma Première Entreprise",
-    type: "Immobilier",
+    zone.innerHTML = `
+        <h2>Informations de l'entreprise</h2>
 
-    // Photo modifiable
-    logo: "images/default-logo.png",
+        <div class="entreprise-bloc">
 
-    // Budget
-    argent: 5000000,
+            <div class="entreprise-photo-section">
+                <img src="${e.logo}" class="entreprise-photo" id="entreprise-photo">
+                <button id="btn-photo" class="action-btn">Changer la photo</button>
+                <input type="file" id="upload-photo" accept="image/*" style="display:none;">
+            </div>
 
-    // Date de création (pour la cession)
-    dateCreation: Date.now(),
+            <div class="entreprise-infos">
+                <label>Nom de l'entreprise :</label>
+                <input type="text" id="nom-entreprise" value="${e.nom}" class="input-text">
 
-    // Biens immobiliers
-    biens: {}
-};
+                <p><strong>Type :</strong> ${e.type}</p>
+                <p><strong>Budget :</strong> ${e.argent.toLocaleString()} €</p>
+                <p><strong>Valeur totale :</strong> ${calculerValeurEntreprise().toLocaleString()} €</p>
 
-// ===============================
-//  CHARGEMENT / SAUVEGARDE
-// ===============================
+                <p><strong>Date de création :</strong> 
+                    ${new Date(e.dateCreation).toLocaleDateString()}
+                </p>
 
-export function getEntreprise() {
-    const data = localStorage.getItem("entreprise");
-    if (data) return JSON.parse(data);
+                <button id="btn-save-nom" class="action-btn btn-louer">Enregistrer le nom</button>
+            </div>
 
-    localStorage.setItem("entreprise", JSON.stringify(ENTREPRISE_PAR_DEFAUT));
-    return ENTREPRISE_PAR_DEFAUT;
-}
+        </div>
+    `;
 
-export function sauvegarderEntreprise(entreprise) {
-    localStorage.setItem("entreprise", JSON.stringify(entreprise));
-}
+    // --- Changer le nom ---
+    document.getElementById("btn-save-nom").onclick = () => {
+        const nouveauNom = document.getElementById("nom-entreprise").value;
+        changerNomEntreprise(nouveauNom);
+        initEntreprise();
+    };
 
-// ===============================
-//  MODIFICATION DU NOM
-// ===============================
+    // --- Changer la photo ---
+    document.getElementById("btn-photo").onclick = () => {
+        document.getElementById("upload-photo").click();
+    };
 
-export function changerNomEntreprise(nouveauNom) {
-    const entreprise = getEntreprise();
-    entreprise.nom = nouveauNom;
-    sauvegarderEntreprise(entreprise);
-}
+    document.getElementById("upload-photo").onchange = (e) => {
+        const file = e.target.files[0];
+        const reader = new FileReader();
 
-// ===============================
-//  MODIFICATION DE LA PHOTO
-// ===============================
-
-export function changerPhotoEntreprise(base64) {
-    const entreprise = getEntreprise();
-    entreprise.logo = base64;
-    sauvegarderEntreprise(entreprise);
-}
-
-// ===============================
-//  AJOUT DE BIENS
-// ===============================
-
-export function ajouterBienEntreprise(categorie, style, quantite, prixUnitaire) {
-    const entreprise = getEntreprise();
-    const coutTotal = quantite * prixUnitaire;
-
-    entreprise.argent -= coutTotal;
-
-    if (!entreprise.biens[categorie]) {
-        entreprise.biens[categorie] = {};
-    }
-
-    if (!entreprise.biens[categorie][style]) {
-        entreprise.biens[categorie][style] = {
-            quantite: 0,
-            prixAchatMoyen: prixUnitaire
+        reader.onload = () => {
+            changerPhotoEntreprise(reader.result);
+            initEntreprise();
         };
-    }
 
-    const bien = entreprise.biens[categorie][style];
-    const ancienneQuantite = bien.quantite;
-
-    bien.quantite += quantite;
-
-    bien.prixAchatMoyen = Math.floor(
-        ((ancienneQuantite * bien.prixAchatMoyen) + (quantite * prixUnitaire)) /
-        (ancienneQuantite + quantite)
-    );
-
-    sauvegarderEntreprise(entreprise);
-}
-
-// ===============================
-//  RETRAIT DE BIENS
-// ===============================
-
-export function retirerBienEntreprise(categorie, style, quantite) {
-    const entreprise = getEntreprise();
-
-    if (!entreprise.biens[categorie] || !entreprise.biens[categorie][style]) return;
-
-    const bien = entreprise.biens[categorie][style];
-    bien.quantite -= quantite;
-
-    if (bien.quantite <= 0) {
-        delete entreprise.biens[categorie][style];
-    }
-
-    sauvegarderEntreprise(entreprise);
-}
-
-// ===============================
-//  ARGENT
-// ===============================
-
-export function ajouterArgent(montant) {
-    const entreprise = getEntreprise();
-    entreprise.argent += montant;
-    sauvegarderEntreprise(entreprise);
-}
-
-export function retirerArgent(montant) {
-    const entreprise = getEntreprise();
-    entreprise.argent = Math.max(0, entreprise.argent - montant);
-    sauvegarderEntreprise(entreprise);
-}
-
-// ===============================
-//  VALEUR TOTALE DE L’ENTREPRISE
-// ===============================
-
-export function calculerValeurEntreprise() {
-    const entreprise = getEntreprise();
-    let total = entreprise.argent;
-
-    for (const categorie in entreprise.biens) {
-        for (const style in entreprise.biens[categorie]) {
-            const bien = entreprise.biens[categorie][style];
-            total += bien.quantite * bien.prixAchatMoyen;
-        }
-    }
-
-    return total;
-}
-
-// ===============================
-//  CESSION / VENTE
-// ===============================
-
-export function peutCederEntreprise() {
-    const entreprise = getEntreprise();
-    const tempsPasse = Date.now() - entreprise.dateCreation;
-    return tempsPasse >= DUREE_CESSION;
-}
-
-export function vendreEntreprise() {
-    const entreprise = getEntreprise();
-    const valeur = calculerValeurEntreprise();
-
-    // Reset complet
-    localStorage.removeItem("entreprise");
-
-    // Nouvelle entreprise avec argent transféré
-    const nouvelle = getEntreprise();
-    nouvelle.argent = valeur;
-
-    sauvegarderEntreprise(nouvelle);
-
-    return valeur;
-}
-
-export function mettreEnCessation() {
-    if (!peutCederEntreprise()) return false;
-
-    localStorage.removeItem("entreprise");
-    return true;
+        reader.readAsDataURL(file);
+    };
 }
