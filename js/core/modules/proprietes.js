@@ -1,3 +1,6 @@
+function afficherAssurance() {
+    // Fonction vide pour éviter l'erreur
+}
 import { getEntreprise } from "./entreprises.js";
 
 export function initProprietes() {
