@@ -1,4 +1,14 @@
-import { getEntreprise, sauvegarderEntreprise } from "../entreprises.js";
+// =======================================
+// GEO EMPIRE — MODULE PERSONNEL
+// Compatible geoData + entrepriseCore
+// =======================================
+
+import { 
+    getEntreprise, 
+    sauvegarderEntreprise 
+} from "../core/entrepriseCore.js";
+
+import { saveData } from "../geoData.js";
 
 export function initPersonnel() {
     const zone = document.getElementById("personnel");
@@ -13,6 +23,7 @@ export function initPersonnel() {
             prime: 0
         };
         sauvegarderEntreprise(e);
+        saveData();
     }
 
     const p = e.personnel;
@@ -45,6 +56,8 @@ export function initPersonnel() {
         p.prime = parseInt(document.getElementById("perso-prime").value);
 
         sauvegarderEntreprise(e);
+        saveData();
+
         initPersonnel();
     };
 }
