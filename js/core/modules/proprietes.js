@@ -67,8 +67,7 @@ function afficherProprietes() {
                 </div>
 
                 <div class="bien-actions">
-                    <button onclick="ouvrirOnglet('assurance')">Assurer</button>
-                    <button onclick="ouvrirOnglet('renovation')">Rénover</button>
+                    <!-- Aucun bouton, tout passe par les onglets -->
                 </div>
             `;
 
