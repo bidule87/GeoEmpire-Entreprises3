@@ -1,62 +1,57 @@
-// ===============================
-//  GEOEMPIRE 3 - BILAN COMPLET
-// ===============================
+// =======================================
+//  GEO EMPIRE — BILAN COMPLET (NOUVEAU SYSTEME)
+// =======================================
 
-// Calcul du total de l'empire
+import { getData } from "../geoData.js";
+import { calculerValeurEntreprise } from "../core/entrepriseCore.js";
+
+// ===============================
+//  TOTAL EMPIRE
+// ===============================
 window.ge_totalEmpire = function () {
+    const data = getData();
+    const e = data.entreprise;
+
     let total = 0;
 
     // Trésorerie
-    total += entreprise.tresorerie;
+    total += e.argent;
 
-    // Valeur patrimoine
-    if (entreprise.patrimoine)
-        total += entreprise.patrimoine.reduce((t, e) => t + e.valeur, 0);
+    // Valeur totale de l'entreprise (biens + rénovations + bonus)
+    total += calculerValeurEntreprise();
 
-    // Immobilier
-    if (entreprise.immobilier)
-        total += entreprise.immobilier.reduce((t, b) => t + b.valeur, 0);
-
-    // Assurances (couverture)
-    if (entreprise.assurances)
-        total += entreprise.assurances.reduce((t, a) => t + a.couverture, 0);
+    // Tokens / Crowns si présents
+    if (e.tokens) total += e.tokens;
+    if (e.crowns) total += e.crowns;
 
     return total;
 };
 
-// Affichage du bilan
+// ===============================
+//  AFFICHAGE DU BILAN COMPLET
+// ===============================
 window.ge_afficherBilanComplet = function () {
     const zone = document.getElementById("bilan-complet");
     if (!zone) return;
 
+    const data = getData();
+    const e = data.entreprise;
+
     const total = ge_totalEmpire();
+
+    // Valeur des biens (nouveau système)
+    const valeurBiens = calculerValeurEntreprise();
 
     let html = `
         <h2>BILAN COMPLET</h2>
 
-        <p><strong>Trésorerie :</strong> ${ge_formatArgent(entreprise.tresorerie)}</p>
-        <p><strong>Tokens :</strong> ${ge_formatTokens(entreprise.tokens)}</p>
-        <p><strong>Crowns :</strong> ${ge_formatCrowns(entreprise.crowns)}</p>
+        <p><strong>Trésorerie :</strong> ${ge_formatArgent(e.argent)}</p>
+        <p><strong>Tokens :</strong> ${ge_formatTokens(e.tokens || 0)}</p>
+        <p><strong>Crowns :</strong> ${ge_formatCrowns(e.crowns || 0)}</p>
 
         <hr>
 
-        <p><strong>Valeur patrimoine :</strong> ${
-            entreprise.patrimoine ? ge_formatArgent(
-                entreprise.patrimoine.reduce((t, e) => t + e.valeur, 0)
-            ) : "0 Ø"
-        }</p>
-
-        <p><strong>Valeur immobilier :</strong> ${
-            entreprise.immobilier ? ge_formatArgent(
-                entreprise.immobilier.reduce((t, b) => t + b.valeur, 0)
-            ) : "0 Ø"
-        }</p>
-
-        <p><strong>Couverture assurances :</strong> ${
-            entreprise.assurances ? ge_formatArgent(
-                entreprise.assurances.reduce((t, a) => t + a.couverture, 0)
-            ) : "0 Ø"
-        }</p>
+        <p><strong>Valeur totale des biens :</strong> ${ge_formatArgent(valeurBiens)}</p>
 
         <hr>
 
