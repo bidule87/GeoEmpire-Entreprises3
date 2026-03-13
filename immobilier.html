@@ -2,49 +2,46 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Immobilier – Geo Empire</title>
-
-    <!-- CSS principal -->
-    <link rel="stylesheet" href="menu.css">
-    <link rel="stylesheet" href="immobilier.css">
-
-    <!-- Police premium -->
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;700&display=swap" rel="stylesheet">
+    <title>Geo Empire – Immobilier</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-<!-- BANDEAU IMMOBILIER -->
-<div class="bandeau-geo"></div>
-
-<div class="immobilier-container">
-
-    <!-- Bouton retour -->
-    <button class="back-btn" onclick="location.href='index.html'">Retour</button>
-
-    <h1>IMMOBILIER GEO EMPIRE</h1>
-
-    <!-- NAVIGATION DES ONGLETS -->
-    <nav class="onglets-nav">
-        <button class="onglet-btn actif" data-onglet="proprietes">Propriétés</button>
-        <button class="onglet-btn" data-onglet="acheter">Acheter</button>
-        <button class="onglet-btn" data-onglet="assurance">Assurance</button>
-        <button class="onglet-btn" data-onglet="renovation">Rénovation</button>
+<header>
+    <h1>Immobilier</h1>
+    <nav>
+        <a href="index.html">Accueil</a>
+        <a href="carte.html">Carte</a>
+        <a href="entreprises.html">Entreprises</a>
+        <a href="finances.html">Finances</a>
+        <a href="prestige.html">Prestige</a>
+        <a href="profil.html">Profil</a>
+        <a href="boutique.html">Boutique</a>
     </nav>
+</header>
 
-    <!-- CONTENU DES ONGLETS -->
-    <section id="proprietes" class="onglet-contenu actif"></section>
-    <section id="acheter" class="onglet-contenu"></section>
-    <section id="assurance" class="onglet-contenu"></section>
-    <section id="renovation" class="onglet-contenu"></section>
+<main id="immobilier-container"></main>
 
-    <!-- Zone de statut -->
-    <div id="immo-status" class="status"></div>
+<!-- CORE -->
+<script type="module" src="./js/core/geoData.js"></script>
+<script type="module" src="./js/core/core.js"></script>
+<script type="module" src="./js/core/systeme.js"></script>
+<script type="module" src="./js/core/ui.js"></script>
+<script type="module" src="./js/core/entrepriseCore.js"></script>
 
-</div>
+<!-- MODULES IMMOBILIER -->
+<script type="module" src="./js/core/modules/proprietes.js"></script>
+<script type="module" src="./js/core/modules/assurance.js"></script>
+<script type="module" src="./js/core/modules/renovation.js"></script>
+<script type="module" src="./js/core/modules/acheter.js"></script>
+<script type="module" src="./js/core/modules/immo-core.js"></script>
+<script type="module" src="./js/core/modules/entreprises.js"></script>
+<script type="module" src="./js/core/modules/personnel.js"></script>
+<script type="module" src="./js/core/modules/cession.js"></script>
 
-<!-- On charge SEULEMENT le module racine -->
-<script type="module" src="immobilier.js"></script>
+<!-- SCRIPT PRINCIPAL -->
+<script type="module" src="./immobilier.js"></script>
 
 </body>
 </html>
