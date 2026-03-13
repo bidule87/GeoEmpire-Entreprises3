@@ -15,9 +15,9 @@
 <h1>Boutique Geo Empire</h1>
 
 <div class="balance">
-<div>G-Tokens : <span id="gtokens">0</span></div>
-<div>Crowns : <span id="crowns">0</span></div>
-<div>Rayon GPS : <span id="gps-radius">5</span> km</div>
+    <div>G-Tokens : <span id="gtokens">0</span></div>
+    <div>Crowns : <span id="crowns">0</span></div>
+    <div>Rayon GPS : <span id="gps-radius">5</span> km</div>
 </div>
 
 <div class="packs-grid" id="packs"></div>
@@ -26,7 +26,29 @@
 
 </div>
 
-<script src="script.js"></script>
+<!-- =============================== -->
+<!--  IMPORTS CORE (obligatoires)   -->
+<!-- =============================== -->
+<script src="js/core/format.js"></script>
+<script src="js/core/sauvegarde.js"></script>
+<script src="js/core/geoData.js"></script>
+<script src="js/core/core.js"></script>
+<script src="js/core/entrepriseCore.js"></script>
+<script src="js/core/systeme.js"></script>
+<script src="js/core/ui.js"></script>
+
+<!-- =============================== -->
+<!--  MODULES UTILISÉS PAR BOUTIQUE -->
+<!-- =============================== -->
+<script src="js/core/modules/prestige.js"></script>
+<script src="js/core/modules/proprietes.js"></script>
+<script src="js/core/modules/actionnaires.js"></script>
+<script src="js/core/modules/bilan.js"></script>
+
+<!-- =============================== -->
+<!--  MODULE BOUTIQUE PRINCIPAL     -->
+<!-- =============================== -->
+<script type="module" src="js/core/modules/boutique.js"></script>
 
 </body>
 </html>
