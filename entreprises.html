@@ -2,86 +2,36 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Geo Empire - Entreprises</title>
-    <link rel="stylesheet" href="/menu.css">
+    <title>Geo Empire – Entreprises</title>
+    <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
-    <div class="menu-container">
-        <h1 class="title">GEO EMPIRE</h1>
+<header>
+    <h1>Entreprises</h1>
+    <nav>
+        <a href="index.html">Accueil</a>
+        <a href="carte.html">Carte</a>
+        <a href="immobilier.html">Immobilier</a>
+        <a href="finances.html">Finances</a>
+        <a href="prestige.html">Prestige</a>
+        <a href="profil.html">Profil</a>
+        <a href="boutique.html">Boutique</a>
+    </nav>
+</header>
 
-        <div class="menu-grid">
-            <a href="finances.html" class="menu-btn finances">Finances</a>
-            <a href="immobilier.html" class="menu-btn immobilier">Immobilier</a>
-            <a href="entreprises.html" class="menu-btn entreprises">Entreprises</a>
-            <a href="carte.html" class="menu-btn carte">Carte (GPS)</a>
-            <a href="prestige.html" class="menu-btn prestige">Prestige</a>
-            <a href="profil.html" class="menu-btn profil">Profil</a>
-            <a href="boutique.html" class="menu-btn prestige">Boutique</a>
-        </div>
-    </div>
+<main id="entreprises-container"></main>
 
-    <main style="padding: 20px;">
-        <h1>Mon entreprise</h1>
+<!-- CORE -->
+<script type="module" src="./js/core/geoData.js"></script>
+<script type="module" src="./js/core/core.js"></script>
+<script type="module" src="./js/core/systeme.js"></script>
+<script type="module" src="./js/core/ui.js"></script>
+<script type="module" src="./js/core/entrepriseCore.js"></script>
 
-        <section class="panel-entreprises">
-            <h2>Rôle</h2>
-            <label for="role-select">Votre rôle :</label>
-            <select id="role-select">
-                <option value="pdg">PDG</option>
-                <option value="dg">Directeur Général</option>
-                <option value="dc">Directeur Commercial</option>
-            </select>
-        </section>
-
-        <section class="panel-entreprises">
-            <h2>Photo de l’entreprise</h2>
-            <input type="file" id="photo-entreprise-input" accept="image/*">
-            <div style="margin-top: 10px;">
-                <img id="photo-entreprise-preview" src="" alt="Photo de l’entreprise" style="max-width:200px; border-radius: 8px; display:none;">
-            </div>
-        </section>
-
-        <section class="panel-entreprises">
-            <h2>Primes</h2>
-            <div class="prime-input-group">
-                <label>Prime PDG (€) :</label>
-                <input type="number" id="prime-pdg" min="0" step="1">
-            </div>
-            <div class="prime-input-group">
-                <label>Prime DG (€) :</label>
-                <input type="number" id="prime-dg" min="0" step="1">
-            </div>
-            <div class="prime-input-group">
-                <label>Prime DC (€) :</label>
-                <input type="number" id="prime-dc" min="0" step="1">
-            </div>
-            <p id="info-primes" style="margin-top: 10px; color: #4facfe;"></p>
-        </section>
-
-        <section id="marketing" class="panel-entreprises" style="display:none;"></section>
-        <section id="gestion" class="panel-entreprises" style="display:none;"></section>
-
-    </main>
-
-    <!-- CORE -->
-    <script src="js/core/format.js"></script>
-    <script src="js/core/sauvegarde.js"></script>
-    <script src="js/core/geoData.js"></script>
-    <script src="js/core/core.js"></script>
-    <script src="js/core/entrepriseCore.js"></script>
-    <script src="js/core/systeme.js"></script>
-    <script src="js/core/ui.js"></script>
-
-    <!-- MODULES ENTREPRISE (vrais noms confirmés) -->
-    <script src="js/core/modules/roles.js"></script>
-    <script src="js/core/modules/gestion.js"></script>
-    <script src="js/core/modules/marketing.js"></script>
-    <script src="js/core/modules/actionnaires.js"></script>
-    <script src="js/core/modules/bilan.js"></script>
-    <script src="js/core/modules/personnel.js"></script>
-    <script src="js/core/modules/cession.js"></script>
-    <script src="js/core/modules/entreprises.js"></script>
+<!-- MODULE ENTREPRISES -->
+<script type="module" src="./js/core/modules/entreprises.js"></script>
 
 </body>
 </html>
