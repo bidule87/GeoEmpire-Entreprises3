@@ -6,18 +6,18 @@
 // ------------------------------
 // IMPORTS DES MODULES EXISTANTS
 // ------------------------------
-import { initAcheter } from "../core/modules/acheter.js";
-import { initAssurance } from "../core/modules/assurances.js";   // ✔ corrigé
-import { initRenovation } from "../core/modules/renovation.js";
-import { initProprietes } from "../core/modules/proprietes.js";
-import { initImmoCore } from "../core/modules/immo-core.js";
+import { initAcheter } from "js/core/modules/acheter.js";
+import { initAssurance } from "js/core/modules/assurances.js";   // ✔ corrigé
+import { initRenovation } from "js/core/modules/renovation.js";
+import { initProprietes } from "js/core/modules/proprietes.js";
+import { initImmoCore } from "js/core/modules/immo-core.js";
 
 // ------------------------------
 // IMPORTS DES NOUVEAUX MODULES
 // ------------------------------
-import { initEntreprise } from "../core/modules/entreprises.js"; // ✔ corrigé
-import { initPersonnel } from "../core/modules/personnel.js";
-import { initCession } from "../core/modules/cession.js";
+import { initEntreprise } from "js/core/modules/entreprises.js"; // ✔ corrigé
+import { initPersonnel } from "js/core/modules/personnel.js";
+import { initCession } from "js/core/modules/cession.js";
 
 // Exposer les fonctions au window
 window.initAcheter = initAcheter;
@@ -31,7 +31,7 @@ window.initCession = initCession;
 // ------------------------------
 // AFFICHAGE DU BUDGET GLOBAL
 // ------------------------------
-import { getEntreprise } from "../core/entrepriseCore.js";
+import { getEntreprise } from "js/core/entrepriseCore.js";
 
 function afficherBudget() {
     const e = getEntreprise();
