@@ -11,9 +11,13 @@ import { getData, saveData, addArgent, removeArgent } from "./geoData.js";
 export function ge_afficherBilan() {
     const e = getData().entreprise;
 
-    document.getElementById("solde").innerText = e.argent.toLocaleString();
-    document.getElementById("tokens").innerText = e.tokens || 0;
-    document.getElementById("crowns").innerText = e.crowns || 0;
+    const solde = document.getElementById("solde");
+    const tokens = document.getElementById("tokens");
+    const crowns = document.getElementById("crowns");
+
+    if (solde) solde.innerText = e.argent.toLocaleString();
+    if (tokens) tokens.innerText = e.tokens || 0;
+    if (crowns) crowns.innerText = e.crowns || 0;
 }
 
 // ===============================
