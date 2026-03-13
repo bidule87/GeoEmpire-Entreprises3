@@ -1,59 +1,36 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>Geo Empire – Carte</title>
-
-  <link rel="stylesheet" href="carte.css">
-
-  <!-- Leaflet -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <meta charset="UTF-8">
+    <title>Geo Empire – Carte</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-  <header class="topbar">
-    <a href="index.html" class="back">← Retour</a>
-    <h1>Carte GPS</h1>
-  </header>
 
-  <main class="container">
-    <section class="panel">
-      <h2>Position actuelle</h2>
-      <p>Latitude : <span id="lat">0</span></p>
-      <p>Longitude : <span id="lng">0</span></p>
-    </section>
+<header>
+    <h1>Carte</h1>
+    <nav>
+        <a href="index.html">Accueil</a>
+        <a href="entreprises.html">Entreprises</a>
+        <a href="immobilier.html">Immobilier</a>
+        <a href="finances.html">Finances</a>
+        <a href="prestige.html">Prestige</a>
+        <a href="profil.html">Profil</a>
+        <a href="boutique.html">Boutique</a>
+    </nav>
+</header>
 
-    <section class="panel">
-      <h2>Carte</h2>
-      <div id="map"></div>
-    </section>
+<main id="map-container"></main>
 
-    <section class="panel">
-      <h2>Entreprises proches</h2>
-      <div id="liste-entreprises"></div>
-    </section>
-  </main>
+<!-- CORE -->
+<script type="module" src="./js/core/geoData.js"></script>
+<script type="module" src="./js/core/core.js"></script>
+<script type="module" src="./js/core/systeme.js"></script>
+<script type="module" src="./js/core/ui.js"></script>
 
-  <!-- CORE -->
-  <script src="js/core/format.js"></script>
-  <script src="js/core/sauvegarde.js"></script>
-  <script src="js/core/geoData.js"></script>
-  <script src="js/core/core.js"></script>
-  <script src="js/core/entrepriseCore.js"></script>
-  <script src="js/core/systeme.js"></script>
-  <script src="js/core/ui.js"></script>
-
-  <!-- MODULES UTILISÉS PAR GPS -->
-  <script src="js/core/modules/entreprises.js"></script>
-  <script src="js/core/modules/proprietes.js"></script>
-  <script src="js/core/modules/assurances.js"></script>
-  <script src="js/core/modules/renovation.js"></script>
-  <script src="js/core/modules/acheter.js"></script>
-  <script src="js/core/modules/immo-core.js"></script>
-
-  <!-- MODULE GPS -->
-  <script type="module" src="js/core/modules/gps.js"></script>
+<!-- MODULE CARTE -->
+<script type="module" src="./js/core/modules/carte.js"></script>
 
 </body>
 </html>
