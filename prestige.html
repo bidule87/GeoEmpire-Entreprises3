@@ -2,9 +2,8 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prestige – Geo Empire</title>
-    <link rel="stylesheet" href="css/style.css">
+    <title>Geo Empire – Prestige</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
@@ -18,44 +17,20 @@
         <a href="immobilier.html">Immobilier</a>
         <a href="finances.html">Finances</a>
         <a href="profil.html">Profil</a>
+        <a href="boutique.html">Boutique</a>
     </nav>
 </header>
 
-<main id="prestige-container">
-
-    <section class="prestige-section">
-        <h2>Niveau de Prestige</h2>
-        <div id="prestige-niveau"></div>
-    </section>
-
-    <section class="prestige-section">
-        <h2>Récompenses débloquées</h2>
-        <div id="prestige-recompenses"></div>
-    </section>
-
-    <section class="prestige-section">
-        <h2>Prochain palier</h2>
-        <div id="prestige-palier"></div>
-    </section>
-
-</main>
+<main id="prestige-container"></main>
 
 <!-- CORE -->
-<script src="js/core/format.js"></script>
-<script src="js/core/sauvegarde.js"></script>
-<script src="js/core/geoData.js"></script>
-<script src="js/core/core.js"></script>
-<script src="js/core/entrepriseCore.js"></script>
-<script src="js/core/systeme.js"></script>
-<script src="js/core/ui.js"></script>
-
-<!-- MODULES UTILISÉS PAR PRESTIGE -->
-<script src="js/core/modules/proprietes.js"></script>
-<script src="js/core/modules/actionnaires.js"></script>
-<script src="js/core/modules/bilan.js"></script>
+<script type="module" src="./js/core/geoData.js"></script>
+<script type="module" src="./js/core/core.js"></script>
+<script type="module" src="./js/core/systeme.js"></script>
+<script type="module" src="./js/core/ui.js"></script>
 
 <!-- MODULE PRESTIGE -->
-<script type="module" src="js/core/modules/prestige.js"></script>
+<script type="module" src="./js/core/modules/prestige.js"></script>
 
 </body>
 </html>
