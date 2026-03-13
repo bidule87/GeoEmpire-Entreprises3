@@ -2,15 +2,14 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profil – Geo Empire</title>
-    <link rel="stylesheet" href="css/style.css">
+    <title>Geo Empire – Profil</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
 <header>
-    <h1>Mon Profil</h1>
+    <h1>Profil</h1>
     <nav>
         <a href="index.html">Accueil</a>
         <a href="carte.html">Carte</a>
@@ -18,43 +17,20 @@
         <a href="immobilier.html">Immobilier</a>
         <a href="finances.html">Finances</a>
         <a href="prestige.html">Prestige</a>
+        <a href="boutique.html">Boutique</a>
     </nav>
 </header>
 
-<main id="profil-container">
-    <section class="profil-section">
-        <h2>Informations du joueur</h2>
-        <div id="profil-info"></div>
-    </section>
-
-    <section class="profil-section">
-        <h2>Statistiques</h2>
-        <div id="profil-stats"></div>
-    </section>
-
-    <section class="profil-section">
-        <h2>Inventaire</h2>
-        <div id="profil-inventaire"></div>
-    </section>
-</main>
+<main id="profil-container"></main>
 
 <!-- CORE -->
-<script src="js/core/format.js"></script>
-<script src="js/core/sauvegarde.js"></script>
-<script src="js/core/geoData.js"></script>
-<script src="js/core/core.js"></script>
-<script src="js/core/entrepriseCore.js"></script>
-<script src="js/core/systeme.js"></script>
-<script src="js/core/ui.js"></script>
-
-<!-- MODULES UTILISÉS PAR PROFIL -->
-<script src="js/core/modules/proprietes.js"></script>
-<script src="js/core/modules/actionnaires.js"></script>
-<script src="js/core/modules/bilan.js"></script>
-<script src="js/core/modules/prestige.js"></script>
+<script type="module" src="./js/core/geoData.js"></script>
+<script type="module" src="./js/core/core.js"></script>
+<script type="module" src="./js/core/systeme.js"></script>
+<script type="module" src="./js/core/ui.js"></script>
 
 <!-- MODULE PROFIL -->
-<script type="module" src="js/core/modules/profil.js"></script>
+<script type="module" src="./js/core/modules/profil.js"></script>
 
 </body>
 </html>
