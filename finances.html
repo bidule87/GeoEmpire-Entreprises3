@@ -1,102 +1,57 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>Geo Empire – Finances</title>
-  <link rel="stylesheet" href="finances.css">
+    <meta charset="UTF-8">
+    <title>Geo Empire – Finances</title>
+    <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
-  <div class="app">
-    <header class="topbar">
-      <a href="index.html" class="btn-retour-home">RETOUR</a>
-      <h1>Finances</h1>
-      <div class="topbar-actions">
-        <button id="btn-prevision" class="btn primary">Comptes prévisionnels (J+1)</button>
-        <button id="btn-export" class="btn secondary">Export Excel (Prestige)</button>
-      </div>
-    </header>
 
-    <main class="layout">
-      <!-- TON CONTENU EST PARFAIT, JE NE TOUCHE À RIEN -->
-      <!-- (je coupe ici pour ne pas alourdir, mais rien n’a été modifié) -->
-    </main>
-  </div>
+<header>
+    <h1>Finances</h1>
+    <nav>
+        <a href="index.html">Accueil</a>
+        <a href="carte.html">Carte</a>
+        <a href="entreprises.html">Entreprises</a>
+        <a href="immobilier.html">Immobilier</a>
+        <a href="prestige.html">Prestige</a>
+        <a href="profil.html">Profil</a>
+    </nav>
+</header>
 
-  <!-- =============================== -->
-  <!--  IMPORTS CORE (obligatoires)   -->
-  <!-- =============================== -->
-  <script src="js/core/format.js"></script>
-  <script src="js/core/sauvegarde.js"></script>
-  <script src="js/core/geoData.js"></script>
-  <script src="js/core/core.js"></script>
-  <script src="js/core/entrepriseCore.js"></script>
-  <script src="js/core/systeme.js"></script>
-  <script src="js/core/ui.js"></script>
+<main id="finances-container">
+    <section class="finances-section">
+        <h2>Résumé financier</h2>
+        <div id="finances-resume"></div>
+    </section>
 
-  <!-- =============================== -->
-  <!--  IMPORTS MODULES FINANCES      -->
-  <!-- =============================== -->
-  <script src="js/core/modules/bilan.js"></script>
-  <script src="js/core/modules/actionnaires.js"></script>
-  <script src="js/core/modules/proprietes.js"></script>
-  <script src="js/core/modules/assurance.js"></script>
-  <script src="js/core/modules/renovations.js"></script>
-  <script src="js/core/modules/acheter.js"></script>
-  <script src="js/core/modules/immo-core.js"></script>
+    <section class="finances-section">
+        <h2>Transactions</h2>
+        <div id="finances-transactions"></div>
+    </section>
+</main>
 
-  <!-- =============================== -->
-  <!--  MODULE FINANCES PRINCIPAL     -->
-  <!-- =============================== -->
-  <script type="module" src="js/core/modules/finances_etape4.js"></script>
+<!-- CORE -->
+<script src="js/core/format.js"></script>
+<script src="js/core/sauvegarde.js"></script>
+<script src="js/core/geoData.js"></script>
+<script src="js/core/core.js"></script>
+<script src="js/core/entrepriseCore.js"></script>
+<script src="js/core/systeme.js"></script>
+<script src="js/core/ui.js"></script>
 
-  <!-- =============================== -->
-  <!--  TON SCRIPT PAGE (inchangé)    -->
-  <!-- =============================== -->
-  <script type="module">
-    import { 
-      mettreAJourTresorerie, 
-      mettreAJourBilan, 
-      mettreAJourResultat, 
-      simulerComptesPrevisionnelsDemain, 
-      genererDonneesExcel 
-    } from './js/core/modules/finances_etape4.js';
+<!-- MODULES FINANCES -->
+<script src="js/core/modules/proprietes.js"></script>
+<script src="js/core/modules/assurances.js"></script>
+<script src="js/core/modules/renovation.js"></script>
+<script src="js/core/modules/acheter.js"></script>
+<script src="js/core/modules/immo-core.js"></script>
+<script src="js/core/modules/actionnaires.js"></script>
+<script src="js/core/modules/bilan.js"></script>
 
-    const fmt = (v) => `${(v || 0).toLocaleString('fr-FR')} Ø`;
-
-    function rafraichirEcran() {
-      const t = mettreAJourTresorerie();
-      document.getElementById('t-solde-actuel').textContent = fmt(t.soldeActuel);
-      document.getElementById('t-revenus-mois').textContent = fmt(t.revenusDuMois);
-      document.getElementById('t-solde-prochain').textContent = fmt(t.soldeMoisProchain);
-      document.getElementById('t-credits-loyers').textContent = fmt(t.credits.loyers);
-
-      const r = mettreAJourResultat();
-      document.getElementById('r-ch-total').textContent = fmt(r.charges.totalCharges);
-      document.getElementById('r-pr-total').textContent = fmt(r.produits.totalProduits);
-      document.getElementById('r-net').textContent = fmt(r.resultatNet);
-      document.getElementById('r-benefices-pertes').textContent = fmt(r.beneficesOuPertes);
-
-      const b = mettreAJourBilan();
-      document.getElementById('b-act-immobilier').textContent = fmt(b.actif.immobilises.immobilier);
-      document.getElementById('b-act-total-immobilises').textContent = fmt(b.actif.immobilises.totalImmobilises);
-      document.getElementById('b-act-compte-courant').textContent = fmt(b.actif.circulant.compteCourant);
-      document.getElementById('b-act-total').textContent = fmt(b.actif.totalActif);
-      document.getElementById('b-pas-total').textContent = fmt(b.passif.totalPassif);
-      document.getElementById('b-pas-capital').textContent = fmt(b.passif.capitauxPropres.capital);
-    }
-
-    document.getElementById('btn-prevision').addEventListener('click', () => {
-      const p = simulerComptesPrevisionnelsDemain();
-      document.getElementById('p-treso-actuelle').textContent = fmt(p.tresorerieActuelle);
-      document.getElementById('p-produits-jour').textContent = fmt(p.produitsJour);
-      document.getElementById('p-charges-jour').textContent = fmt(p.chargesJour);
-      document.getElementById('p-treso-demain').textContent = fmt(p.tresoreriePrevueDemain);
-    });
-
-    document.getElementById('btn-export').addEventListener('click', genererDonneesExcel);
-
-    rafraichirEcran();
-  </script>
+<!-- MODULE FINANCES PRINCIPAL -->
+<script type="module" src="js/core/modules/finances_etape4.js"></script>
 
 </body>
 </html>
