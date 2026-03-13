@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <title>Geo Empire – Finances</title>
-    <link rel="stylesheet" href="css/style.css">
+
+    <!-- style.css est à la racine -->
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
@@ -32,23 +34,23 @@
     </section>
 </main>
 
-<!-- CORE -->
-<script src="js/core/format.js"></script>
-<script src="js/core/sauvegarde.js"></script>
-<script src="js/core/geoData.js"></script>
-<script src="js/core/core.js"></script>
-<script src="js/core/entrepriseCore.js"></script>
-<script src="js/core/systeme.js"></script>
-<script src="js/core/ui.js"></script>
+<!-- CORE (TOUS EN MODULE) -->
+<script type="module" src="js/core/format.js"></script>
+<script type="module" src="js/core/sauvegarde.js"></script>
+<script type="module" src="js/core/geoData.js"></script>
+<script type="module" src="js/core/core.js"></script>
+<script type="module" src="js/core/entrepriseCore.js"></script>
+<script type="module" src="js/core/systeme.js"></script>
+<script type="module" src="js/core/ui.js"></script>
 
 <!-- MODULES FINANCES -->
-<script src="js/core/modules/proprietes.js"></script>
-<script src="js/core/modules/assurances.js"></script>
-<script src="js/core/modules/renovation.js"></script>
-<script src="js/core/modules/acheter.js"></script>
-<script src="js/core/modules/immo-core.js"></script>
-<script src="js/core/modules/actionnaires.js"></script>
-<script src="js/core/modules/bilan.js"></script>
+<script type="module" src="js/core/modules/proprietes.js"></script>
+<script type="module" src="js/core/modules/assurances.js"></script>
+<script type="module" src="js/core/modules/renovation.js"></script>
+<script type="module" src="js/core/modules/acheter.js"></script>
+<script type="module" src="js/core/modules/immo-core.js"></script>
+<script type="module" src="js/core/modules/actionnaires.js"></script>
+<script type="module" src="js/core/modules/bilan.js"></script>
 
 <!-- MODULE FINANCES PRINCIPAL -->
 <script type="module" src="js/core/modules/finances_etape4.js"></script>
