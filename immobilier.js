@@ -7,7 +7,7 @@
 // IMPORTS DES MODULES EXISTANTS
 // ------------------------------
 import { initAcheter } from "../core/modules/acheter.js";
-import { initAssurance } from "../core/modules/assurance.js";
+import { initAssurance } from "../core/modules/assurances.js";   // ✔ corrigé
 import { initRenovation } from "../core/modules/renovation.js";
 import { initProprietes } from "../core/modules/proprietes.js";
 import { initImmoCore } from "../core/modules/immo-core.js";
@@ -15,7 +15,7 @@ import { initImmoCore } from "../core/modules/immo-core.js";
 // ------------------------------
 // IMPORTS DES NOUVEAUX MODULES
 // ------------------------------
-import { initEntreprise } from "../core/modules/entreprise.js";
+import { initEntreprise } from "../core/modules/entreprises.js"; // ✔ corrigé
 import { initPersonnel } from "../core/modules/personnel.js";
 import { initCession } from "../core/modules/cession.js";
 
