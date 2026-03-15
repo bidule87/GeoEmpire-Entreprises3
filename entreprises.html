@@ -27,7 +27,6 @@
     | Crowns : <span id="crowns">0</span>
 </div>
 
-<!-- ICI : correction -->
 <main id="entreprise"></main>
 
 <!-- CORE -->
@@ -39,6 +38,12 @@
 
 <!-- MODULE ENTREPRISES -->
 <script type="module" src="./js/core/modules/entreprises.js"></script>
+
+<!-- APPEL DU MODULE -->
+<script type="module">
+    import { initEntreprise } from "./js/core/modules/entreprises.js";
+    initEntreprise();
+</script>
 
 </body>
 </html>
