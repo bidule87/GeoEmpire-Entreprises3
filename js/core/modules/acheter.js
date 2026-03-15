@@ -6,14 +6,14 @@
 import { 
     getEntreprise, 
     ajouterBienEntreprise 
-} from "../core/entrepriseCore.js";
+} from "../entrepriseCore.js";
 
 import { 
     getData, 
     saveData 
 } from "../geoData.js";
 
-import { immoState, refreshSiNecessaire } from "../core/modules/immo-core.js";
+import { immoState, refreshSiNecessaire } from "./immo-core.js";
 
 export function initAcheter() {
     refreshSiNecessaire();
