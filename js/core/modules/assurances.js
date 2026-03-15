@@ -1,120 +1,101 @@
-// =======================================
-// GEO EMPIRE — MODULE ASSURANCE
-// Liste des biens non assurés + action Assurer
-// =======================================
-
 import { 
     getEntreprise, 
     sauvegarderEntreprise 
 } from "../entrepriseCore.js";
 
-import { saveData } from "../geoData.js";
+const ASSURANCES = {
+    "Basique": { couverture: 0, braquage: false, coutMultiplicateur: 0.01 },
+    "Standard": { couverture: 0, braquage: false, coutMultiplicateur: 0.02 },
+    "Premium": { couverture: 70, braquage: false, coutMultiplicateur: 0.05 },
+    "Totale": { couverture: 100, braquage: false, coutMultiplicateur: 0.08 },
+    "Prestige Ultime": { couverture: 120, braquage: true, coutMultiplicateur: 0.03, prestigeOnly: true }
+};
 
-// =======================================
-// INITIALISATION DU MODULE
-// =======================================
-window.initAssurance = function () {
+export function initAssurances() {
+    afficherBiensAssurables();
+}
 
-    const container = document.getElementById("assurance");
-    container.innerHTML = ""; // reset propre
-
-    // ------------------------------
-    // TITRE
-    // ------------------------------
-    const titre = document.createElement("h2");
-    titre.textContent = "Assurance des biens";
-    container.appendChild(titre);
-
-    // ------------------------------
-    // TABLEAU
-    // ------------------------------
-    const table = document.createElement("table");
-    table.className = "biens-table";
-
-    table.innerHTML = `
-        <thead>
-            <tr>
-                <th>Bien</th>
-                <th>Catégorie</th>
-                <th>État</th>
-                <th>Prix d'achat</th>
-                <th>Assurance</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody id="assurance-tbody"></tbody>
-    `;
-
-    container.appendChild(table);
-
-    const status = document.createElement("div");
-    status.id = "assurance-status";
-    status.className = "status";
-    container.appendChild(status);
-
-    const tbody = table.querySelector("#assurance-tbody");
-
-    // ------------------------------
-    // RÉCUPÉRATION DES BIENS NON ASSURÉS
-    // ------------------------------
+function afficherBiensAssurables() {
     const entreprise = getEntreprise();
-    const biens = (entreprise.biens || []).filter(b => !b.assure);
+    const container = document.getElementById("assurances");
+    container.innerHTML = "";
 
-    if (biens.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="6" style="text-align:center; padding:20px; color:#94a3b8;">
-                    Tous vos biens sont déjà assurés.
-                </td>
-            </tr>
+    for (const categorie in entreprise.biens) {
+        const bloc = document.createElement("div");
+        bloc.className = "categorie-bloc";
+        bloc.innerHTML = `<h2>${categorie}</h2>`;
+
+        for (const style in entreprise.biens[categorie]) {
+            const bien = entreprise.biens[categorie][style];
+
+            const item = document.createElement("div");
+            item.className = "bien-item";
+
+            item.innerHTML = `
+                <div class="bien-nom">${style}</div>
+                <div class="bien-quantite">Quantité : ${bien.quantite}</div>
+                <div class="bien-prix">Prix moyen : ${bien.prixAchatMoyen.toLocaleString()} €</div>
+
+                <div class="assurance-options">
+                    ${genererBoutonsAssurance()}
+                </div>
+            `;
+
+            bloc.appendChild(item);
+        }
+
+        container.appendChild(bloc);
+    }
+}
+
+function genererBoutonsAssurance() {
+    let html = "";
+
+    for (const nom in ASSURANCES) {
+        const a = ASSURANCES[nom];
+
+        if (a.prestigeOnly && !localStorage.getItem("prestigePack")) continue;
+
+        html += `
+            <button class="assurance-btn" data-type="${nom}">
+                ${nom} (${a.couverture}%)
+            </button>
         `;
+    }
+
+    return html;
+}
+
+document.addEventListener("click", e => {
+    if (!e.target.classList.contains("assurance-btn")) return;
+
+    const type = e.target.dataset.type;
+    const a = ASSURANCES[type];
+
+    const entreprise = getEntreprise();
+
+    const item = e.target.closest(".bien-item");
+    const style = item.querySelector(".bien-nom").textContent;
+    const categorie = item.closest(".categorie-bloc").querySelector("h2").textContent;
+
+    const bien = entreprise.biens[categorie][style];
+
+    const coutUnitaire = Math.floor(bien.prixAchatMoyen * a.coutMultiplicateur);
+
+    if (entreprise.argent < coutUnitaire) {
+        alert("Fonds insuffisants !");
         return;
     }
 
-    // ------------------------------
-    // AFFICHAGE DES BIENS NON ASSURÉS
-    // ------------------------------
-    biens.forEach(bien => {
+    entreprise.argent -= coutUnitaire;
 
-        const prixAssurance = Math.round(bien.prixAchat * 0.05); // 5% du prix d'achat
+    bien.assurance = {
+        type: type,
+        couverture: a.couverture,
+        braquage: a.braquage
+    };
 
-        const tr = document.createElement("tr");
+    sauvegarderEntreprise(entreprise);
 
-        tr.innerHTML = `
-            <td>${bien.nom}</td>
-            <td>${bien.categorie}</td>
-            <td>${bien.etat}%</td>
-            <td>${bien.prixAchat.toLocaleString("fr-FR")} €</td>
-            <td>${prixAssurance.toLocaleString("fr-FR")} €</td>
-            <td>
-                <button class="action-btn btn-acheter">Assurer</button>
-            </td>
-        `;
-
-        // ------------------------------
-        // ACTION : ASSURER
-        // ------------------------------
-        tr.querySelector(".btn-acheter").addEventListener("click", () => {
-
-            bien.assure = true;
-
-            // Sauvegarde
-            sauvegarderEntreprise(entreprise);
-            saveData();
-
-            showStatus(`Bien assuré : ${bien.nom}`);
-            tr.remove();
-        });
-
-        tbody.appendChild(tr);
-    });
-
-    // ------------------------------
-    // STATUS
-    // ------------------------------
-    function showStatus(msg) {
-        status.textContent = msg;
-        status.style.display = "block";
-        setTimeout(() => status.style.display = "none", 2000);
-    }
-};
+    alert(`Assurance "${type}" appliquée à ${style}`);
+});
