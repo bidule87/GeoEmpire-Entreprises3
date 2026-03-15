@@ -49,7 +49,14 @@
     <div id="proprietes" class="tab" style="display:none;"></div>
     <div id="actionnaires" class="tab" style="display:none;"></div>
     <div id="personnel" class="tab" style="display:none;"></div>
-    <div id="patrimoine" class="tab" style="display:none;"></div>
+
+    <!-- PATRIMOINE — AJOUT DES BLOCS INTERNES -->
+    <div id="patrimoine" class="tab" style="display:none;">
+        <div id="patrimoine-monnaies"></div>
+        <div id="patrimoine-global"></div>
+        <div id="patrimoine-structure"></div>
+        <div id="patrimoine-classement"></div>
+    </div>
 
 </main>
 
@@ -82,7 +89,6 @@
             tabs.forEach(t => t.style.display = "none");
             document.getElementById(target).style.display = "block";
 
-            // Appels des modules SANS toucher à leur code
             if (target === "entreprise" && window.initEntreprise) initEntreprise();
             if (target === "acheter" && window.initAcheter) initAcheter();
             if (target === "assurances" && window.initAssurances) initAssurances();
@@ -94,7 +100,6 @@
         });
     });
 
-    // Onglet par défaut
     document.querySelector('#entreprises-menu button[data-tab="entreprise"]').click();
 </script>
 
