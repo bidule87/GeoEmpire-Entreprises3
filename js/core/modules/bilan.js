@@ -3,7 +3,7 @@
 // =======================================
 
 import { getData } from "../geoData.js";
-import { calculerValeurEntreprise } from "../core/entrepriseCore.js";
+import { calculerValeurEntreprise } from "../entrepriseCore.js";
 
 // ===============================
 //  TOTAL EMPIRE
