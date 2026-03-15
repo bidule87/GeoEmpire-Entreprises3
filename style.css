@@ -16,14 +16,15 @@ body {
 
 
 /* ===============================
-   HEADER ACCUEIL
+   HEADER ACCUEIL (SANS ONGLET)
    =============================== */
 
 #header-accueil {
     text-align: center;
     padding: 25px 0;
     color: white;
-    font-size: 28px;
+    font-size: 32px;
+    font-weight: bold;
     text-shadow: 0 0 10px rgba(0,0,0,0.6);
 }
 
