@@ -8,7 +8,7 @@ import { getData, addArgent, removeArgent } from "./geoData.js";
 //  FORMATAGE
 // ===============================
 
-window.ge_formatArgent = n => n.toLocaleString("fr-FR") + " Ø";
+window.ge_formatArgent = n => n.toLocaleString("fr-FR") + " GEO";
 window.ge_formatTokens = n => n + " GT";
 window.ge_formatCrowns = n => n + " 👑";
 window.ge_formatNom = n => n.charAt(0).toUpperCase() + n.slice(1);
@@ -60,7 +60,7 @@ window.ouvrirPage = function (id) {
 };
 
 // ===============================
-//  BILAN RAPIDE (header)
+//  BILAN RAPIDE (HUD)
 // ===============================
 
 window.ge_afficherBilan = function () {
@@ -69,7 +69,7 @@ window.ge_afficherBilan = function () {
     if (!zone) return;
 
     zone.innerHTML = `
-        <p><strong>Ø</strong> ${ge_formatArgent(e.argent)}</p>
+        <p><strong>GEO</strong> ${ge_formatArgent(e.argent)}</p>
         <p><strong>GT</strong> ${ge_formatTokens(e.tokens || 0)}</p>
         <p><strong>👑</strong> ${ge_formatCrowns(e.crowns || 0)}</p>
     `;
