@@ -1,25 +1,53 @@
 /* ===============================
+   FOND PREMIUM
+   =============================== */
+
+body {
+    background-image: url("https://i.postimg.cc/Hs0s4ctB/OIG1.jpg");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+}
+
+
+
+/* ===============================
    CONSOLE CENTRALE - ACCUEIL
    =============================== */
 
 #console-principale {
     width: 90%;
     max-width: 900px;
-    margin: 40px auto;
-    padding: 25px;
+    margin: 60px auto;
+    padding: 30px;
     background: rgba(0, 40, 70, 0.45);
-    border-radius: 12px;
+    border-radius: 14px;
     border: 1px solid rgba(0, 150, 255, 0.25);
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(12px);
     text-align: center;
     box-shadow: 0 0 25px rgba(0, 150, 255, 0.15);
+
+    /* Centrage parfait interne */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
+
+
+
+/* ===============================
+   BOUTONS ACCUEIL
+   =============================== */
 
 #console-boutons {
     display: flex;
     justify-content: center;
     flex-wrap: wrap;
-    gap: 15px;
+    gap: 18px;
     margin-bottom: 25px;
 }
 
@@ -33,6 +61,7 @@
     text-transform: uppercase;
     transition: 0.25s ease;
     color: white;
+    min-width: 160px;
 }
 
 /* Couleurs des boutons */
@@ -49,6 +78,12 @@
     transform: translateY(-4px);
     box-shadow: 0 0 15px rgba(0, 150, 255, 0.4);
 }
+
+
+
+/* ===============================
+   TEXTE D’ACCUEIL
+   =============================== */
 
 #console-contenu {
     margin-top: 20px;
