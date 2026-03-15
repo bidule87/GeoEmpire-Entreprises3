@@ -4,7 +4,7 @@ import {
     changerNomEntreprise, 
     changerPhotoEntreprise, 
     calculerValeurEntreprise 
-} from "../entrepriseCore.js";
+} from "./js/core/entrepriseCore.js";
 
 // AJOUT — Import des modules Marketing + Gestion
 import { initMarketing } from "./marketing.js";
