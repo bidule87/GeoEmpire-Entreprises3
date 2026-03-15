@@ -6,7 +6,7 @@
 import { 
     getEntreprise, 
     sauvegarderEntreprise 
-} from "../core/entrepriseCore.js";
+} from "../entrepriseCore.js";
 
 import { saveData } from "../geoData.js";
 
