@@ -3,16 +3,8 @@
 // Compatible geoData + entrepriseCore
 // =======================================
 
-import { 
-    getEntreprise,
-    ajouterBienEntreprise
-} from "../entrepriseCore.js";
-
-import { 
-    getData, 
-    saveData 
-} from "../geoData.js";
-
+import { getEntreprise } from "../entrepriseCore.js";
+import { getData, saveData, addBien } from "../geoData.js";
 import { immoState, refreshSiNecessaire } from "./immo-core.js";
 
 export function initAcheter() {
@@ -98,8 +90,10 @@ function gererAchat(categorie, style, prix, quantiteDisponible, typeAchat) {
     // Débiter l'argent
     entreprise.argent -= coutTotal;
 
-    // Ajouter les biens
-    ajouterBienEntreprise(categorie, style, quantiteAchetee, prix);
+    // Ajouter les biens (addBien ajoute 1 bien à la fois)
+    for (let i = 0; i < quantiteAchetee; i++) {
+        addBien(categorie, style, prix);
+    }
 
     // Retirer du stock
     immoState.quantites[categorie][style] -= quantiteAchetee;
@@ -111,6 +105,6 @@ function gererAchat(categorie, style, prix, quantiteDisponible, typeAchat) {
     // Rafraîchir l'affichage
     afficherBiensDisponibles();
 
-    // Mettre à jour le bilan
+    // Mettre à jour le bilan si présent
     if (window.ge_afficherBilan) window.ge_afficherBilan();
 }
