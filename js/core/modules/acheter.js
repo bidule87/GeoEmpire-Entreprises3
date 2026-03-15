@@ -4,8 +4,8 @@
 // =======================================
 
 import { 
-    getEntreprise, 
-    ajouterBienEntreprise 
+    getEntreprise,
+    ajouterBienEntreprise
 } from "../entrepriseCore.js";
 
 import { 
