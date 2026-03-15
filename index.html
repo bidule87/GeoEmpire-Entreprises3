@@ -27,8 +27,28 @@
     | Crowns : <span id="crowns">0</span>
 </div>
 
+<!-- 🟦 CONSOLE CENTRALE RÉINTRODUITE -->
+<div id="console-principale">
+
+    <div id="console-boutons">
+        <button class="btn-console btn-bleu" data-section="carte">Carte</button>
+        <button class="btn-console btn-vert" data-section="entreprises">Entreprises</button>
+        <button class="btn-console btn-orange" data-section="immobilier">Immobilier</button>
+        <button class="btn-console btn-jaune" data-section="finances">Finances</button>
+        <button class="btn-console btn-violet" data-section="prestige">Prestige</button>
+        <button class="btn-console btn-rose" data-section="profil">Profil</button>
+        <button class="btn-console btn-rouge" data-section="boutique">Boutique</button>
+    </div>
+
+    <div id="console-contenu">
+        <h2>Bienvenue dans Geo Empire</h2>
+        <p>Sélectionne une section pour commencer.</p>
+    </div>
+
+</div>
+<!-- 🟦 FIN CONSOLE CENTRALE -->
+
 <main>
-    <h2>Bienvenue dans Geo Empire</h2>
 </main>
 
 <!-- CORE -->
@@ -37,6 +57,16 @@
 <script type="module" src="./js/core/core.js"></script>
 <script type="module" src="./js/core/systeme.js"></script>
 <script type="module" src="./js/core/ui.js"></script>
+
+<!-- SCRIPT NAVIGATION DES BOUTONS -->
+<script>
+document.querySelectorAll('.btn-console').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const page = btn.dataset.section + ".html";
+        window.location.href = page;
+    });
+});
+</script>
 
 </body>
 </html>
