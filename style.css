@@ -16,7 +16,35 @@ body {
 
 
 /* ===============================
-   CONSOLE CENTRALE - ACCUEIL
+   HEADER ACCUEIL
+   =============================== */
+
+#header-accueil {
+    text-align: center;
+    padding: 25px 0;
+    color: white;
+    font-size: 28px;
+    text-shadow: 0 0 10px rgba(0,0,0,0.6);
+}
+
+
+
+/* ===============================
+   TOPBAR
+   =============================== */
+
+#topbar {
+    text-align: center;
+    padding: 10px;
+    font-size: 18px;
+    color: #d9eaff;
+    text-shadow: 0 0 8px rgba(0,0,0,0.5);
+}
+
+
+
+/* ===============================
+   CONSOLE CENTRALE
    =============================== */
 
 #console-principale {
@@ -31,7 +59,6 @@ body {
     text-align: center;
     box-shadow: 0 0 25px rgba(0, 150, 255, 0.15);
 
-    /* Centrage parfait interne */
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -61,17 +88,13 @@ body {
     text-transform: uppercase;
     transition: 0.25s ease;
     color: white;
-    min-width: 160px;
+    min-width: 180px;
 }
 
-/* Couleurs des boutons */
-.btn-bleu { background: #0077c8; }
-.btn-vert { background: #22c55e; }
-.btn-orange { background: #f97316; }
-.btn-jaune { background: #eab308; color: #000; }
-.btn-violet { background: #8b5cf6; }
-.btn-rose { background: #ec4899; }
-.btn-rouge { background: #ef4444; }
+/* Couleur harmonisée premium */
+.btn-bleu {
+    background: rgba(0, 60, 110, 0.9);
+}
 
 /* Hover */
 .btn-console:hover {
