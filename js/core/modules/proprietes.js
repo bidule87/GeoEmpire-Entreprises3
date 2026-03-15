@@ -3,7 +3,7 @@
 // Compatible geoData + entrepriseCore
 // =======================================
 
-import { getEntreprise } from "../core/entrepriseCore.js";
+import { getEntreprise } from "../entrepriseCore.js";
 
 export function initProprietes() {
     afficherProprietes();
