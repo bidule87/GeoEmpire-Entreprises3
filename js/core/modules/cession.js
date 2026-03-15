@@ -9,7 +9,7 @@ import {
     peutCederEntreprise, 
     vendreEntreprise, 
     mettreEnCessation 
-} from "../core/entrepriseCore.js";
+} from "../entrepriseCore.js";
 
 import { saveData } from "../geoData.js";
 
