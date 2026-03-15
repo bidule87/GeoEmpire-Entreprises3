@@ -1,7 +1,7 @@
 import { 
     getEntreprise, 
     sauvegarderEntreprise 
-} from "./entreprises.js";
+} from "../entrepriseCore.js";
 
 const ASSURANCES = {
     "Basique": { couverture: 0, braquage: false, coutMultiplicateur: 0.01 },
@@ -17,7 +17,7 @@ export function initAssurance() {
 
 function afficherBiensAssurables() {
     const entreprise = getEntreprise();
-    const container = document.getElementById("assurance"); // ✔ corrigé
+    const container = document.getElementById("assurance");
     container.innerHTML = "";
 
     for (const categorie in entreprise.biens) {
