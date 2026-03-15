@@ -3,21 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <title>Geo Empire – Accueil</title>
-    <link rel="stylesheet" href="style.css?v=2">
+    <link rel="stylesheet" href="style.css?v=3">
 </head>
 
 <body>
 
+<!-- HEADER SANS ONGLET -->
 <header id="header-accueil">
     <h1>Geo Empire</h1>
 </header>
 
+<!-- TOPBAR DÉCALÉE À DROITE -->
 <div id="topbar">
-    <span id="solde">0</span> €
+    <span id="solde">0</span> GEO
     | Tokens : <span id="tokens">0</span>
     | Crowns : <span id="crowns">0</span>
 </div>
 
+<!-- CONSOLE CENTRALE -->
 <div id="console-principale">
 
     <div id="console-boutons">
@@ -39,12 +42,14 @@
 
 <main></main>
 
+<!-- CORE -->
 <script type="module" src="./js/core/geoData.js"></script>
 <script type="module" src="./js/core/entrepriseCore.js"></script>
 <script type="module" src="./js/core/core.js"></script>
 <script type="module" src="./js/core/systeme.js"></script>
 <script type="module" src="./js/core/ui.js"></script>
 
+<!-- NAVIGATION DES BOUTONS -->
 <script>
 document.querySelectorAll('.btn-console').forEach(btn => {
     btn.addEventListener('click', () => {
