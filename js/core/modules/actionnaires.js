@@ -2,7 +2,7 @@
 //  GEO EMPIRE — ACTIONNAIRES (NOUVEAU SYSTEME)
 // =======================================
 
-import { getEntreprise, sauvegarderEntreprise } from "../core/entrepriseCore.js";
+import { getEntreprise, sauvegarderEntreprise } from "../entrepriseCore.js";
 import { getData, saveData } from "../geoData.js";
 
 // ===============================
