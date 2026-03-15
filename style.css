@@ -16,7 +16,7 @@ body {
 
 
 /* ===============================
-   HEADER ACCUEIL (SANS ONGLET)
+   HEADER ACCUEIL
    =============================== */
 
 #header-accueil {
@@ -31,12 +31,12 @@ body {
 
 
 /* ===============================
-   TOPBAR
+   TOPBAR (DÉCALÉE À DROITE)
    =============================== */
 
 #topbar {
-    text-align: center;
-    padding: 10px;
+    text-align: right;
+    padding: 10px 40px 0 0;
     font-size: 18px;
     color: #d9eaff;
     text-shadow: 0 0 8px rgba(0,0,0,0.5);
