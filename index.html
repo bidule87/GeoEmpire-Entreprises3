@@ -8,36 +8,29 @@
 
 <body>
 
-<header>
+<!-- HEADER SANS ONGLET -->
+<header id="header-accueil">
     <h1>Geo Empire</h1>
-    <nav>
-        <a href="carte.html">Carte</a>
-        <a href="entreprises.html">Entreprises</a>
-        <a href="immobilier.html">Immobilier</a>
-        <a href="finances.html">Finances</a>
-        <a href="prestige.html">Prestige</a>
-        <a href="profil.html">Profil</a>
-        <a href="boutique.html">Boutique</a>
-    </nav>
 </header>
 
+<!-- TOPBAR -->
 <div id="topbar">
     <span id="solde">0</span> €
     | Tokens : <span id="tokens">0</span>
     | Crowns : <span id="crowns">0</span>
 </div>
 
-<!-- 🟦 CONSOLE CENTRALE -->
+<!-- CONSOLE CENTRALE -->
 <div id="console-principale">
 
     <div id="console-boutons">
         <button class="btn-console btn-bleu" data-section="carte">Carte</button>
-        <button class="btn-console btn-vert" data-section="entreprises">Entreprises</button>
-        <button class="btn-console btn-orange" data-section="immobilier">Immobilier</button>
-        <button class="btn-console btn-jaune" data-section="finances">Finances</button>
-        <button class="btn-console btn-violet" data-section="prestige">Prestige</button>
-        <button class="btn-console btn-rose" data-section="profil">Profil</button>
-        <button class="btn-console btn-rouge" data-section="boutique">Boutique</button>
+        <button class="btn-console btn-bleu" data-section="entreprises">Entreprises</button>
+        <button class="btn-console btn-bleu" data-section="immobilier">Immobilier</button>
+        <button class="btn-console btn-bleu" data-section="finances">Finances</button>
+        <button class="btn-console btn-bleu" data-section="prestige">Prestige</button>
+        <button class="btn-console btn-bleu" data-section="profil">Profil</button>
+        <button class="btn-console btn-bleu" data-section="boutique">Boutique</button>
     </div>
 
     <div id="console-contenu">
@@ -46,7 +39,6 @@
     </div>
 
 </div>
-<!-- 🟦 FIN CONSOLE CENTRALE -->
 
 <main></main>
 
@@ -57,7 +49,7 @@
 <script type="module" src="./js/core/systeme.js"></script>
 <script type="module" src="./js/core/ui.js"></script>
 
-<!-- SCRIPT NAVIGATION DES BOUTONS -->
+<!-- NAVIGATION DES BOUTONS -->
 <script>
 document.querySelectorAll('.btn-console').forEach(btn => {
     btn.addEventListener('click', () => {
