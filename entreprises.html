@@ -27,7 +27,31 @@
     | Crowns : <span id="crowns">0</span>
 </div>
 
-<main id="entreprise"></main>
+<!-- MENU ENTREPRISES -->
+<div id="entreprises-menu">
+    <button data-tab="entreprise">Entreprise</button>
+    <button data-tab="acheter">Acheter</button>
+    <button data-tab="assurances">Assurances</button>
+    <button data-tab="renovation">Rénovation</button>
+    <button data-tab="proprietes">Propriétés</button>
+    <button data-tab="actionnaires">Actionnaires</button>
+    <button data-tab="personnel">Personnel</button>
+    <button data-tab="patrimoine">Patrimoine</button>
+</div>
+
+<!-- CONTENU DES MODULES -->
+<main id="entreprises-container">
+
+    <div id="entreprise" class="tab"></div>
+    <div id="acheter" class="tab" style="display:none;"></div>
+    <div id="assurances" class="tab" style="display:none;"></div>
+    <div id="renovation" class="tab" style="display:none;"></div>
+    <div id="proprietes" class="tab" style="display:none;"></div>
+    <div id="actionnaires" class="tab" style="display:none;"></div>
+    <div id="personnel" class="tab" style="display:none;"></div>
+    <div id="patrimoine" class="tab" style="display:none;"></div>
+
+</main>
 
 <!-- CORE -->
 <script type="module" src="./js/core/geoData.js"></script>
@@ -36,13 +60,42 @@
 <script type="module" src="./js/core/systeme.js"></script>
 <script type="module" src="./js/core/ui.js"></script>
 
-<!-- MODULE ENTREPRISES -->
+<!-- MODULES -->
 <script type="module" src="./js/core/modules/entreprises.js"></script>
+<script type="module" src="./js/core/modules/acheter.js"></script>
+<script type="module" src="./js/core/modules/assurances.js"></script>
+<script type="module" src="./js/core/modules/renovation.js"></script>
+<script type="module" src="./js/core/modules/proprietes.js"></script>
+<script type="module" src="./js/core/modules/actionnaires.js"></script>
+<script type="module" src="./js/core/modules/personnel.js"></script>
+<script type="module" src="./js/core/modules/patrimoine.js"></script>
 
-<!-- APPEL DU MODULE -->
-<script type="module">
-    import { initEntreprise } from "./js/core/modules/entreprises.js";
-    initEntreprise();
+<!-- NAVIGATION ENTRE ONGLET + APPELS MODULES -->
+<script>
+    const tabs = document.querySelectorAll(".tab");
+    const buttons = document.querySelectorAll("#entreprises-menu button");
+
+    buttons.forEach(btn => {
+        btn.addEventListener("click", () => {
+            const target = btn.dataset.tab;
+
+            tabs.forEach(t => t.style.display = "none");
+            document.getElementById(target).style.display = "block";
+
+            // Appels des modules SANS toucher à leur code
+            if (target === "entreprise" && window.initEntreprise) initEntreprise();
+            if (target === "acheter" && window.initAcheter) initAcheter();
+            if (target === "assurances" && window.initAssurances) initAssurances();
+            if (target === "renovation" && window.initRenovation) initRenovation();
+            if (target === "proprietes" && window.initProprietes) initProprietes();
+            if (target === "actionnaires" && window.ge_afficherActionnaires) ge_afficherActionnaires();
+            if (target === "personnel" && window.initPersonnel) initPersonnel();
+            if (target === "patrimoine" && window.initPatrimoine) initPatrimoine();
+        });
+    });
+
+    // Onglet par défaut
+    document.querySelector('#entreprises-menu button[data-tab="entreprise"]').click();
 </script>
 
 </body>
