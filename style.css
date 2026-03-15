@@ -118,7 +118,7 @@ body {
 
 
 /* ===============================
-   HUD (BILAN RAPIDE)
+   HUD (BILAN RAPIDE) — BLEU FONCÉ PREMIUM
    =============================== */
 
 #bilan-rapide {
@@ -129,7 +129,14 @@ body {
     color: #d9eaff;
     font-size: 18px;
     line-height: 1.4;
-    text-shadow: 0 0 8px rgba(0,0,0,0.6);
+    padding: 10px 18px;
+
+    background: rgba(0, 40, 70, 0.75);
+    border: 1px solid rgba(0, 150, 255, 0.25);
+    border-radius: 10px;
+
+    backdrop-filter: blur(6px);
+    box-shadow: 0 0 15px rgba(0, 150, 255, 0.25);
 }
 
 #bilan-rapide p {
