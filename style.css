@@ -143,16 +143,19 @@ body {
     margin: 0;
     padding: 0;
 }
+
+
+
 /* ===============================
-   FIX AUTO HUD (geoTokens / entreprises)
+   FIX HUD AUTO (geoTokens / entreprises)
    =============================== */
 
-body > div:not(#bilan-rapide):not(#topbar):not(#console-principale) {
+body > *:not(#bilan-rapide):not(#topbar):not(#console-principale):not(header):not(main) {
     position: absolute;
     top: 20px;
     right: 40px;
-    color: #d9eaff;
-    background: rgba(0, 40, 70, 0.75);
+    color: #d9eaff !important;
+    background: rgba(0, 40, 70, 0.85);
     padding: 10px 18px;
     border-radius: 10px;
     font-size: 18px;
@@ -160,4 +163,5 @@ body > div:not(#bilan-rapide):not(#topbar):not(#console-principale) {
     border: 1px solid rgba(0, 150, 255, 0.25);
     backdrop-filter: blur(6px);
     box-shadow: 0 0 15px rgba(0, 150, 255, 0.25);
+    z-index: 9999;
 }
