@@ -15,16 +15,13 @@ let bonusGToken = 0;           // Boost patrimonial (n'influence PAS le classeme
 // --- STRUCTURE EMPIRE ---
 let structureEmpire = {
     holding: 0,
-    filiales: {} // Exemple : { "GPS": 350000, "Immo": 250000 }
+    filiales: {}
 };
 
 // ===============================
 //  TAUX DE CONVERSION G-TOKEN
-//  (placeholder — formule DOX à intégrer)
 // ===============================
 function tauxConversionActuel() {
-    // Pour l'instant : 1 G‑Token = 1 Geo
-    // On mettra ta formule logarithmique plus tard
     return 1;
 }
 
@@ -36,7 +33,7 @@ function calculerBonusGToken() {
 }
 
 // ===============================
-//  PATRIMOINE BOOSTÉ (primes, découvert, conversion)
+//  PATRIMOINE BOOSTÉ
 // ===============================
 function getPatrimoineBoosté() {
     return patrimoineReel + bonusGToken;
@@ -56,7 +53,6 @@ function afficherPatrimoine() {
 
     calculerBonusGToken();
 
-    // --- MONNAIES ---
     document.getElementById("patrimoine-monnaies").innerHTML = `
         <div class="bloc-patrimoine">
             <h3>MONNAIES</h3>
@@ -66,7 +62,6 @@ function afficherPatrimoine() {
         </div>
     `;
 
-    // --- PATRIMOINE GLOBAL ---
     document.getElementById("patrimoine-global").innerHTML = `
         <div class="bloc-patrimoine">
             <h3>PATRIMOINE GLOBAL</h3>
@@ -77,7 +72,6 @@ function afficherPatrimoine() {
         </div>
     `;
 
-    // --- STRUCTURE EMPIRE ---
     document.getElementById("patrimoine-structure").innerHTML = `
         <div class="bloc-patrimoine">
             <h3>STRUCTURE DE L’EMPIRE</h3>
@@ -88,7 +82,6 @@ function afficherPatrimoine() {
         </div>
     `;
 
-    // --- CLASSEMENT ---
     document.getElementById("patrimoine-classement").innerHTML = `
         <div class="bloc-patrimoine">
             <h3>CLASSEMENT (PATRIMOINE RÉEL)</h3>
@@ -96,3 +89,13 @@ function afficherPatrimoine() {
         </div>
     `;
 }
+
+// ===============================
+//  INITIALISATION (APPELÉ PAR LE HTML)
+// ===============================
+export function initPatrimoine() {
+    afficherPatrimoine();
+}
+
+// Pour compatibilité avec ton HTML
+window.initPatrimoine = initPatrimoine;
