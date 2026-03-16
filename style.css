@@ -195,3 +195,33 @@ body {
     transform: translateY(-3px);
     box-shadow: 0 0 18px rgba(0,150,255,0.45);
 }
+/* ===============================
+   BOUTONS ENTREPRISES — PREMIUM
+   =============================== */
+
+#entreprises-menu {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin: 25px 0;
+}
+
+#entreprises-menu button {
+    padding: 16px 26px !important;
+    font-size: 20px !important;
+    font-weight: bold;
+    border-radius: 12px;
+    border: 1px solid rgba(0,150,255,0.45);
+    background: rgba(0,40,70,0.85);
+    color: #d9eaff;
+    cursor: pointer;
+    transition: 0.25s ease;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 0 18px rgba(0,150,255,0.35);
+}
+
+#entreprises-menu button:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 0 25px rgba(0,150,255,0.55);
+}
