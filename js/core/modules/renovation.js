@@ -115,3 +115,4 @@ document.addEventListener("click", e => {
 
     alert(`Rénovation niveau ${niveau} appliquée à ${style}`);
 });
+window.initRenovation = initRenovation;
