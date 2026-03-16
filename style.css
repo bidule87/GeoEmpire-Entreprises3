@@ -314,3 +314,75 @@ header nav a:hover {
     transform: translateY(-3px);
     box-shadow: 0 0 25px rgba(0,150,255,0.55);
 }
+/* ============================================
+   ONGLET ACHETER — REDESIGN PREMIUM
+   ============================================ */
+
+#acheter {
+    max-width: 900px;
+    margin: 20px auto;
+}
+
+/* TITRES DE CATÉGORIES */
+.acheter-categorie {
+    background: rgba(0, 25, 45, 0.75);
+    padding: 18px 20px;
+    margin: 20px 0 10px 0;
+    border-radius: 14px;
+    border: 1px solid rgba(0,150,255,0.45);
+    box-shadow: 0 0 18px rgba(0,150,255,0.35);
+    color: #7ec8ff;
+    font-size: 22px;
+    font-weight: bold;
+    text-shadow: 0 0 8px rgba(0,150,255,0.6);
+    cursor: pointer;
+    transition: 0.25s ease;
+}
+
+.acheter-categorie:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 0 25px rgba(0,150,255,0.55);
+}
+
+/* CONTENU DES BIENS */
+.acheter-liste {
+    padding: 15px 20px;
+    background: rgba(0, 20, 35, 0.65);
+    border-radius: 12px;
+    border: 1px solid rgba(0,150,255,0.25);
+    margin-bottom: 20px;
+    display: block; /* restera ouvert tant qu’on n’active pas l’accordéon */
+}
+
+/* CARTE PREMIUM POUR CHAQUE BIEN */
+.acheter-item {
+    background: rgba(0, 40, 70, 0.65);
+    border: 1px solid rgba(0,150,255,0.35);
+    border-radius: 12px;
+    padding: 18px;
+    margin-bottom: 18px;
+    box-shadow: 0 0 15px rgba(0,150,255,0.25);
+    backdrop-filter: blur(6px);
+}
+
+/* TITRE DU BIEN */
+.acheter-item h3 {
+    margin: 0 0 10px 0;
+    color: #d9eaff;
+    font-size: 20px;
+    text-shadow: 0 0 6px rgba(0,150,255,0.5);
+}
+
+/* STOCK + PRIX */
+.acheter-info {
+    font-size: 17px;
+    color: #aee0ff;
+    margin-bottom: 12px;
+}
+
+/* BOUTONS ACHETER — NON MODIFIÉS, JUSTE ALIGNÉS */
+.acheter-boutons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
