@@ -19,12 +19,14 @@ body {
 
 body.page-entreprises {
     background-image: url("https://i.postimg.cc/NMJjXdVb/Copilot_20260312_161105.png");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
 }
 
-
-
 /* ===============================
-   NAVIGATION PREMIUM
+   NAVIGATION PREMIUM ENTREPRISES
    =============================== */
 
 #nav-premium {
@@ -50,8 +52,6 @@ body.page-entreprises {
     color: white;
     text-shadow: 0 0 8px rgba(0,150,255,0.6);
 }
-
-
 
 /* ===============================
    MENU ENTREPRISES PREMIUM
@@ -81,10 +81,8 @@ body.page-entreprises {
     box-shadow: 0 0 12px rgba(0, 150, 255, 0.4);
 }
 
-
-
 /* ===============================
-   TOPBAR — BLEU FONCÉ LISIBLE
+   TOPBAR
    =============================== */
 
 #topbar {
