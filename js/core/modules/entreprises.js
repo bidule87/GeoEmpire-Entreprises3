@@ -19,7 +19,12 @@ export function initEntreprise() {
         <div class="entreprise-bloc">
 
             <div class="entreprise-photo-section">
-                <img src="${e.logo}" class="entreprise-photo" id="entreprise-photo">
+
+                <!-- ⭐ CADRE AJOUTÉ SANS RIEN CHANGER AU RESTE ⭐ -->
+                <div class="entreprise-photo-frame">
+                    <img src="${e.logo}" class="entreprise-photo" id="entreprise-photo">
+                </div>
+
                 <button id="btn-photo" class="action-btn">Changer la photo</button>
                 <input type="file" id="upload-photo" accept="image/*" style="display:none;">
             </div>
