@@ -12,16 +12,14 @@
     <h1>Entreprises</h1>
     <nav>
         <a href="index.html">Accueil</a>
-        
     </nav>
 </header>
 
 <div id="topbar">
-  <span id="solde">0</span> GEO
+    <span id="solde">0</span> GEO
     | Tokens : <span id="tokens">0</span>
     | Crowns : <span id="crowns">0</span>
 
-    <!-- ⭐ Boutons Cheat -->
     | <button id="btn-cheat-argent" style="padding:2px 6px; font-size:12px;">+1M €</button>
     | <button id="btn-cheat-tokens" style="padding:2px 6px; font-size:12px;">+100 Tokens</button>
     | <button id="btn-cheat-crowns" style="padding:2px 6px; font-size:12px;">+50 Crowns</button>
@@ -99,28 +97,40 @@
 
     document.querySelector('#entreprises-menu button[data-tab="entreprise"]').click();
 
-    // ⭐ Bouton +1M €
     document.getElementById("btn-cheat-argent").addEventListener("click", () => {
         if (window.ge_ajouterArgent) ge_ajouterArgent(1000000);
     });
 
-    // ⭐ Bouton +100 Tokens
     document.getElementById("btn-cheat-tokens").addEventListener("click", () => {
         if (window.ge_ajouterTokens) ge_ajouterTokens(100);
     });
 
-    // ⭐ Bouton +50 Crowns
     document.getElementById("btn-cheat-crowns").addEventListener("click", () => {
         if (window.ge_ajouterCrowns) ge_ajouterCrowns(50);
     });
 </script>
+
+<!-- ⭐ AJOUT ACCORDÉON PREMIUM (RIEN D’AUTRE TOUCHÉ) -->
 <script>
-document.addEventListener("click", (e) => {
-    if (e.target.classList.contains("acheter-categorie")) {
-        const liste = e.target.nextElementSibling;
-        liste.style.display = (liste.style.display === "block") ? "none" : "block";
-    }
+document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll(".categorie-bloc").forEach(bloc => {
+        const h2 = bloc.querySelector("h2");
+
+        const liste = document.createElement("div");
+        liste.className = "liste-biens";
+
+        bloc.querySelectorAll(".bien-item").forEach(item => {
+            liste.appendChild(item);
+        });
+
+        bloc.appendChild(liste);
+
+        h2.addEventListener("click", () => {
+            liste.style.display = (liste.style.display === "block") ? "none" : "block";
+        });
+    });
 });
 </script>
+
 </body>
 </html>
