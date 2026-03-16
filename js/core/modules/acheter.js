@@ -108,3 +108,4 @@ function gererAchat(categorie, style, prix, quantiteDisponible, typeAchat) {
     // Mettre à jour le bilan si présent
     if (window.ge_afficherBilan) window.ge_afficherBilan();
 }
+window.initAcheter = initAcheter;
