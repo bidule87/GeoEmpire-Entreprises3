@@ -1,460 +1,71 @@
-/* ===============================
-   FOND PREMIUM
-   =============================== */
-
-body {
-    background-image: url("https://i.postimg.cc/Hs0s4ctB/OIG1.jpg");
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
-    margin: 0;
-    padding: 0;
-    font-family: Arial, sans-serif;
-}
-
-
-
-/* ===============================
-   HEADER ACCUEIL
-   =============================== */
-
-#header-accueil {
-    text-align: center;
-    padding: 25px 0;
-    color: white;
-    font-size: 32px;
-    font-weight: bold;
-    text-shadow: 0 0 10px rgba(0,0,0,0.6);
-}
-
-
-
-/* ===============================
-   TOPBAR — BLEU FONCÉ LISIBLE
-   =============================== */
-
-#topbar {
-    position: absolute;
-    top: 20px;
-    right: 40px;
-    text-align: right;
-    font-size: 18px;
-    color: #d9eaff;
-
-    padding: 10px 18px;
-    background: rgba(0, 40, 70, 0.85);
-    border-radius: 10px;
-    border: 1px solid rgba(0, 150, 255, 0.25);
-
-    backdrop-filter: blur(6px);
-    box-shadow: 0 0 15px rgba(0, 150, 255, 0.25);
-}
-
-
-
-/* ===============================
-   CONSOLE CENTRALE
-   =============================== */
-
-#console-principale {
-    width: 90%;
-    max-width: 900px;
-    margin: 60px auto;
-    padding: 30px;
-    background: rgba(0, 40, 70, 0.45);
-    border-radius: 14px;
-    border: 1px solid rgba(0, 150, 255, 0.25);
-    backdrop-filter: blur(12px);
-    text-align: center;
-    box-shadow: 0 0 25px rgba(0, 150, 255, 0.15);
-
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-
-
-/* ===============================
-   BOUTONS ACCUEIL
-   =============================== */
-
-#console-boutons {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 18px;
-    margin-bottom: 25px;
-}
-
-.btn-console {
-    padding: 14px 22px;
-    border: none;
-    border-radius: 8px;
-    font-size: 18px;
-    font-weight: bold;
-    cursor: pointer;
-    text-transform: uppercase;
-    transition: 0.25s ease;
-    color: white;
-    min-width: 180px;
-}
-
-/* Couleur harmonisée premium */
-.btn-bleu {
-    background: rgba(0, 60, 110, 0.9);
-}
-
-/* Hover */
-.btn-console:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 0 15px rgba(0, 150, 255, 0.4);
-}
-
-
-
-/* ===============================
-   TEXTE D’ACCUEIL
-   =============================== */
-
-#console-contenu {
-    margin-top: 20px;
-    font-size: 18px;
-    color: #d9eaff;
-}
-
-
-
-/* ===============================
-   HUD (BILAN RAPIDE) — BLEU FONCÉ PREMIUM
-   =============================== */
-
-#bilan-rapide {
-    position: absolute;
-    top: 20px;
-    right: 40px;
-    text-align: right;
-    color: #d9eaff;
-    font-size: 18px;
-    line-height: 1.4;
-    padding: 10px 18px;
-
-    background: rgba(0, 40, 70, 0.75);
-    border: 1px solid rgba(0, 150, 255, 0.25);
-    border-radius: 10px;
-
-    backdrop-filter: blur(6px);
-    box-shadow: 0 0 15px rgba(0, 150, 255, 0.25);
-}
-
-#bilan-rapide p {
-    margin: 0;
-    padding: 0;
-}
-.entreprise-photo-frame {
-    width: 120px;
-    height: 120px;
-    border-radius: 12px;
-    overflow: hidden;
-    background: #1a1a1a;
-    border: 2px solid rgba(255,255,255,0.15);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 10px;
-}
-
-.entreprise-photo-frame img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-#entreprises-menu {
-    display: flex;
-    justify-content: center;
-    gap: 12px;
-    margin: 25px 0;
-}
-
-#entreprises-menu button {
-    padding: 14px 22px;
-    font-size: 18px;
-    font-weight: bold;
-    border-radius: 10px;
-    border: 1px solid rgba(0,150,255,0.35);
-    background: rgba(0,40,70,0.75);
-    color: #d9eaff;
-    cursor: pointer;
-    transition: 0.25s ease;
-    backdrop-filter: blur(6px);
-    box-shadow: 0 0 12px rgba(0,150,255,0.25);
-}
-
-#entreprises-menu button:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 0 18px rgba(0,150,255,0.45);
-}
-/* ===============================
-   BOUTONS ENTREPRISES — PREMIUM
-   =============================== */
-
-#entreprises-menu {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 14px;
-    margin: 25px 0;
-}
-
-#entreprises-menu button {
-    padding: 16px 26px !important;
-    font-size: 20px !important;
-    font-weight: bold;
-    border-radius: 12px;
-    border: 1px solid rgba(0,150,255,0.45);
-    background: rgba(0,40,70,0.85);
-    color: #d9eaff;
-    cursor: pointer;
-    transition: 0.25s ease;
-    backdrop-filter: blur(8px);
-    box-shadow: 0 0 18px rgba(0,150,255,0.35);
-}
-
-#entreprises-menu button:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 0 25px rgba(0,150,255,0.55);
-}
-/* ===============================
-   BOUTON ACCUEIL — PREMIUM
-   =============================== */
-
-header nav a {
-    display: inline-block !important;
-    padding: 14px 26px !important;
-    font-size: 20px !important;
-    font-weight: bold !important;
-    border-radius: 12px !important;
-    background: rgba(0,40,70,0.85) !important;
-    color: #d9eaff !important;
-    border: 1px solid rgba(0,150,255,0.45) !important;
-    text-decoration: none !important;
-    transition: 0.25s ease !important;
-    backdrop-filter: blur(8px) !important;
-    box-shadow: 0 0 18px rgba(0,150,255,0.35) !important;
-}
-
-header nav a:hover {
-    transform: translateY(-4px) !important;
-    box-shadow: 0 0 25px rgba(0,150,255,0.55) !important;
-}
 /* ============================================
-   BLOC INFORMATIONS ENTREPRISE — PREMIUM
+   ONGLET ACHETER — PREMIUM COMPATIBLE
    ============================================ */
 
-#entreprise {
-    max-width: 600px;
-    margin: 30px auto;
-    padding: 25px;
+/* BLOC DE CATÉGORIE */
+.categorie-bloc {
     background: rgba(0, 25, 45, 0.75);
-    border-radius: 15px;
-    border: 1px solid rgba(0,150,255,0.35);
-    box-shadow: 0 0 25px rgba(0,150,255,0.25);
+    padding: 22px;
+    margin: 28px 0;
+    border-radius: 16px;
+    border: 1px solid rgba(0,150,255,0.45);
+    box-shadow: 0 0 25px rgba(0,150,255,0.35);
     backdrop-filter: blur(8px);
-    color: #d9eaff;
-    font-size: 18px;
 }
 
-#entreprise h2 {
-    text-align: center;
+/* TITRE DE CATÉGORIE */
+.categorie-bloc > h2 {
+    margin: 0 0 20px 0;
     font-size: 26px;
-    margin-bottom: 20px;
     color: #7ec8ff;
-    text-shadow: 0 0 8px rgba(0,150,255,0.6);
-}
-
-#entreprise label {
-    display: block;
-    margin-top: 15px;
-    font-weight: bold;
-    color: #aee0ff;
-    font-size: 17px;
-}
-
-#entreprise input[type="text"],
-#entreprise input[type="number"],
-#entreprise select {
-    width: 100%;
-    padding: 12px;
-    margin-top: 6px;
-    border-radius: 10px;
-    border: 1px solid rgba(0,150,255,0.35);
-    background: rgba(0,40,70,0.65);
-    color: #d9eaff;
-    font-size: 17px;
-    box-shadow: inset 0 0 8px rgba(0,150,255,0.25);
-}
-
-#entreprise button {
-    margin-top: 20px;
-    width: 100%;
-    padding: 14px;
-    font-size: 18px;
-    font-weight: bold;
-    border-radius: 12px;
-    background: rgba(0,60,110,0.85);
-    color: #d9eaff;
-    border: 1px solid rgba(0,150,255,0.45);
-    cursor: pointer;
-    transition: 0.25s ease;
-    box-shadow: 0 0 15px rgba(0,150,255,0.35);
-}
-
-#entreprise button:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 0 25px rgba(0,150,255,0.55);
-}
-/* ============================================
-   ONGLET ACHETER — REDESIGN PREMIUM
-   ============================================ */
-
-#acheter {
-    max-width: 900px;
-    margin: 20px auto;
-}
-
-/* TITRES DE CATÉGORIES */
-.acheter-categorie {
-    background: rgba(0, 25, 45, 0.75);
-    padding: 18px 20px;
-    margin: 20px 0 10px 0;
-    border-radius: 14px;
-    border: 1px solid rgba(0,150,255,0.45);
-    box-shadow: 0 0 18px rgba(0,150,255,0.35);
-    color: #7ec8ff;
-    font-size: 22px;
-    font-weight: bold;
-    text-shadow: 0 0 8px rgba(0,150,255,0.6);
+    text-shadow: 0 0 10px rgba(0,150,255,0.6);
     cursor: pointer;
     transition: 0.25s ease;
 }
 
-.acheter-categorie:hover {
+.categorie-bloc > h2:hover {
     transform: translateY(-3px);
-    box-shadow: 0 0 25px rgba(0,150,255,0.55);
+    text-shadow: 0 0 15px rgba(0,150,255,0.9);
 }
 
-/* CONTENU DES BIENS */
-.acheter-liste {
-    padding: 15px 20px;
-    background: rgba(0, 20, 35, 0.65);
-    border-radius: 12px;
-    border: 1px solid rgba(0,150,255,0.25);
-    margin-bottom: 20px;
-    display: block; /* restera ouvert tant qu’on n’active pas l’accordéon */
+/* LISTE DES BIENS — FERMÉE PAR DÉFAUT */
+.categorie-bloc .liste-biens {
+    display: none;
+    padding-top: 10px;
 }
 
 /* CARTE PREMIUM POUR CHAQUE BIEN */
-.acheter-item {
+.bien-item {
     background: rgba(0, 40, 70, 0.65);
     border: 1px solid rgba(0,150,255,0.35);
-    border-radius: 12px;
+    border-radius: 14px;
     padding: 18px;
     margin-bottom: 18px;
-    box-shadow: 0 0 15px rgba(0,150,255,0.25);
+    box-shadow: 0 0 18px rgba(0,150,255,0.25);
     backdrop-filter: blur(6px);
 }
 
-/* TITRE DU BIEN */
-.acheter-item h3 {
-    margin: 0 0 10px 0;
-    color: #d9eaff;
+/* NOM DU BIEN */
+.bien-nom {
     font-size: 20px;
+    font-weight: bold;
+    color: #d9eaff;
+    margin-bottom: 8px;
     text-shadow: 0 0 6px rgba(0,150,255,0.5);
 }
 
 /* STOCK + PRIX */
-.acheter-info {
+.bien-quantite,
+.bien-prix {
     font-size: 17px;
     color: #aee0ff;
-    margin-bottom: 12px;
+    margin-bottom: 6px;
 }
 
 /* BOUTONS ACHETER — NON MODIFIÉS, JUSTE ALIGNÉS */
-.acheter-boutons {
+.achat-boutons {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
-}
-/* ============================================
-   ONGLET ACHETER — PREMIUM + ACCORDÉON
-   ============================================ */
-
-#acheter {
-    max-width: 900px;
-    margin: 20px auto;
-}
-
-/* TITRE DE CATÉGORIE (FERMÉ PAR DÉFAUT) */
-.acheter-categorie {
-    background: rgba(0, 25, 45, 0.75);
-    padding: 18px 20px;
-    margin: 20px 0 10px 0;
-    border-radius: 14px;
-    border: 1px solid rgba(0,150,255,0.45);
-    box-shadow: 0 0 18px rgba(0,150,255,0.35);
-    color: #7ec8ff;
-    font-size: 22px;
-    font-weight: bold;
-    text-shadow: 0 0 8px rgba(0,150,255,0.6);
-    cursor: pointer;
-    transition: 0.25s ease;
-}
-
-.acheter-categorie:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 0 25px rgba(0,150,255,0.55);
-}
-
-/* CONTENU DES BIENS — FERMÉ PAR DÉFAUT */
-.acheter-liste {
-    padding: 15px 20px;
-    background: rgba(0, 20, 35, 0.65);
-    border-radius: 12px;
-    border: 1px solid rgba(0,150,255,0.25);
-    margin-bottom: 20px;
-    display: none; /* FERMÉ PAR DÉFAUT */
-}
-
-/* CARTE PREMIUM POUR CHAQUE BIEN */
-.acheter-item {
-    background: rgba(0, 40, 70, 0.65);
-    border: 1px solid rgba(0,150,255,0.35);
-    border-radius: 12px;
-    padding: 18px;
-    margin-bottom: 18px;
-    box-shadow: 0 0 15px rgba(0,150,255,0.25);
-    backdrop-filter: blur(6px);
-}
-
-/* TITRE DU BIEN */
-.acheter-item h3 {
-    margin: 0 0 10px 0;
-    color: #d9eaff;
-    font-size: 20px;
-    text-shadow: 0 0 6px rgba(0,150,255,0.5);
-}
-
-/* STOCK + PRIX */
-.acheter-info {
-    font-size: 17px;
-    color: #aee0ff;
-    margin-bottom: 12px;
-}
-
-/* BOUTONS ACHETER — NON MODIFIÉS, JUSTE ALIGNÉS */
-.acheter-boutons {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
+    margin-top: 12px;
 }
