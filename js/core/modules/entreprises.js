@@ -6,7 +6,6 @@ import {
     calculerValeurEntreprise 
 } from "../entrepriseCore.js";
 
-// AJOUT — Import des modules Marketing + Gestion
 import { initMarketing } from "./marketing.js";
 import { initGestion } from "./gestion.js";
 
@@ -43,14 +42,12 @@ export function initEntreprise() {
         </div>
     `;
 
-    // --- Changer le nom ---
     document.getElementById("btn-save-nom").onclick = () => {
         const nouveauNom = document.getElementById("nom-entreprise").value;
         changerNomEntreprise(nouveauNom);
         initEntreprise();
     };
 
-    // --- Changer la photo ---
     document.getElementById("btn-photo").onclick = () => {
         document.getElementById("upload-photo").click();
     };
@@ -67,7 +64,6 @@ export function initEntreprise() {
         reader.readAsDataURL(file);
     };
 
-    // AJOUT — Initialisation automatique des modules Marketing + Gestion
     if (document.getElementById("marketing")) {
         initMarketing();
     }
@@ -76,3 +72,6 @@ export function initEntreprise() {
         initGestion();
     }
 }
+
+// ⭐ AJOUT ESSENTIEL ⭐
+window.initEntreprise = initEntreprise;
