@@ -42,6 +42,29 @@ export function ge_ajouterArgent(montant) {
     addArgent(montant);
     ge_afficherBilan();
 }
+window.ge_ajouterArgent = ge_ajouterArgent;
+
+// ===============================
+//  AJOUTER TOKENS
+// ===============================
+export function ge_ajouterTokens(montant) {
+    const e = getData().entreprise;
+    e.tokens = (e.tokens || 0) + montant;
+    saveData();
+    ge_afficherBilan();
+}
+window.ge_ajouterTokens = ge_ajouterTokens;
+
+// ===============================
+//  AJOUTER CROWNS
+// ===============================
+export function ge_ajouterCrowns(montant) {
+    const e = getData().entreprise;
+    e.crowns = (e.crowns || 0) + montant;
+    saveData();
+    ge_afficherBilan();
+}
+window.ge_ajouterCrowns = ge_ajouterCrowns;
 
 // ===============================
 //  RETIRER ARGENT
