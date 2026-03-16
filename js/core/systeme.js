@@ -4,6 +4,7 @@
 // ===============================
 
 import { getData, saveData, addArgent, removeArgent } from "./geoData.js";
+import { initImmoCore } from "./modules/immo-core.js"; // AJOUT
 
 // ===============================
 //  INITIALISATION ENTREPRISE (AJOUT)
@@ -11,7 +12,6 @@ import { getData, saveData, addArgent, removeArgent } from "./geoData.js";
 const data = getData();
 const e = data.entreprise;
 
-// Si l'entreprise n'a jamais été initialisée, on la crée proprement
 if (!e.dateCreation) {
     e.dateCreation = Date.now();
     e.nom = e.nom || "Nouvelle Entreprise";
@@ -61,6 +61,7 @@ export function ge_retirerArgent(montant) {
 // ===============================
 export function ge_initialiser() {
     ge_afficherBilan();
+    initImmoCore(); // AJOUT
     console.log("GeoEmpire 3 initialisé (version geoData).");
 }
 
