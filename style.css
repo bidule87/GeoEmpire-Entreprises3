@@ -1,9 +1,9 @@
 /* ===============================
-   FOND PREMIUM ENTREPRISES
+   FOND ACCUEIL (PAR DÉFAUT)
    =============================== */
 
 body {
-    background-image: url("https://i.postimg.cc/NMJjXdVb/Copilot_20260312_161105.png");
+    background-image: url("https://i.postimg.cc/yxMmgpyR/OIG1.jpg");
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -11,6 +11,14 @@ body {
     margin: 0;
     padding: 0;
     font-family: Arial, sans-serif;
+}
+
+/* ===============================
+   FOND PREMIUM ENTREPRISES
+   =============================== */
+
+body.page-entreprises {
+    background-image: url("https://i.postimg.cc/NMJjXdVb/Copilot_20260312_161105.png");
 }
 
 
