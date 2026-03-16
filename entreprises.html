@@ -25,6 +25,11 @@
     <span id="solde">0</span> €
     | Tokens : <span id="tokens">0</span>
     | Crowns : <span id="crowns">0</span>
+
+    <!-- ⭐ Boutons Cheat -->
+    | <button id="btn-cheat-argent" style="padding:2px 6px; font-size:12px;">+1M €</button>
+    | <button id="btn-cheat-tokens" style="padding:2px 6px; font-size:12px;">+100 Tokens</button>
+    | <button id="btn-cheat-crowns" style="padding:2px 6px; font-size:12px;">+50 Crowns</button>
 </div>
 
 <!-- MENU ENTREPRISES -->
@@ -34,7 +39,6 @@
     <button data-tab="assurances">Assurances</button>
     <button data-tab="renovation">Rénovation</button>
     <button data-tab="proprietes">Propriétés</button>
-    <!-- Actionnaires retiré du menu -->
     <button data-tab="personnel">Personnel</button>
     <button data-tab="patrimoine">Patrimoine</button>
 </div>
@@ -42,26 +46,20 @@
 <!-- CONTENU DES MODULES -->
 <main id="entreprises-container">
 
-   <div id="entreprise" class="tab"></div>
+    <div id="entreprise" class="tab"></div>
+    <div id="acheter" class="tab" style="display:none;"></div>
+    <div id="assurances" class="tab" style="display:none;"></div>
+    <div id="renovation" class="tab" style="display:none;"></div>
+    <div id="proprietes" class="tab" style="display:none;"></div>
+    <div id="personnel" class="tab" style="display:none;"></div>
+    <div id="actionnaires" class="tab" style="display:none;"></div>
 
-<div id="acheter" class="tab" style="display:none;"></div>
-
-<div id="assurances" class="tab" style="display:none;"></div>
-
-<div id="renovation" class="tab" style="display:none;"></div>
-
-<div id="proprietes" class="tab" style="display:none;"></div>
-
-<div id="personnel" class="tab" style="display:none;"></div>
-
-<div id="actionnaires" class="tab" style="display:none;"></div>
-
-<div id="patrimoine" class="tab" style="display:none;">
-    <div id="patrimoine-monnaies"></div>
-    <div id="patrimoine-global"></div>
-    <div id="patrimoine-structure"></div>
-    <div id="patrimoine-classement"></div>
-</div>
+    <div id="patrimoine" class="tab" style="display:none;">
+        <div id="patrimoine-monnaies"></div>
+        <div id="patrimoine-global"></div>
+        <div id="patrimoine-structure"></div>
+        <div id="patrimoine-classement"></div>
+    </div>
 
 </main>
 
@@ -105,6 +103,21 @@
     });
 
     document.querySelector('#entreprises-menu button[data-tab="entreprise"]').click();
+
+    // ⭐ Bouton +1M €
+    document.getElementById("btn-cheat-argent").addEventListener("click", () => {
+        if (window.ge_ajouterArgent) ge_ajouterArgent(1000000);
+    });
+
+    // ⭐ Bouton +100 Tokens
+    document.getElementById("btn-cheat-tokens").addEventListener("click", () => {
+        if (window.ge_ajouterTokens) ge_ajouterTokens(100);
+    });
+
+    // ⭐ Bouton +50 Crowns
+    document.getElementById("btn-cheat-crowns").addEventListener("click", () => {
+        if (window.ge_ajouterCrowns) ge_ajouterCrowns(50);
+    });
 </script>
 
 </body>
