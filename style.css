@@ -1,9 +1,9 @@
 /* ===============================
-   FOND PREMIUM
+   FOND PREMIUM ENTREPRISES
    =============================== */
 
 body {
-    background-image: url("https://i.postimg.cc/Hs0s4ctB/OIG1.jpg");
+    background-image: url("https://i.postimg.cc/NMJjXdVb/Copilot_20260312_161105.png");
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -16,16 +16,61 @@ body {
 
 
 /* ===============================
-   HEADER ACCUEIL
+   NAVIGATION PREMIUM
    =============================== */
 
-#header-accueil {
-    text-align: center;
-    padding: 25px 0;
-    color: white;
-    font-size: 32px;
+#nav-premium {
+    display: flex;
+    justify-content: center;
+    gap: 18px;
+    padding: 14px 0;
+    background: rgba(0, 40, 70, 0.75);
+    border-bottom: 1px solid rgba(0, 150, 255, 0.25);
+    backdrop-filter: blur(6px);
+}
+
+#nav-premium a {
+    color: #d9eaff;
+    text-decoration: none;
+    font-size: 18px;
     font-weight: bold;
-    text-shadow: 0 0 10px rgba(0,0,0,0.6);
+    padding: 8px 14px;
+    transition: 0.25s ease;
+}
+
+#nav-premium a:hover {
+    color: white;
+    text-shadow: 0 0 8px rgba(0,150,255,0.6);
+}
+
+
+
+/* ===============================
+   MENU ENTREPRISES PREMIUM
+   =============================== */
+
+.menu-premium {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    padding: 20px 0;
+}
+
+.menu-premium button {
+    padding: 12px 20px;
+    background: rgba(0, 60, 110, 0.85);
+    border: 1px solid rgba(0, 150, 255, 0.25);
+    border-radius: 8px;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.25s ease;
+}
+
+.menu-premium button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 0 12px rgba(0, 150, 255, 0.4);
 }
 
 
@@ -49,106 +94,4 @@ body {
 
     backdrop-filter: blur(6px);
     box-shadow: 0 0 15px rgba(0, 150, 255, 0.25);
-}
-
-
-
-/* ===============================
-   CONSOLE CENTRALE
-   =============================== */
-
-#console-principale {
-    width: 90%;
-    max-width: 900px;
-    margin: 60px auto;
-    padding: 30px;
-    background: rgba(0, 40, 70, 0.45);
-    border-radius: 14px;
-    border: 1px solid rgba(0, 150, 255, 0.25);
-    backdrop-filter: blur(12px);
-    text-align: center;
-    box-shadow: 0 0 25px rgba(0, 150, 255, 0.15);
-
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-
-
-/* ===============================
-   BOUTONS ACCUEIL
-   =============================== */
-
-#console-boutons {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 18px;
-    margin-bottom: 25px;
-}
-
-.btn-console {
-    padding: 14px 22px;
-    border: none;
-    border-radius: 8px;
-    font-size: 18px;
-    font-weight: bold;
-    cursor: pointer;
-    text-transform: uppercase;
-    transition: 0.25s ease;
-    color: white;
-    min-width: 180px;
-}
-
-/* Couleur harmonisée premium */
-.btn-bleu {
-    background: rgba(0, 60, 110, 0.9);
-}
-
-/* Hover */
-.btn-console:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 0 15px rgba(0, 150, 255, 0.4);
-}
-
-
-
-/* ===============================
-   TEXTE D’ACCUEIL
-   =============================== */
-
-#console-contenu {
-    margin-top: 20px;
-    font-size: 18px;
-    color: #d9eaff;
-}
-
-
-
-/* ===============================
-   HUD (BILAN RAPIDE) — BLEU FONCÉ PREMIUM
-   =============================== */
-
-#bilan-rapide {
-    position: absolute;
-    top: 20px;
-    right: 40px;
-    text-align: right;
-    color: #d9eaff;
-    font-size: 18px;
-    line-height: 1.4;
-    padding: 10px 18px;
-
-    background: rgba(0, 40, 70, 0.75);
-    border: 1px solid rgba(0, 150, 255, 0.25);
-    border-radius: 10px;
-
-    backdrop-filter: blur(6px);
-    box-shadow: 0 0 15px rgba(0, 150, 255, 0.25);
-}
-
-#bilan-rapide p {
-    margin: 0;
-    padding: 0;
 }
