@@ -99,3 +99,4 @@ document.addEventListener("click", e => {
 
     alert(`Assurance "${type}" appliquée à ${style}`);
 });
+window.initAssurances = initAssurances;
