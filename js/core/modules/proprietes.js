@@ -82,3 +82,4 @@ function afficherProprietes() {
         container.appendChild(bloc);
     }
 }
+window.initProprietes = initProprietes;
