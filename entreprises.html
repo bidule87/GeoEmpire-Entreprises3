@@ -114,6 +114,13 @@
         if (window.ge_ajouterCrowns) ge_ajouterCrowns(50);
     });
 </script>
-
+<script>
+document.addEventListener("click", (e) => {
+    if (e.target.classList.contains("acheter-categorie")) {
+        const liste = e.target.nextElementSibling;
+        liste.style.display = (liste.style.display === "block") ? "none" : "block";
+    }
+});
+</script>
 </body>
 </html>
