@@ -61,3 +61,4 @@ export function initPersonnel() {
         initPersonnel();
     };
 }
+window.initPersonnel = initPersonnel;
