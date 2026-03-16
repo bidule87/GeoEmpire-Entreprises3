@@ -6,6 +6,21 @@
 import { getData, saveData, addArgent, removeArgent } from "./geoData.js";
 
 // ===============================
+//  INITIALISATION ENTREPRISE (AJOUT)
+// ===============================
+const data = getData();
+const e = data.entreprise;
+
+// Si l'entreprise n'a jamais été initialisée, on la crée proprement
+if (!e.dateCreation) {
+    e.dateCreation = Date.now();
+    e.nom = e.nom || "Nouvelle Entreprise";
+    e.type = e.type || "Société Générale";
+    e.logo = e.logo || "";
+    saveData();
+}
+
+// ===============================
 //  BARRE DU HAUT
 // ===============================
 export function ge_afficherBilan() {
