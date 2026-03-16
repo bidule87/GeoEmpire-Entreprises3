@@ -170,3 +170,28 @@ body {
     height: 100%;
     object-fit: cover;
 }
+#entreprises-menu {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin: 25px 0;
+}
+
+#entreprises-menu button {
+    padding: 14px 22px;
+    font-size: 18px;
+    font-weight: bold;
+    border-radius: 10px;
+    border: 1px solid rgba(0,150,255,0.35);
+    background: rgba(0,40,70,0.75);
+    color: #d9eaff;
+    cursor: pointer;
+    transition: 0.25s ease;
+    backdrop-filter: blur(6px);
+    box-shadow: 0 0 12px rgba(0,150,255,0.25);
+}
+
+#entreprises-menu button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 0 18px rgba(0,150,255,0.45);
+}
