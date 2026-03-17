@@ -566,10 +566,10 @@ header nav a:hover {
     box-shadow: 0 0 20px rgba(0,150,255,0.55);
 }
 /* ============================================
-   PROPRIÉTÉS — LISIBILITÉ DU TEXTE
+   PROPRIÉTÉS — FORCER LE TEXTE EN BLANC
    ============================================ */
 
-.proprietes-item,
-.proprietes-item * {
+#proprietes,
+#proprietes * {
     color: #ffffff !important;
 }
