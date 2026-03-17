@@ -364,3 +364,73 @@ header nav a:hover {
     transform: translateY(-3px);
     box-shadow: 0 0 20px rgba(0,150,255,0.55);
 }
+/* ============================================
+   ACHETER — SCROLL INTERNE PREMIUM
+   ============================================ */
+
+#acheter {
+    max-height: 70vh;      /* hauteur visible */
+    overflow-y: auto;      /* scroll vertical interne */
+    padding-right: 10px;   /* évite que le scroll colle au bord */
+    scrollbar-width: thin; /* scroll fin (Firefox) */
+}
+
+/* Scrollbar premium (Chrome / Edge) */
+#acheter::-webkit-scrollbar {
+    width: 8px;
+}
+
+#acheter::-webkit-scrollbar-track {
+    background: rgba(0, 20, 40, 0.4);
+    border-radius: 10px;
+}
+
+#acheter::-webkit-scrollbar-thumb {
+    background: rgba(0,150,255,0.45);
+    border-radius: 10px;
+}
+
+#acheter::-webkit-scrollbar-thumb:hover {
+    background: rgba(0,150,255,0.65);
+}
+/* ============================================
+   BOUTON CHANGER DE VUE — PREMIUM
+   ============================================ */
+
+.btn-switch {
+    display: block;
+    margin: 0 auto 20px auto;
+    padding: 12px 20px;
+    font-size: 18px;
+    font-weight: bold;
+    border-radius: 10px;
+    background: rgba(0,60,110,0.85);
+    color: #d9eaff;
+    border: 1px solid rgba(0,150,255,0.45);
+    cursor: pointer;
+    transition: 0.25s ease;
+    box-shadow: 0 0 15px rgba(0,150,255,0.35);
+}
+
+.btn-switch:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 0 25px rgba(0,150,255,0.55);
+}
+/* ============================================
+   MODE COMPACT — SECOND VISUEL
+   ============================================ */
+
+.mode-compact {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+}
+
+.mode-compact .bien-nom {
+    font-size: 18px;
+}
+
+.mode-compact .achat-boutons {
+    gap: 5px;
+}
