@@ -4,13 +4,13 @@
 // ===============================
 
 // --- MONNAIES ---
-let geo = 0;            // Monnaie principale
-let gtoken = 0;         // Monnaie premium patrimoniale
-let crowns = 0;         // Monnaie de la loterie
+let geo = 0;
+let gtoken = 0;
+let crowns = 0;
 
 // --- PATRIMOINE ---
-let patrimoineReel = 0;        // Utilisé pour le classement
-let bonusGToken = 0;           // Boost patrimonial (n'influence PAS le classement)
+let patrimoineReel = 0;
+let bonusGToken = 0;
 
 // --- STRUCTURE EMPIRE ---
 let structureEmpire = {
@@ -91,11 +91,23 @@ function afficherPatrimoine() {
 }
 
 // ===============================
-//  INITIALISATION (APPELÉ PAR LE HTML)
+//  INITIALISATION
 // ===============================
 export function initPatrimoine() {
+
+    const zone = document.getElementById("patrimoine");
+
+    zone.innerHTML = `
+        <h2>Patrimoine</h2>
+        <div class="patrimoine-bloc">
+            <div id="patrimoine-monnaies"></div>
+            <div id="patrimoine-global"></div>
+            <div id="patrimoine-structure"></div>
+            <div id="patrimoine-classement"></div>
+        </div>
+    `;
+
     afficherPatrimoine();
 }
 
-// Pour compatibilité avec ton HTML
 window.initPatrimoine = initPatrimoine;
