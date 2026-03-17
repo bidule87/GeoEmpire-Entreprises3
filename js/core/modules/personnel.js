@@ -27,10 +27,12 @@ export function initPersonnel() {
     }
 
     const p = e.personnel;
-    const patrimoine = e.patrimoineGlobal || 0; // selon ton système
-const primeMax = Math.floor(patrimoine * 0.10);
 
-    // === HTML AVEC MENU DÉROULANT ===
+    // 🔵 RÉCUPÉRATION DU PATRIMOINE + CALCUL DES 10 %
+    const patrimoine = e.patrimoineGlobal || 0;
+    const primeMax = Math.floor(patrimoine * 0.10);
+
+    // === HTML AVEC MENU DÉROULANT + PRIME MAX ===
     zone.innerHTML = `
         <h2>Personnel</h2>
 
@@ -50,18 +52,26 @@ const primeMax = Math.floor(patrimoine * 0.10);
             <input type="number" id="perso-salaire" class="input-text" value="${p.salaire}">
 
             <label>Prime :</label>
-            <input type="number" id="perso-prime" class="input-text" value="${p.prime}">
+            <div class="prime-ligne">
+                <input type="number" id="perso-prime" class="input-text" value="${p.prime}">
+                <button id="prime-max" class="action-btn btn-louer" style="margin-left:10px;">→</button>
+            </div>
+
+            <p class="prime-info">Maximum autorisé : ${primeMax} €</p>
 
             <button id="perso-save" class="action-btn btn-louer">Enregistrer</button>
         </div>
     `;
-document.getElementById("prime-max").onclick = () => {
-    document.getElementById("perso-prime").value = primeMax;
-};
+
+    // 🔵 BOUTON → POUR METTRE LE MAX DES 10 %
+    document.getElementById("prime-max").onclick = () => {
+        document.getElementById("perso-prime").value = primeMax;
+    };
+
     // === SAUVEGARDE ===
     document.getElementById("perso-save").onclick = () => {
         p.nom = document.getElementById("perso-nom").value;
-        p.poste = document.getElementById("perso-poste").value; // <-- MENU DÉROULANT
+        p.poste = document.getElementById("perso-poste").value;
         p.salaire = parseInt(document.getElementById("perso-salaire").value);
         p.prime = parseInt(document.getElementById("perso-prime").value);
 
