@@ -99,6 +99,7 @@ export function initPatrimoine() {
 
     zone.innerHTML = `
         <h2>Patrimoine</h2>
+
         <div class="patrimoine-bloc">
             <div id="patrimoine-monnaies"></div>
             <div id="patrimoine-global"></div>
