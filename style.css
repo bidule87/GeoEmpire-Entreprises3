@@ -681,3 +681,12 @@ header nav a:hover {
     background: #003a70;
     color: white;
 }
+#patrimoine .patrimoine-bloc {
+    background: rgba(0, 80, 160, 0.6);
+    padding: 20px;
+    border-radius: 10px;
+    color: white;
+}
+#patrimoine .patrimoine-bloc div {
+    margin-bottom: 20px;
+}
