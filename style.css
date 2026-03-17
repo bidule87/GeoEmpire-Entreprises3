@@ -602,3 +602,60 @@ header nav a:hover {
 #proprietes .bien-item * {
     color: #ffffff !important;
 }
+#personnel {
+    padding: 20px;
+}
+
+#personnel h2 {
+    font-size: 26px;
+    margin-bottom: 20px;
+    color: #fff;
+}
+
+.perso-bloc {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    padding: 20px;
+    max-width: 450px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.perso-bloc label {
+    font-size: 15px;
+    color: #ddd;
+    margin-bottom: -8px;
+}
+
+.input-text {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: none;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    font-size: 15px;
+}
+
+.input-text:focus {
+    outline: 2px solid #4da3ff;
+}
+
+#perso-save {
+    margin-top: 10px;
+    padding: 12px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #4da3ff, #0066ff);
+    border: none;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+#perso-save:hover {
+    transform: scale(1.03);
+    background: linear-gradient(135deg, #6bb4ff, #1a7aff);
+}
