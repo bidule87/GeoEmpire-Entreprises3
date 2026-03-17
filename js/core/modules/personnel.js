@@ -27,6 +27,8 @@ export function initPersonnel() {
     }
 
     const p = e.personnel;
+    const patrimoine = e.patrimoineGlobal || 0; // selon ton système
+const primeMax = Math.floor(patrimoine * 0.10);
 
     // === HTML AVEC MENU DÉROULANT ===
     zone.innerHTML = `
@@ -53,7 +55,9 @@ export function initPersonnel() {
             <button id="perso-save" class="action-btn btn-louer">Enregistrer</button>
         </div>
     `;
-
+document.getElementById("prime-max").onclick = () => {
+    document.getElementById("perso-prime").value = primeMax;
+};
     // === SAUVEGARDE ===
     document.getElementById("perso-save").onclick = () => {
         p.nom = document.getElementById("perso-nom").value;
