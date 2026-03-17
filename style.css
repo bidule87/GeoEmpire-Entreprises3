@@ -509,3 +509,59 @@ header nav a:hover {
     font-size: 18px;
     margin-bottom: 10px;
 }
+/* ============================================
+   RENOVATION — MODULE PREMIUM
+   ============================================ */
+
+.renov-bloc {
+    background: rgba(0, 25, 45, 0.75);
+    border: 1px solid rgba(0,150,255,0.35);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 35px;
+    box-shadow: 0 0 25px rgba(0,150,255,0.25);
+    backdrop-filter: blur(8px);
+    color: #d9eaff;
+}
+
+.renov-bloc h2 {
+    font-size: 26px;
+    margin-bottom: 20px;
+    text-align: center;
+    color: #7ec8ff;
+    text-shadow: 0 0 8px rgba(0,150,255,0.6);
+}
+
+.renov-item {
+    background: rgba(0, 40, 70, 0.65);
+    border: 1px solid rgba(0,150,255,0.35);
+    border-radius: 12px;
+    padding: 18px;
+    margin-bottom: 18px;
+    box-shadow: 0 0 15px rgba(0,150,255,0.25);
+    backdrop-filter: blur(6px);
+}
+
+.renov-niveau {
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+
+.renov-item button {
+    padding: 10px 16px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 10px;
+    border: 1px solid rgba(0,150,255,0.45);
+    background: rgba(0,60,110,0.85);
+    color: #d9eaff;
+    cursor: pointer;
+    transition: 0.25s ease;
+    box-shadow: 0 0 12px rgba(0,150,255,0.35);
+    margin-right: 10px;
+}
+
+.renov-item button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 0 20px rgba(0,150,255,0.55);
+}
