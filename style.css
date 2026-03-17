@@ -659,3 +659,25 @@ header nav a:hover {
     transform: scale(1.03);
     background: linear-gradient(135deg, #6bb4ff, #1a7aff);
 }
+#personnel .perso-bloc label,
+#personnel .perso-bloc input,
+#personnel .perso-bloc select {
+    color: white;
+}
+#personnel .perso-bloc {
+    background: rgba(0, 80, 160, 0.6);
+    padding: 20px;
+    border-radius: 10px;
+}
+#personnel select {
+    background: rgba(0, 0, 0, 0.4);
+    color: white;
+    padding: 8px;
+    border-radius: 6px;
+    width: 100%;
+    font-size: 16px;
+}
+#personnel select option {
+    background: #003a70;
+    color: white;
+}
