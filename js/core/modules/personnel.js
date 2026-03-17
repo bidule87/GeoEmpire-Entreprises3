@@ -1,6 +1,5 @@
 // =======================================
 // GEO EMPIRE — MODULE PERSONNEL
-// Compatible geoData + entrepriseCore
 // =======================================
 
 import {
@@ -14,12 +13,11 @@ export function initPersonnel() {
     const zone = document.getElementById("personnel");
     const e = getEntreprise();
 
-    // Si le joueur n'existe pas encore, on le crée
+    // Création si inexistant
     if (!e.personnel) {
         e.personnel = {
             nom: "Joueur",
             poste: "Directeur Général",
-            salaire: 5000,
             prime: 0
         };
         sauvegarderEntreprise(e);
@@ -32,7 +30,7 @@ export function initPersonnel() {
     const patrimoine = e.patrimoineGlobal || 0;
     const primeMax = Math.floor(patrimoine * 0.10);
 
-    // === HTML AVEC MENU DÉROULANT + PRIME MAX ===
+    // === HTML SANS SALAIRE ===
     zone.innerHTML = `
         <h2>Personnel</h2>
 
@@ -48,9 +46,6 @@ export function initPersonnel() {
                 <option value="Directeur Commercial" ${p.poste === "Directeur Commercial" ? "selected" : ""}>Directeur Commercial</option>
             </select>
 
-            <label>Salaire mensuel :</label>
-            <input type="number" id="perso-salaire" class="input-text" value="${p.salaire}">
-
             <label>Prime :</label>
             <div class="prime-ligne">
                 <input type="number" id="perso-prime" class="input-text" value="${p.prime}">
@@ -63,7 +58,7 @@ export function initPersonnel() {
         </div>
     `;
 
-    // 🔵 BOUTON → POUR METTRE LE MAX DES 10 %
+    // 🔵 BOUTON → POUR METTRE LE MAX
     const primeMaxBtn = document.getElementById("prime-max");
     if (primeMaxBtn) {
         primeMaxBtn.onclick = () => {
@@ -75,7 +70,6 @@ export function initPersonnel() {
     document.getElementById("perso-save").onclick = () => {
         p.nom = document.getElementById("perso-nom").value;
         p.poste = document.getElementById("perso-poste").value;
-        p.salaire = parseInt(document.getElementById("perso-salaire").value);
         p.prime = parseInt(document.getElementById("perso-prime").value);
 
         sauvegarderEntreprise(e);
