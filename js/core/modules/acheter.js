@@ -12,20 +12,29 @@ let filtreCategorie = "tous";
 export function initAcheter() {
     refreshSiNecessaire();
 
-    // Afficher le select
+    // --- FILTRE ---
     const select = document.getElementById("filtre-acheter");
     select.style.display = "block";
 
-    // Remplir le select avec les catégories réelles
     select.innerHTML = `<option value="tous">Tous</option>`;
     for (const categorie in immoState.styles) {
         select.innerHTML += `<option value="${categorie}">${categorie}</option>`;
     }
 
-    // Gestion du filtre
     select.onchange = () => {
         filtreCategorie = select.value;
         afficherBiensDisponibles();
+    };
+
+    // --- EXPORT (Pack Prestige) ---
+    const btnExport = document.getElementById("export-acheter");
+    const data = getData();
+    const prestige = data.entreprise?.prestigePack === true;
+
+    btnExport.style.display = prestige ? "block" : "none";
+
+    btnExport.onclick = () => {
+        exporterAcheter();
     };
 
     afficherBiensDisponibles();
@@ -37,7 +46,6 @@ function afficherBiensDisponibles() {
 
     for (const categorie in immoState.styles) {
 
-        // Filtre actif
         if (filtreCategorie !== "tous" && filtreCategorie !== categorie) continue;
 
         const bloc = document.createElement("div");
@@ -124,6 +132,40 @@ function gererAchat(categorie, style, prix, quantiteDisponible, typeAchat) {
     afficherBiensDisponibles();
 
     if (window.ge_afficherBilan) window.ge_afficherBilan();
+}
+
+// --- EXPORT CSV ---
+function exporterAcheter() {
+    let lignes = [];
+
+    for (const categorie in immoState.styles) {
+        immoState.styles[categorie].forEach(style => {
+            const quantite = immoState.quantites[categorie][style];
+            const prix = genererPrix(style);
+
+            lignes.push({
+                categorie,
+                style,
+                quantite,
+                prix
+            });
+        });
+    }
+
+    let csv = "Catégorie;Style;Stock;Prix\n";
+    lignes.forEach(l => {
+        csv += `${l.categorie};${l.style};${l.quantite};${l.prix}\n`;
+    });
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "geo_empire_achat_export.csv";
+    a.click();
+
+    URL.revokeObjectURL(url);
 }
 
 window.initAcheter = initAcheter;
