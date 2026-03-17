@@ -7,17 +7,24 @@ import { getEntreprise } from "../entrepriseCore.js";
 import { getData, saveData, addBien } from "../geoData.js";
 import { immoState, refreshSiNecessaire } from "./immo-core.js";
 
-let modeVisuel = 1; // 1 = normal, 2 = compact
+let filtreCategorie = "tous";
 
 export function initAcheter() {
     refreshSiNecessaire();
 
-    // Afficher le bouton Changer de vue
-    const btnSwitch = document.getElementById("switch-acheter-view");
-    btnSwitch.style.display = "block";
+    // Afficher le select
+    const select = document.getElementById("filtre-acheter");
+    select.style.display = "block";
 
-    btnSwitch.onclick = () => {
-        modeVisuel = (modeVisuel === 1) ? 2 : 1;
+    // Remplir le select avec les catégories réelles
+    select.innerHTML = `<option value="tous">Tous</option>`;
+    for (const categorie in immoState.styles) {
+        select.innerHTML += `<option value="${categorie}">${categorie}</option>`;
+    }
+
+    // Gestion du filtre
+    select.onchange = () => {
+        filtreCategorie = select.value;
         afficherBiensDisponibles();
     };
 
@@ -29,6 +36,10 @@ function afficherBiensDisponibles() {
     container.innerHTML = "";
 
     for (const categorie in immoState.styles) {
+
+        // Filtre actif
+        if (filtreCategorie !== "tous" && filtreCategorie !== categorie) continue;
+
         const bloc = document.createElement("div");
         bloc.className = "categorie-bloc";
         bloc.innerHTML = `<h2>${categorie}</h2>`;
@@ -39,11 +50,6 @@ function afficherBiensDisponibles() {
 
             const item = document.createElement("div");
             item.className = "bien-item";
-
-            // Mode compact
-            if (modeVisuel === 2) {
-                item.classList.add("mode-compact");
-            }
 
             item.innerHTML = `
                 <div class="bien-nom">${style}</div>
