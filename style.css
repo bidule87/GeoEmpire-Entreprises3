@@ -450,3 +450,6 @@ header nav a:hover {
     box-shadow: 0 0 12px rgba(0,150,255,0.35);
     backdrop-filter: blur(6px);
 }
+#export-acheter {
+    margin-bottom: 15px;
+}
