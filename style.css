@@ -687,6 +687,12 @@ header nav a:hover {
     border-radius: 10px;
     color: white;
 }
-#patrimoine .patrimoine-bloc div {
-    margin-bottom: 20px;
+
+#patrimoine .patrimoine-bloc h3 {
+    margin-top: 0;
+    color: #ffffff;
+}
+
+#patrimoine .patrimoine-bloc p {
+    margin: 6px 0;
 }
