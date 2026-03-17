@@ -3,9 +3,9 @@
 // Compatible geoData + entrepriseCore
 // =======================================
 
-import { 
-    getEntreprise, 
-    sauvegarderEntreprise 
+import {
+    getEntreprise,
+    sauvegarderEntreprise
 } from "../entrepriseCore.js";
 
 import { saveData } from "../geoData.js";
@@ -64,9 +64,12 @@ export function initPersonnel() {
     `;
 
     // 🔵 BOUTON → POUR METTRE LE MAX DES 10 %
-    document.getElementById("prime-max").onclick = () => {
-        document.getElementById("perso-prime").value = primeMax;
-    };
+    const primeMaxBtn = document.getElementById("prime-max");
+    if (primeMaxBtn) {
+        primeMaxBtn.onclick = () => {
+            document.getElementById("perso-prime").value = primeMax;
+        };
+    }
 
     // === SAUVEGARDE ===
     document.getElementById("perso-save").onclick = () => {
