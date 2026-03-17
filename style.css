@@ -565,3 +565,11 @@ header nav a:hover {
     transform: translateY(-3px);
     box-shadow: 0 0 20px rgba(0,150,255,0.55);
 }
+/* ============================================
+   PROPRIÉTÉS — LISIBILITÉ DU TEXTE
+   ============================================ */
+
+.proprietes-item,
+.proprietes-item * {
+    color: #ffffff !important;
+}
