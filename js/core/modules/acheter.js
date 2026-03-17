@@ -7,8 +7,20 @@ import { getEntreprise } from "../entrepriseCore.js";
 import { getData, saveData, addBien } from "../geoData.js";
 import { immoState, refreshSiNecessaire } from "./immo-core.js";
 
+let modeVisuel = 1; // 1 = normal, 2 = compact
+
 export function initAcheter() {
     refreshSiNecessaire();
+
+    // Afficher le bouton Changer de vue
+    const btnSwitch = document.getElementById("switch-acheter-view");
+    btnSwitch.style.display = "block";
+
+    btnSwitch.onclick = () => {
+        modeVisuel = (modeVisuel === 1) ? 2 : 1;
+        afficherBiensDisponibles();
+    };
+
     afficherBiensDisponibles();
 }
 
@@ -27,6 +39,11 @@ function afficherBiensDisponibles() {
 
             const item = document.createElement("div");
             item.className = "bien-item";
+
+            // Mode compact
+            if (modeVisuel === 2) {
+                item.classList.add("mode-compact");
+            }
 
             item.innerHTML = `
                 <div class="bien-nom">${style}</div>
@@ -87,25 +104,20 @@ function gererAchat(categorie, style, prix, quantiteDisponible, typeAchat) {
         return;
     }
 
-    // Débiter l'argent
     entreprise.argent -= coutTotal;
 
-    // Ajouter les biens (addBien ajoute 1 bien à la fois)
     for (let i = 0; i < quantiteAchetee; i++) {
         addBien(categorie, style, prix);
     }
 
-    // Retirer du stock
     immoState.quantites[categorie][style] -= quantiteAchetee;
     localStorage.setItem("immoState", JSON.stringify(immoState));
 
-    // Sauvegarde
     saveData();
 
-    // Rafraîchir l'affichage
     afficherBiensDisponibles();
 
-    // Mettre à jour le bilan si présent
     if (window.ge_afficherBilan) window.ge_afficherBilan();
 }
+
 window.initAcheter = initAcheter;
