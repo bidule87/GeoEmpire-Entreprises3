@@ -12,7 +12,6 @@
     <h1>Entreprises</h1>
     <nav>
         <a href="index.html">Accueil</a>
-        
     </nav>
 </header>
 
@@ -21,13 +20,11 @@
     | Tokens : <span id="tokens">0</span>
     | Crowns : <span id="crowns">0</span>
 
-    <!-- ⭐ Boutons Cheat -->
     | <button id="btn-cheat-argent" style="padding:2px 6px; font-size:12px;">+1M €</button>
     | <button id="btn-cheat-tokens" style="padding:2px 6px; font-size:12px;">+100 Tokens</button>
     | <button id="btn-cheat-crowns" style="padding:2px 6px; font-size:12px;">+50 Crowns</button>
 </div>
 
-<!-- MENU ENTREPRISES -->
 <div id="entreprises-menu">
     <button data-tab="entreprise">Entreprise</button>
     <button data-tab="acheter">Acheter</button>
@@ -38,16 +35,20 @@
     <button data-tab="patrimoine">Patrimoine</button>
 </div>
 
-<!-- CONTENU DES MODULES -->
 <main id="entreprises-container">
 
     <div id="entreprise" class="tab"></div>
-<!-- FILTRE DES CATÉGORIES -->
-<select id="filtre-acheter" class="filtre-acheter" style="display:none;">
-    <option value="tous">Tous</option>
-</select>
 
-<div id="acheter" class="tab" style="display:none;"></div>
+    <!-- BOUTON EXPORT (Pack Prestige) -->
+    <button id="export-acheter" class="btn-switch" style="display:none;">Exporter (Excel / Sheets)</button>
+
+    <!-- FILTRE DES CATÉGORIES -->
+    <select id="filtre-acheter" class="filtre-acheter" style="display:none;">
+        <option value="tous">Tous</option>
+    </select>
+
+    <div id="acheter" class="tab" style="display:none;"></div>
+
     <div id="assurances" class="tab" style="display:none;"></div>
     <div id="renovation" class="tab" style="display:none;"></div>
     <div id="proprietes" class="tab" style="display:none;"></div>
@@ -80,7 +81,6 @@
 <script type="module" src="./js/core/modules/personnel.js"></script>
 <script type="module" src="./js/core/modules/patrimoine.js"></script>
 
-<!-- NAVIGATION ENTRE ONGLET + APPELS MODULES -->
 <script>
     const tabs = document.querySelectorAll(".tab");
     const buttons = document.querySelectorAll("#entreprises-menu button");
@@ -103,29 +103,7 @@
     });
 
     document.querySelector('#entreprises-menu button[data-tab="entreprise"]').click();
-
-    // ⭐ Bouton +1M €
-    document.getElementById("btn-cheat-argent").addEventListener("click", () => {
-        if (window.ge_ajouterArgent) ge_ajouterArgent(1000000);
-    });
-
-    // ⭐ Bouton +100 Tokens
-    document.getElementById("btn-cheat-tokens").addEventListener("click", () => {
-        if (window.ge_ajouterTokens) ge_ajouterTokens(100);
-    });
-
-    // ⭐ Bouton +50 Crowns
-    document.getElementById("btn-cheat-crowns").addEventListener("click", () => {
-        if (window.ge_ajouterCrowns) ge_ajouterCrowns(50);
-    });
 </script>
-<script>
-document.addEventListener("click", (e) => {
-    if (e.target.classList.contains("acheter-categorie")) {
-        const liste = e.target.nextElementSibling;
-        liste.style.display = (liste.style.display === "block") ? "none" : "block";
-    }
-});
-</script>
+
 </body>
 </html>
