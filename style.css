@@ -434,3 +434,19 @@ header nav a:hover {
 .mode-compact .achat-boutons {
     gap: 5px;
 }
+/* ============================================
+   FILTRE DES CATÉGORIES — ACHETER
+   ============================================ */
+
+.filtre-acheter {
+    display: block;
+    margin: 0 auto 20px auto;
+    padding: 10px 14px;
+    font-size: 18px;
+    border-radius: 10px;
+    background: rgba(0,40,70,0.85);
+    color: #d9eaff;
+    border: 1px solid rgba(0,150,255,0.45);
+    box-shadow: 0 0 12px rgba(0,150,255,0.35);
+    backdrop-filter: blur(6px);
+}
