@@ -821,3 +821,36 @@ header nav a:hover {
     border-bottom: 1px solid rgba(59, 130, 246, 0.25);
     color: #e2e8f0;
 }
+.premium-panel {
+    border: 2px solid #3aa0ff;
+    padding: 20px;
+    border-radius: 12px;
+    background: rgba(0, 80, 255, 0.08);
+    margin-bottom: 20px;
+}
+
+.premium-title {
+    color: #3aa0ff;
+    font-size: 22px;
+    margin-bottom: 15px;
+}
+
+.premium-box {
+    background: rgba(0, 80, 255, 0.12);
+    padding: 15px;
+    border-radius: 10px;
+}
+
+.premium-btn {
+    background: #3aa0ff;
+    color: white;
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.premium-btn:hover {
+    background: #1f7be0;
+}
