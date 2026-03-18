@@ -1,13 +1,12 @@
 import { 
     getEntreprise, 
-    sauvegarderEntreprise, 
     changerNomEntreprise, 
     changerPhotoEntreprise, 
     calculerValeurEntreprise 
 } from "../entrepriseCore.js";
 
 import { initMarketing } from "./marketing.js";
-import { initGestion } from "./gestion.js";
+import { initGestion } from "./core/modules/gestions.js"; // ⭐ CHEMIN CORRIGÉ
 
 export function initEntreprise() {
     const zone = document.getElementById("entreprise");
@@ -24,7 +23,6 @@ export function initEntreprise() {
         <div class="entreprise-bloc">
 
             <div class="entreprise-photo-section">
-
                 <div class="entreprise-photo-frame">
                     <img src="${e.logo}" class="entreprise-photo" id="entreprise-photo">
                 </div>
@@ -50,25 +48,16 @@ export function initEntreprise() {
 
         </div>
 
-        <!-- ⭐ ZONE MARKETING ⭐ -->
         <div id="marketing" class="section" style="display:none;"></div>
-
-        <!-- ⭐ ZONE GESTION ⭐ -->
         <div id="gestion" class="section" style="display:none;"></div>
     `;
 
-    // ===============================
-    //  SAUVEGARDE DU NOM
-    // ===============================
     document.getElementById("btn-save-nom").onclick = () => {
         const nouveauNom = document.getElementById("nom-entreprise").value;
         changerNomEntreprise(nouveauNom);
         initEntreprise();
     };
 
-    // ===============================
-    //  PHOTO
-    // ===============================
     document.getElementById("btn-photo").onclick = () => {
         document.getElementById("upload-photo").click();
     };
@@ -85,18 +74,14 @@ export function initEntreprise() {
         reader.readAsDataURL(file);
     };
 
-    // ===============================
-    //  ONGLET MARKETING
-    // ===============================
+    // ⭐ ONGLET MARKETING
     document.getElementById("btn-marketing").onclick = () => {
         document.querySelectorAll(".section").forEach(sec => sec.style.display = "none");
         document.getElementById("marketing").style.display = "block";
         initMarketing();
     };
 
-    // ===============================
-    //  ONGLET GESTION
-    // ===============================
+    // ⭐ ONGLET GESTION
     document.getElementById("btn-gestion").onclick = () => {
         document.querySelectorAll(".section").forEach(sec => sec.style.display = "none");
         document.getElementById("gestion").style.display = "block";
@@ -104,5 +89,4 @@ export function initEntreprise() {
     };
 }
 
-// ⭐ ESSENTIEL POUR L’APPEL GLOBAL ⭐
 window.initEntreprise = initEntreprise;
