@@ -25,6 +25,7 @@
     | <button id="btn-cheat-crowns" style="padding:2px 6px; font-size:12px;">+50 Crowns</button>
 </div>
 
+<!-- ⭐ MENU ENTREPRISES ⭐ -->
 <div id="entreprises-menu">
     <button data-tab="entreprise">Entreprise</button>
     <button data-tab="acheter">Acheter</button>
@@ -33,16 +34,17 @@
     <button data-tab="proprietes">Propriétés</button>
     <button data-tab="personnel">Personnel</button>
 
-    <!-- ⭐ AJOUT DU BOUTON MARKETING ⭐ -->
     <button data-tab="marketing">Marketing</button>
-
     <button data-tab="finances">Finances</button>
     <button data-tab="patrimoine">Patrimoine</button>
+
+    <!-- ⭐ CORRECTION : BOUTON GESTION AVEC data-tab ⭐ -->
     <button data-tab="gestion">Gestion</button>
 </div>
 
 <main id="entreprises-container">
 
+    <!-- ⭐ ONGLET ENTREPRISE (initEntreprise injecte ici) ⭐ -->
     <div id="entreprise" class="tab"></div>
 
     <button id="export-acheter" class="btn-switch" style="display:none;">Exporter (Excel / Sheets)</button>
@@ -60,9 +62,11 @@
     <div id="proprietes" class="tab" style="display:none;"></div>
     <div id="personnel" class="tab" style="display:none;"></div>
     <div id="actionnaires" class="tab" style="display:none;"></div>
-    <div id="gestion" style="display:none;"></div>
 
-    <!-- ⭐ AJOUT DE L’ONGLET MARKETING ⭐ -->
+    <!-- ⭐ ONGLET GESTION (affiché quand tu cliques sur Gestion) ⭐ -->
+    <div id="gestion" class="tab" style="display:none;"></div>
+
+    <!-- ⭐ ONGLET MARKETING ⭐ -->
     <div id="marketing" class="tab" style="display:none;"></div>
 
     <div id="patrimoine" class="tab" style="display:none;">
@@ -92,7 +96,9 @@
 <script type="module" src="./js/core/modules/patrimoine.js"></script>
 <script type="module" src="./js/core/modules/finances.js"></script>
 <script type="module" src="./js/core/modules/marketing.js"></script>
+<script type="module" src="./js/core/modules/gestions.js"></script> <!-- ⭐ AJOUT ESSENTIEL ⭐ -->
 
+<!-- ⭐ SYSTÈME D’ONGLETS ⭐ -->
 <script>
     const tabs = document.querySelectorAll(".tab");
     const buttons = document.querySelectorAll("#entreprises-menu button");
@@ -113,6 +119,8 @@
 
             if (target === "marketing" && window.initMarketing) initMarketing();
 
+            if (target === "gestion" && window.initGestion) initGestion(); <!-- ⭐ AJOUT ICI ⭐ -->
+
             if (target === "finances" && window.initFinances) initFinances();
             if (target === "patrimoine" && window.initPatrimoine) initPatrimoine();
         });
@@ -120,6 +128,8 @@
 
     document.querySelector('#entreprises-menu button[data-tab="entreprise"]').click();
 </script>
+
+<!-- CHEATS -->
 <script type="module">
 import { getData, saveData } from "./js/core/geoData.js";
 
@@ -144,5 +154,6 @@ document.getElementById("btn-cheat-crowns").addEventListener("click", () => {
     document.getElementById("crowns").textContent = data.entreprise.crowns;
 });
 </script>
+
 </body>
 </html>
