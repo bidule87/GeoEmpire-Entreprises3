@@ -118,6 +118,29 @@
 
     document.querySelector('#entreprises-menu button[data-tab="entreprise"]').click();
 </script>
+<script type="module">
+import { getData, saveData } from "./js/core/geoData.js";
 
+document.getElementById("btn-cheat-argent").addEventListener("click", () => {
+    const data = getData();
+    data.entreprise.argent += 1000000;
+    saveData(data);
+    document.getElementById("solde").textContent = data.entreprise.argent;
+});
+
+document.getElementById("btn-cheat-tokens").addEventListener("click", () => {
+    const data = getData();
+    data.entreprise.tokens += 100;
+    saveData(data);
+    document.getElementById("tokens").textContent = data.entreprise.tokens;
+});
+
+document.getElementById("btn-cheat-crowns").addEventListener("click", () => {
+    const data = getData();
+    data.entreprise.crowns += 50;
+    saveData(data);
+    document.getElementById("crowns").textContent = data.entreprise.crowns;
+});
+</script>
 </body>
 </html>
