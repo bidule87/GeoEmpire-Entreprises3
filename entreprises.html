@@ -43,10 +43,11 @@
 
     <div id="entreprise" class="tab"></div>
 
-    <!-- ⭐ FIX ACHETER : SELECT + BOUTON EXPORT ⭐ -->
-    <select id="filtre-acheter" style="display:none;"></select>
-    <button id="export-acheter" style="display:none;">Exporter CSV</button>
-    <div id="acheter" class="tab" style="display:none;"></div>
+    <!-- ⭐ ONGLET ACHETER (corrigé) ⭐ -->
+    <div id="acheter" class="tab" style="display:none;">
+        <select id="filtre-acheter" style="display:none;"></select>
+        <button id="export-acheter" style="display:none;">Exporter CSV</button>
+    </div>
 
     <div id="assurances" class="tab" style="display:none;"></div>
     <div id="renovation" class="tab" style="display:none;"></div>
@@ -78,8 +79,6 @@
 <script type="module" src="./js/core/modules/marketing.js"></script>
 <script type="module" src="./js/core/modules/finances.js"></script>
 <script type="module" src="./js/core/modules/patrimoine.js"></script>
-
-<!-- ⭐ LE BON FICHIER GESTION (SANS S) ⭐ -->
 <script type="module" src="./js/core/modules/gestion.js"></script>
 
 <!-- ⭐ SYSTÈME D’ONGLETS ⭐ -->
