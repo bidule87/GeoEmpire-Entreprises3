@@ -51,11 +51,6 @@ export function initMarketing() {
                     <div class="client-body">
                         <p>Satisfaction : <strong>${c.satisfaction ?? 0}</strong></p>
 
-                        <div class="client-actions">
-                            <button class="btn-satisfaction" data-client="${nom}" data-val="1">+ Satisfaction</button>
-                            <button class="btn-satisfaction" data-client="${nom}" data-val="-1">- Satisfaction</button>
-                        </div>
-
                         <div class="client-invest">
                             <input type="number" class="input-invest" data-client="${nom}" placeholder="Montant en GEO">
                             <button class="btn-invest" data-client="${nom}">Valider</button>
@@ -67,21 +62,8 @@ export function initMarketing() {
     `;
 
     // ======================================================
-    //  BOUTONS SATISFACTION
-    // ======================================================
-
-    document.querySelectorAll(".btn-satisfaction").forEach(btn => {
-        btn.onclick = () => {
-            const client = btn.dataset.client;
-            const val = Number(btn.dataset.val);
-            modifierSatisfaction(client, val);
-            initMarketing();
-        };
-    });
-
-    // ======================================================
     //  BOUTON INVESTIR (CHAMP DE TEXTE)
-// ======================================================
+    // ======================================================
 
     document.querySelectorAll(".btn-invest").forEach(btn => {
         btn.onclick = () => {
