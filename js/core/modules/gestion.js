@@ -3,11 +3,24 @@
 //  Compatible geoData.js + marketing.js
 // ======================================================
 
-import { 
-    getData, 
-    saveData, 
-    removeBien 
+import {
+    getData,
+    saveData,
+    removeBien
 } from "../geoData.js";
+
+// ======================================================
+//  HELPERS
+// ======================================================
+function hasPrestigePack(data) {
+    // Hook futur : pack prestige / espace SAPHIR
+    // Tu pourras brancher ici ton vrai flag (ex: data.joueur.prestigeSaphir)
+    return data.entreprise && data.entreprise.prestigePack === true;
+}
+
+function calculerPrixFinal(prixBase, ajustement) {
+    return Math.floor(prixBase * (1 + ajustement / 100));
+}
 
 // ======================================================
 //  INITIALISATION DE L'AFFICHAGE
@@ -18,7 +31,7 @@ export function initGestion() {
     const biens = data.entreprise.biens;
 
     zone.innerHTML = `
-        <h2>Gestion — Vente / Location</h2>
+        <h2>Gestion — Location / Vente</h2>
 
         <div class="gestion-container">
             ${Object.entries(biens).map(([categorie, styles]) => `
@@ -38,40 +51,48 @@ export function initGestion() {
                             <div class="gestion-actions">
 
                                 <label>Quantité :</label>
-                                <input type="number" 
-                                       class="input-quantite" 
-                                       data-cat="${categorie}" 
-                                       data-style="${style}" 
-                                       min="1" 
-                                       max="${bien.quantite}" 
+                                <input type="number"
+                                       class="input-quantite"
+                                       data-cat="${categorie}"
+                                       data-style="${style}"
+                                       min="1"
+                                       max="${bien.quantite}"
                                        value="1">
 
-                                <button class="btn-tous" 
-                                        data-cat="${categorie}" 
-                                        data-style="${style}" 
+                                <button class="btn-tous"
+                                        data-cat="${categorie}"
+                                        data-style="${style}"
                                         data-max="${bien.quantite}">
                                     Tous
                                 </button>
 
-                                <label>Prix :</label>
-                                <input type="range" 
-                                       class="slider-prix" 
-                                       data-cat="${categorie}" 
+                                <label>Ajustement :</label>
+                                <input type="range"
+                                       class="slider-prix"
+                                       data-cat="${categorie}"
                                        data-style="${style}"
-                                       min="-30" 
-                                       max="30" 
+                                       min="-30"
+                                       max="30"
                                        value="0">
 
-                                <span class="prix-affiche" 
+                                <span class="prix-affiche"
                                       id="prix-${categorie}-${style}">
                                       0%
                                 </span>
 
-                                <button class="btn-vendre" 
-                                        data-cat="${categorie}" 
-                                        data-style="${style}">
-                                    Vendre
-                                </button>
+                                <div class="gestion-boutons-double">
+                                    <button class="btn-louer"
+                                            data-cat="${categorie}"
+                                            data-style="${style}">
+                                        Louer
+                                    </button>
+
+                                    <button class="btn-vendre"
+                                            data-cat="${categorie}"
+                                            data-style="${style}">
+                                        Vendre
+                                    </button>
+                                </div>
 
                             </div>
 
@@ -80,6 +101,11 @@ export function initGestion() {
 
                 </div>
             `).join("")}
+        </div>
+
+        <div class="gestion-info-prestige">
+            ⭐ Dites adieu aux commissions : avec le Pack Prestige / espace SAPHIR,
+            vos assistants sont 100% gratuits.
         </div>
     `;
 
@@ -101,7 +127,7 @@ export function initGestion() {
     });
 
     // ===============================
-    //  SLIDER PRIX
+    //  SLIDER PRIX (-30% / +30%)
     // ===============================
     document.querySelectorAll(".slider-prix").forEach(slider => {
         slider.oninput = () => {
@@ -116,7 +142,49 @@ export function initGestion() {
     });
 
     // ===============================
-    //  VENTE
+    //  LOUER (même interface, logique différée possible)
+    // ===============================
+    document.querySelectorAll(".btn-louer").forEach(btn => {
+        btn.onclick = () => {
+            const cat = btn.dataset.cat;
+            const style = btn.dataset.style;
+
+            const input = document.querySelector(
+                `.input-quantite[data-cat="${cat}"][data-style="${style}"]`
+            );
+
+            const slider = document.querySelector(
+                `.slider-prix[data-cat="${cat}"][data-style="${style}"]`
+            );
+
+            const quantite = Number(input.value);
+            const ajustement = Number(slider.value);
+
+            const data = getData();
+            const bien = data.entreprise.biens[cat][style];
+
+            if (!bien || quantite <= 0 || quantite > bien.quantite) return;
+
+            // Hook futur : location traitée à minuit
+            if (!data.entreprise.locationsEnAttente) {
+                data.entreprise.locationsEnAttente = [];
+            }
+
+            data.entreprise.locationsEnAttente.push({
+                categorie: cat,
+                style,
+                quantite,
+                ajustement,
+                dateDemande: Date.now()
+            });
+
+            saveData();
+            initGestion();
+        };
+    });
+
+    // ===============================
+    //  VENTE (même interface, avec hook commission / prestige)
     // ===============================
     document.querySelectorAll(".btn-vendre").forEach(btn => {
         btn.onclick = () => {
@@ -139,14 +207,15 @@ export function initGestion() {
 
             if (!bien || quantite <= 0 || quantite > bien.quantite) return;
 
-            // Prix final invisible pour le joueur
             const prixBase = bien.prixAchatMoyen;
-            const prixFinal = Math.floor(prixBase * (1 + ajustement / 100));
+            const prixFinal = calculerPrixFinal(prixBase, ajustement);
 
-            // Créditer l'entreprise
-            data.entreprise.argent += prixFinal * quantite;
+            const commissionTaux = hasPrestigePack(data) ? 0 : 0.02;
+            const montantBrut = prixFinal * quantite;
+            const montantNet = Math.floor(montantBrut * (1 - commissionTaux));
 
-            // Retirer les biens
+            data.entreprise.argent += montantNet;
+
             removeBien(cat, style, quantite);
 
             saveData();
