@@ -94,3 +94,11 @@ export function initMarketing() {
         };
     });
 }
+
+// ======================================================
+//  APPEL AUTOMATIQUE (REMIS COMME AVANT)
+// ======================================================
+
+document.addEventListener("DOMContentLoaded", () => {
+    initMarketing();
+});
