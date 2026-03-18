@@ -29,7 +29,7 @@ export function initMarketing() {
 
     // Si aucun client → on en crée 1
     if (Object.keys(marketing.clients).length === 0) {
-        marketing.clients["Client 1"] = {
+        marketing.clients["client 1"] = {
             couleur: "rgb(120,180,255)",
             satisfaction: 0
         };
@@ -81,7 +81,7 @@ export function initMarketing() {
 
     // ======================================================
     //  BOUTON INVESTIR (CHAMP DE TEXTE)
-    // ======================================================
+// ======================================================
 
     document.querySelectorAll(".btn-invest").forEach(btn => {
         btn.onclick = () => {
