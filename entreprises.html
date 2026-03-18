@@ -32,7 +32,10 @@
     <button data-tab="renovation">Rénovation</button>
     <button data-tab="proprietes">Propriétés</button>
     <button data-tab="personnel">Personnel</button>
-   <button data-tab="finances">Finances</button>
+
+    <!-- CORRECTION : bouton FINANCES utilise data-tab -->
+    <button data-tab="finances">Finances</button>
+
     <button data-tab="patrimoine">Patrimoine</button>
 </div>
 
@@ -50,6 +53,7 @@
     <div id="assurances" class="tab" style="display:none;"></div>
     <div id="renovation" class="tab" style="display:none;"></div>
 
+    <!-- CORRECTION : FINANCES devient un onglet normal -->
     <div id="finances" class="tab" style="display:none;"></div>
 
     <div id="proprietes" class="tab" style="display:none;"></div>
@@ -81,6 +85,8 @@
 <script type="module" src="./js/core/modules/actionnaires.js"></script>
 <script type="module" src="./js/core/modules/personnel.js"></script>
 <script type="module" src="./js/core/modules/patrimoine.js"></script>
+
+<!-- AJOUT : module finances -->
 <script type="module" src="./js/core/modules/finances.js"></script>
 
 <script>
@@ -100,6 +106,10 @@
             if (target === "renovation" && window.initRenovation) initRenovation();
             if (target === "proprietes" && window.initProprietes) initProprietes();
             if (target === "personnel" && window.initPersonnel) initPersonnel();
+
+            /* CORRECTION : appel FINANCES */
+            if (target === "finances" && window.initFinances) initFinances();
+
             if (target === "patrimoine" && window.initPatrimoine) initPatrimoine();
         });
     });
