@@ -20,9 +20,9 @@
     | Tokens : <span id="tokens">0</span>
     | Crowns : <span id="crowns">0</span>
 
-    | <button id="btn-cheat-argent" style="padding:2px 6px; font-size:12px;">+1M €</button>
-    | <button id="btn-cheat-tokens" style="padding:2px 6px; font-size:12px;">+100 Tokens</button>
-    | <button id="btn-cheat-crowns" style="padding:2px 6px; font-size:12px;">+50 Crowns</button>
+    | <button id="btn-cheat-argent">+1M €</button>
+    | <button id="btn-cheat-tokens">+100 Tokens</button>
+    | <button id="btn-cheat-crowns">+50 Crowns</button>
 </div>
 
 <!-- ⭐ MENU ENTREPRISES ⭐ -->
@@ -33,48 +33,28 @@
     <button data-tab="renovation">Rénovation</button>
     <button data-tab="proprietes">Propriétés</button>
     <button data-tab="personnel">Personnel</button>
-
     <button data-tab="marketing">Marketing</button>
     <button data-tab="finances">Finances</button>
     <button data-tab="patrimoine">Patrimoine</button>
 
-    <!-- ⭐ CORRECTION : BOUTON GESTION AVEC data-tab ⭐ -->
+    <!-- ⭐ BOUTON GESTION ⭐ -->
     <button data-tab="gestion">Gestion</button>
 </div>
 
 <main id="entreprises-container">
 
-    <!-- ⭐ ONGLET ENTREPRISE (initEntreprise injecte ici) ⭐ -->
     <div id="entreprise" class="tab"></div>
-
-    <button id="export-acheter" class="btn-switch" style="display:none;">Exporter (Excel / Sheets)</button>
-
-    <select id="filtre-acheter" class="filtre-acheter" style="display:none;">
-        <option value="tous">Tous</option>
-    </select>
-
     <div id="acheter" class="tab" style="display:none;"></div>
     <div id="assurances" class="tab" style="display:none;"></div>
     <div id="renovation" class="tab" style="display:none;"></div>
-
-    <div id="finances" class="tab" style="display:none;"></div>
-
     <div id="proprietes" class="tab" style="display:none;"></div>
     <div id="personnel" class="tab" style="display:none;"></div>
-    <div id="actionnaires" class="tab" style="display:none;"></div>
-
-    <!-- ⭐ ONGLET GESTION (affiché quand tu cliques sur Gestion) ⭐ -->
-    <div id="gestion" class="tab" style="display:none;"></div>
-
-    <!-- ⭐ ONGLET MARKETING ⭐ -->
     <div id="marketing" class="tab" style="display:none;"></div>
+    <div id="finances" class="tab" style="display:none;"></div>
+    <div id="patrimoine" class="tab" style="display:none;"></div>
 
-    <div id="patrimoine" class="tab" style="display:none;">
-        <div id="patrimoine-monnaies"></div>
-        <div id="patrimoine-global"></div>
-        <div id="patrimoine-structure"></div>
-        <div id="patrimoine-classement"></div>
-    </div>
+    <!-- ⭐ ONGLET GESTION ⭐ -->
+    <div id="gestion" class="tab" style="display:none;"></div>
 
 </main>
 
@@ -91,12 +71,13 @@
 <script type="module" src="./js/core/modules/assurances.js"></script>
 <script type="module" src="./js/core/modules/renovation.js"></script>
 <script type="module" src="./js/core/modules/proprietes.js"></script>
-<script type="module" src="./js/core/modules/actionnaires.js"></script>
 <script type="module" src="./js/core/modules/personnel.js"></script>
-<script type="module" src="./js/core/modules/patrimoine.js"></script>
-<script type="module" src="./js/core/modules/finances.js"></script>
 <script type="module" src="./js/core/modules/marketing.js"></script>
-<script type="module" src="./js/core/modules/gestion.js"></script> <!-- ⭐ AJOUT ESSENTIEL ⭐ -->
+<script type="module" src="./js/core/modules/finances.js"></script>
+<script type="module" src="./js/core/modules/patrimoine.js"></script>
+
+<!-- ⭐ LE BON FICHIER GESTION (SANS S) ⭐ -->
+<script type="module" src="./js/core/modules/gestion.js"></script>
 
 <!-- ⭐ SYSTÈME D’ONGLETS ⭐ -->
 <script>
@@ -108,51 +89,15 @@
             const target = btn.dataset.tab;
 
             tabs.forEach(t => t.style.display = "none");
-            if (target) document.getElementById(target).style.display = "block";
+            document.getElementById(target).style.display = "block";
 
-            if (target === "entreprise" && window.initEntreprise) initEntreprise();
-            if (target === "acheter" && window.initAcheter) initAcheter();
-            if (target === "assurances" && window.initAssurances) initAssurances();
-            if (target === "renovation" && window.initRenovation) initRenovation();
-            if (target === "proprietes" && window.initProprietes) initProprietes();
-            if (target === "personnel" && window.initPersonnel) initPersonnel();
-
-            if (target === "marketing" && window.initMarketing) initMarketing();
-
-            if (target === "gestion" && window.initGestion) initGestion(); <!-- ⭐ AJOUT ICI ⭐ -->
-
-            if (target === "finances" && window.initFinances) initFinances();
-            if (target === "patrimoine" && window.initPatrimoine) initPatrimoine();
+            if (window["init" + target.charAt(0).toUpperCase() + target.slice(1)]) {
+                window["init" + target.charAt(0).toUpperCase() + target.slice(1)]();
+            }
         });
     });
 
     document.querySelector('#entreprises-menu button[data-tab="entreprise"]').click();
-</script>
-
-<!-- CHEATS -->
-<script type="module">
-import { getData, saveData } from "./js/core/geoData.js";
-
-document.getElementById("btn-cheat-argent").addEventListener("click", () => {
-    const data = getData();
-    data.entreprise.argent += 1000000;
-    saveData(data);
-    document.getElementById("solde").textContent = data.entreprise.argent;
-});
-
-document.getElementById("btn-cheat-tokens").addEventListener("click", () => {
-    const data = getData();
-    data.entreprise.tokens += 100;
-    saveData(data);
-    document.getElementById("tokens").textContent = data.entreprise.tokens;
-});
-
-document.getElementById("btn-cheat-crowns").addEventListener("click", () => {
-    const data = getData();
-    data.entreprise.crowns += 50;
-    saveData(data);
-    document.getElementById("crowns").textContent = data.entreprise.crowns;
-});
 </script>
 
 </body>
