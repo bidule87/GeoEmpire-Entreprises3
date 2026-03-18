@@ -769,3 +769,85 @@ header nav a:hover {
     background: #3b82f6;
     color: white;
 }
+/* ============================
+   PROFIL PREMIUM
+   ============================ */
+
+.profil-premium {
+    width: 100%;
+    background: rgba(10, 20, 40, 0.85);
+    border: 1px solid #1e3a8a;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 0 18px rgba(30, 60, 150, 0.45);
+    color: #dbeafe;
+    margin-bottom: 25px;
+}
+
+.profil-premium h2 {
+    color: #60a5fa;
+    font-size: 28px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #1e3a8a;
+    padding-bottom: 8px;
+}
+
+.profil-header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.profil-photo {
+    width: 110px;
+    height: 110px;
+    border-radius: 12px;
+    border: 2px solid #3b82f6;
+    object-fit: cover;
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
+}
+
+.profil-info p {
+    margin: 6px 0;
+    font-size: 16px;
+}
+
+.badge-premium {
+    display: inline-block;
+    background: #1e40af;
+    color: #dbeafe;
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1px solid #3b82f6;
+    font-size: 14px;
+    margin-top: 8px;
+}
+
+.profil-section-title {
+    background: rgba(30, 58, 138, 0.6);
+    color: #93c5fd;
+    font-weight: bold;
+    padding: 8px 10px;
+    border-left: 3px solid #3b82f6;
+    margin-top: 25px;
+}
+
+.profil-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+.profil-table th {
+    background: #1e3a8a;
+    color: #dbeafe;
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #3b82f6;
+}
+
+.profil-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid rgba(59, 130, 246, 0.25);
+    color: #e2e8f0;
+}
