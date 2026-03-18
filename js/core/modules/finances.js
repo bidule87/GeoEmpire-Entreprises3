@@ -1,290 +1,101 @@
 import { getData } from "../geoData.js";
 
-/* ============================================================
-   FONCTIONS CALCULS
-   ============================================================ */
-
-function calculRevenuNet(bien) {
-    return (bien.loyer || 0) - (bien.chargesSociales || 0) - (bien.impots || 0);
-}
-
-export const joueur = {
-    tresorerie: 0,
-
-    tresorerieVue: {
-        soldeActuel: 0,
-        revenusDuMois: 0,
-        soldeMoisProchain: 0,
-        credits: { loyers: 0 },
-        debits: {
-            primesDirecteurs: 0,
-            impotPrimes: 0,
-            chargesFoncieres: 0,
-            impotFoncier: 0,
-            assurances: 0,
-            mensualitesPrets: 0,
-            versementsEpargne: 0,
-            dividendes: 0,
-            fraisGestion: 0,
-            agiosDecouvert: 0
-        }
-    },
-
-    bilan: {
-        actif: {
-            immobilises: {
-                immobilier: 0,
-                travaux: 0,
-                comptesEpargne: 0,
-                totalImmobilises: 0
-            },
-            circulant: {
-                loyers: 0,
-                livretsI: 0,
-                compteCourant: 0,
-                totalCirculant: 0
-            },
-            totalActif: 0
-        },
-
-        passif: {
-            capitauxPropres: {
-                capital: 0,
-                beneficesPerteReportes: 0,
-                totalCapitauxPropres: 0
-            },
-            dettes: {
-                soldeRestantEmprunts: 0,
-                totalDettes: 0
-            },
-            totalPassif: 0
-        }
-    },
-
-    resultat: {
-        charges: { exploitation: 0, totalCharges: 0 },
-        produits: { exploitation: 0, totalProduits: 0 },
-        resultatNet: 0,
-        beneficesOuPertes: 0
-    }
-};
-
-/* ============================================================
-   TRÉSORERIE
-   ============================================================ */
-
-export function mettreAJourTresorerie() {
-    const t = joueur.tresorerieVue;
-    let loyers = 0;
-
-    const data = getData();
-    const biens = data.entreprise.biens;
-
-    Object.values(biens).forEach(styles => {
-        Object.values(styles).forEach(bien => {
-            const net = calculRevenuNet(bien);
-            if (net > 0) loyers += net;
-        });
-    });
-
-    t.credits.loyers = loyers;
-    t.debits.impotPrimes = t.debits.primesDirecteurs * 0.20;
-
-    const totalDebits = Object.values(t.debits).reduce((a, b) => a + b, 0);
-
-    t.soldeActuel = joueur.tresorerie;
-    t.revenusDuMois = loyers - totalDebits;
-    t.soldeMoisProchain = t.soldeActuel + t.revenusDuMois;
-
-    return t;
-}
-
-/* ============================================================
-   BILAN
-   ============================================================ */
-
-export function mettreAJourBilan() {
-    const b = joueur.bilan;
-    let immo = 0;
-
-    const data = getData();
-    const biens = data.entreprise.biens;
-
-    Object.values(biens).forEach(styles => {
-        Object.values(styles).forEach(bien => {
-            immo += (bien.prixAchat * (bien.quantite || 1));
-        });
-    });
-
-    b.actif.immobilises.immobilier = immo;
-    b.actif.immobilises.totalImmobilises =
-        immo +
-        b.actif.immobilises.travaux +
-        b.actif.immobilises.comptesEpargne;
-
-    b.actif.circulant.compteCourant = joueur.tresorerie;
-
-    b.actif.totalActif =
-        b.actif.immobilises.totalImmobilises +
-        b.actif.circulant.compteCourant;
-
-    b.passif.capitauxPropres.capital = b.actif.totalActif;
-    b.passif.totalPassif = b.actif.totalActif;
-
-    return b;
-}
-
-/* ============================================================
-   RÉSULTAT
-   ============================================================ */
-
-export function mettreAJourResultat() {
-    const r = joueur.resultat;
-    const t = mettreAJourTresorerie();
-
-    r.produits.totalProduits = t.credits.loyers;
-    r.charges.totalCharges = Object.values(t.debits).reduce((a, b) => a + b, 0);
-
-    r.resultatNet = r.produits.totalProduits - r.charges.totalCharges;
-    r.beneficesOuPertes = r.resultatNet;
-
-    return r;
-}
-
-/* ============================================================
-   PRÉVISIONNEL J+1
-   ============================================================ */
-
-export function simulerComptesPrevisionnelsDemain() {
-    let produits = 0;
-    let charges = 0;
-
-    const data = getData();
-    const biens = data.entreprise.biens;
-
-    Object.values(biens).forEach(styles => {
-        Object.values(styles).forEach(bien => {
-            const net = calculRevenuNet(bien);
-            if (net > 0) produits += net;
-            else charges += Math.abs(net);
-        });
-    });
-
-    return {
-        tresorerieActuelle: joueur.tresorerie,
-        produitsJour: produits,
-        chargesJour: charges,
-        tresoreriePrevueDemain: joueur.tresorerie + produits - charges
-    };
-}
-
-/* ============================================================
-   EXPORT EXCEL (CSV)
-   ============================================================ */
-
-export function genererDonneesExcel() {
-    const lignes = [];
-
-    lignes.push("Section;Libellé;Valeur");
-
-    // Trésorerie
-    lignes.push(`Trésorerie;Solde actuel;${joueur.tresorerieVue.soldeActuel}`);
-    lignes.push(`Trésorerie;Revenus du mois;${joueur.tresorerieVue.revenusDuMois}`);
-    lignes.push(`Trésorerie;Solde mois prochain;${joueur.tresorerieVue.soldeMoisProchain}`);
-    lignes.push(`Trésorerie;Crédits loyers;${joueur.tresorerieVue.credits.loyers}`);
-
-    Object.entries(joueur.tresorerieVue.debits).forEach(([cle, val]) => {
-        lignes.push(`Trésorerie;Débit ${cle};${val}`);
-    });
-
-    // Bilan actif
-    lignes.push(`Bilan actif;Immobilier;${joueur.bilan.actif.immobilises.immobilier}`);
-    lignes.push(`Bilan actif;Travaux;${joueur.bilan.actif.immobilises.travaux}`);
-    lignes.push(`Bilan actif;Comptes épargne;${joueur.bilan.actif.immobilises.comptesEpargne}`);
-    lignes.push(`Bilan actif;Total immobilisés;${joueur.bilan.actif.immobilises.totalImmobilises}`);
-    lignes.push(`Bilan actif;Compte courant;${joueur.bilan.actif.circulant.compteCourant}`);
-    lignes.push(`Bilan actif;Total actif;${joueur.bilan.actif.totalActif}`);
-
-    // Bilan passif
-    lignes.push(`Bilan passif;Capital;${joueur.bilan.passif.capitauxPropres.capital}`);
-    lignes.push(`Bilan passif;Bénéfices/pertes reportés;${joueur.bilan.passif.capitauxPropres.beneficesPerteReportes}`);
-    lignes.push(`Bilan passif;Total capitaux propres;${joueur.bilan.passif.capitauxPropres.totalCapitauxPropres}`);
-    lignes.push(`Bilan passif;Dettes emprunts;${joueur.bilan.passif.dettes.soldeRestantEmprunts}`);
-    lignes.push(`Bilan passif;Total dettes;${joueur.bilan.passif.dettes.totalDettes}`);
-    lignes.push(`Bilan passif;Total passif;${joueur.bilan.passif.totalPassif}`);
-
-    // Résultat
-    lignes.push(`Résultat;Total produits;${joueur.resultat.produits.totalProduits}`);
-    lignes.push(`Résultat;Total charges;${joueur.resultat.charges.totalCharges}`);
-    lignes.push(`Résultat;Résultat net;${joueur.resultat.resultatNet}`);
-
-    const csv = lignes.join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "GeoEmpire_Finances.csv";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-}
-
-/* ============================================================
-   INTERFACE PREMIUM
-   ============================================================ */
-
 export function initFinances() {
     const zone = document.getElementById("finances");
     if (!zone) return;
 
-    const t = mettreAJourTresorerie();
-    const b = mettreAJourBilan();
-    const r = mettreAJourResultat();
-    const p = simulerComptesPrevisionnelsDemain();
+    const data = getData();
+    const biens = data.entreprise.biens;
+    const joueur = data.joueur;
+
+    /* ============================
+       CALCULS
+       ============================ */
+
+    let loyers = 0;
+    let chargesFoncieres = 0;
+    let impotFoncier = 0;
+    let primesDirecteurs = joueur.primesDirecteurs || 0;
+    let impotPrimes = primesDirecteurs * 0.20;
+
+    Object.values(biens).forEach(styles => {
+        Object.values(styles).forEach(bien => {
+            loyers += bien.loyer || 0;
+            chargesFoncieres += bien.chargesFoncieres || 0;
+            impotFoncier += bien.impotFoncier || 0;
+        });
+    });
+
+    const totalDebits =
+        primesDirecteurs +
+        chargesFoncieres +
+        impotFoncier +
+        impotPrimes;
+
+    const revenusDuMois = loyers - totalDebits;
+    const soldeMoisProchain = joueur.tresorerie + revenusDuMois;
+
+    /* ============================
+       BILAN
+       ============================ */
+
+    let immobilier = 0;
+
+    Object.values(biens).forEach(styles => {
+        Object.values(styles).forEach(bien => {
+            immobilier += (bien.prixAchat || 0);
+        });
+    });
+
+    const totalImmobilises = immobilier;
+    const totalCirculant = joueur.tresorerie;
+    const totalActif = totalImmobilises + totalCirculant;
+
+    const capitauxPropres = totalActif;
+    const totalPassif = totalActif;
+
+    /* ============================
+       RENDU HTML
+       ============================ */
 
     zone.innerHTML = `
-        <div class="finances-premium">
+        <div class="finances-premium-wrapper">
             <h2>Finances – Tableau Premium</h2>
 
-            <div class="finances-section-title">Trésorerie</div>
             <table class="finances-table">
-                <tr><th>Libellé</th><th>Valeur</th></tr>
-                <tr><td>Solde actuel</td><td>${t.soldeActuel.toLocaleString()} €</td></tr>
-                <tr><td>Revenus du mois</td><td>${t.revenusDuMois.toLocaleString()} €</td></tr>
-                <tr><td>Solde mois prochain</td><td>${t.soldeMoisProchain.toLocaleString()} €</td></tr>
-                <tr><td>Loyers perçus</td><td>${t.credits.loyers.toLocaleString()} €</td></tr>
-            </table>
 
-            <div class="finances-section-title">Résultat</div>
-            <table class="finances-table">
-                <tr><th>Libellé</th><th>Valeur</th></tr>
-                <tr><td>Total produits</td><td>${r.produits.totalProduits.toLocaleString()} €</td></tr>
-                <tr><td>Total charges</td><td>${r.charges.totalCharges.toLocaleString()} €</td></tr>
-                <tr class="finances-total"><td>Résultat net</td><td>${r.resultatNet.toLocaleString()} €</td></tr>
-            </table>
+                <!-- TRÉSORERIE -->
+                <tr><td colspan="2" class="finances-section-header">TRÉSORERIE</td></tr>
+                <tr><td>Solde actuel</td><td>${joueur.tresorerie.toLocaleString()} Ø</td></tr>
+                <tr><td>Crédits – Loyers</td><td>${loyers.toLocaleString()} Ø</td></tr>
+                <tr><td>Débits – Primes des directeurs</td><td>${primesDirecteurs.toLocaleString()} Ø</td></tr>
+                <tr><td>Débits – Impôt sur les primes</td><td>${impotPrimes.toLocaleString()} Ø</td></tr>
+                <tr><td>Débits – Charges foncières</td><td>${chargesFoncieres.toLocaleString()} Ø</td></tr>
+                <tr><td>Débits – Impôt foncier</td><td>${impotFoncier.toLocaleString()} Ø</td></tr>
+                <tr><td>Total débits</td><td>${totalDebits.toLocaleString()} Ø</td></tr>
+                <tr><td>Revenus du mois</td><td>${revenusDuMois.toLocaleString()} Ø</td></tr>
+                <tr><td>Solde du mois prochain</td><td>${soldeMoisProchain.toLocaleString()} Ø</td></tr>
 
-            <div class="finances-section-title">Bilan</div>
-            <table class="finances-table">
-                <tr><th>Libellé</th><th>Valeur</th></tr>
-                <tr><td>Immobilier</td><td>${b.actif.immobilises.immobilier.toLocaleString()} €</td></tr>
-                <tr><td>Travaux</td><td>${b.actif.immobilises.travaux.toLocaleString()} €</td></tr>
-                <tr><td>Comptes épargne</td><td>${b.actif.immobilises.comptesEpargne.toLocaleString()} €</td></tr>
-                <tr class="finances-total"><td>Total immobilisés</td><td>${b.actif.immobilises.totalImmobilises.toLocaleString()} €</td></tr>
-                <tr><td>Compte courant</td><td>${b.actif.circulant.compteCourant.toLocaleString()} €</td></tr>
-                <tr class="finances-total"><td>Total actif</td><td>${b.actif.totalActif.toLocaleString()} €</td></tr>
-            </table>
+                <!-- RÉSULTAT -->
+                <tr><td colspan="2" class="finances-section-header">RÉSULTAT</td></tr>
+                <tr><td>Charges exploitation</td><td>${chargesFoncieres.toLocaleString()} Ø</td></tr>
+                <tr><td>Charges – Impôt foncier</td><td>${impotFoncier.toLocaleString()} Ø</td></tr>
+                <tr><td>Charges – Impôt sur primes</td><td>${impotPrimes.toLocaleString()} Ø</td></tr>
+                <tr><td>Total charges</td><td>${totalDebits.toLocaleString()} Ø</td></tr>
+                <tr><td>Total produits</td><td>${loyers.toLocaleString()} Ø</td></tr>
+                <tr><td>Résultat net</td><td>${revenusDuMois.toLocaleString()} Ø</td></tr>
 
-            <div class="finances-section-title">Prévisionnel J+1</div>
-            <table class="finances-table">
-                <tr><th>Libellé</th><th>Valeur</th></tr>
-                <tr><td>Produits du jour</td><td>${p.produitsJour.toLocaleString()} €</td></tr>
-                <tr><td>Charges du jour</td><td>${p.chargesJour.toLocaleString()} €</td></tr>
-                <tr class="finances-total"><td>Trésorerie prévue demain</td><td>${p.tresoreriePrevueDemain.toLocaleString()} €</td></tr>
-            </table>
+                <!-- BILAN -->
+                <tr><td colspan="2" class="finances-section-header">BILAN</td></tr>
+                <tr><td>Immobilisés – Immobilier</td><td>${immobilier.toLocaleString()} €</td></tr>
+                <tr><td>Total immobilisés</td><td>${totalImmobilises.toLocaleString()} €</td></tr>
+                <tr><td>Circulant – Compte courant</td><td>${joueur.tresorerie.toLocaleString()} €</td></tr>
+                <tr><td>Total circulant</td><td>${totalCirculant.toLocaleString()} €</td></tr>
+                <tr><td>Total actif</td><td>${totalActif.toLocaleString()} €</td></tr>
+                <tr><td>Capitaux propres</td><td>${capitauxPropres.toLocaleString()} €</td></tr>
+                <tr><td>Total passif</td><td>${totalPassif.toLocaleString()} €</td></tr>
 
-            <button class="btn-export-premium" onclick="genererDonneesExcel()">Exporter (Excel / Sheets)</button>
+            </table>
         </div>
     `;
 }
