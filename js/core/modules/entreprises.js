@@ -5,20 +5,12 @@ import {
     calculerValeurEntreprise 
 } from "../entrepriseCore.js";
 
-import { initMarketing } from "./marketing.js";
-import { initGestion } from "./core/modules/gestions.js"; // ⭐ CHEMIN CORRIGÉ
-
 export function initEntreprise() {
     const zone = document.getElementById("entreprise");
     const e = getEntreprise();
 
     zone.innerHTML = `
         <h2>Informations de l'entreprise</h2>
-
-        <div class="entreprise-menu">
-            <button id="btn-marketing" class="menu-btn">Marketing</button>
-            <button id="btn-gestion" class="menu-btn">Gestion</button>
-        </div>
 
         <div class="entreprise-bloc">
 
@@ -47,9 +39,6 @@ export function initEntreprise() {
             </div>
 
         </div>
-
-        <div id="marketing" class="section" style="display:none;"></div>
-        <div id="gestion" class="section" style="display:none;"></div>
     `;
 
     document.getElementById("btn-save-nom").onclick = () => {
@@ -73,20 +62,7 @@ export function initEntreprise() {
 
         reader.readAsDataURL(file);
     };
-
-    // ⭐ ONGLET MARKETING
-    document.getElementById("btn-marketing").onclick = () => {
-        document.querySelectorAll(".section").forEach(sec => sec.style.display = "none");
-        document.getElementById("marketing").style.display = "block";
-        initMarketing();
-    };
-
-    // ⭐ ONGLET GESTION
-    document.getElementById("btn-gestion").onclick = () => {
-        document.querySelectorAll(".section").forEach(sec => sec.style.display = "none");
-        document.getElementById("gestion").style.display = "block";
-        initGestion();
-    };
 }
 
 window.initEntreprise = initEntreprise;
+window.initGestion = initGestion; // ⭐ GESTION devient global grâce au HTML
