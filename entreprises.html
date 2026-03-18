@@ -40,21 +40,20 @@
 
     <div id="entreprise" class="tab"></div>
 
-    <!-- BOUTON EXPORT (Pack Prestige) -->
     <button id="export-acheter" class="btn-switch" style="display:none;">Exporter (Excel / Sheets)</button>
 
-    <!-- FILTRE DES CATÉGORIES -->
     <select id="filtre-acheter" class="filtre-acheter" style="display:none;">
         <option value="tous">Tous</option>
     </select>
 
     <div id="acheter" class="tab" style="display:none;"></div>
-
     <div id="assurances" class="tab" style="display:none;"></div>
     <div id="renovation" class="tab" style="display:none;"></div>
-    <div id="finances" class="onglet-contenu" style="display:none;"></div>
+
+    <div id="finances" class="tab" style="display:none;"></div>
+
     <div id="proprietes" class="tab" style="display:none;"></div>
-   <div id="personnel" class="tab" style="display:none;"></div>
+    <div id="personnel" class="tab" style="display:none;"></div>
     <div id="actionnaires" class="tab" style="display:none;"></div>
 
     <div id="patrimoine" class="tab" style="display:none;">
@@ -82,6 +81,7 @@
 <script type="module" src="./js/core/modules/actionnaires.js"></script>
 <script type="module" src="./js/core/modules/personnel.js"></script>
 <script type="module" src="./js/core/modules/patrimoine.js"></script>
+<script type="module" src="./js/core/modules/finances.js"></script>
 
 <script>
     const tabs = document.querySelectorAll(".tab");
@@ -92,7 +92,7 @@
             const target = btn.dataset.tab;
 
             tabs.forEach(t => t.style.display = "none");
-            document.getElementById(target).style.display = "block";
+            if (target) document.getElementById(target).style.display = "block";
 
             if (target === "entreprise" && window.initEntreprise) initEntreprise();
             if (target === "acheter" && window.initAcheter) initAcheter();
