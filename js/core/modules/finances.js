@@ -9,14 +9,14 @@ export function initFinances() {
     const biens = entreprise.biens;
 
     /* ============================
-       CALCULS
+       CALCULS DES FLUX
        ============================ */
 
     let loyers = 0;
     let chargesFoncieres = 0;
     let impotFoncier = 0;
 
-    // Primes (PDG, DG, DC)
+    // Primes direction
     let primesDirecteurs =
         (entreprise.primes?.pdg || 0) +
         (entreprise.primes?.dg || 0) +
@@ -24,6 +24,7 @@ export function initFinances() {
 
     let impotPrimes = primesDirecteurs * 0.20;
 
+    // Parcours des biens
     Object.values(biens).forEach(styles => {
         Object.values(styles).forEach(bien => {
             loyers += bien.loyer || 0;
@@ -40,6 +41,12 @@ export function initFinances() {
 
     const revenusDuMois = loyers - totalDebits;
     const soldeMoisProchain = entreprise.argent + revenusDuMois;
+
+    /* ============================
+       CALCUL DU MONTANT IMPOSABLE
+       ============================ */
+
+    const montantImposable = loyers - totalDebits;
 
     /* ============================
        BILAN
@@ -89,6 +96,10 @@ export function initFinances() {
                 <tr><td>Charges – Impôt sur primes</td><td>${impotPrimes.toLocaleString()} Ø</td></tr>
                 <tr><td>Total charges</td><td>${totalDebits.toLocaleString()} Ø</td></tr>
                 <tr><td>Total produits</td><td>${loyers.toLocaleString()} Ø</td></tr>
+
+                <!-- AJOUT : MONTANT IMPOSABLE -->
+                <tr><td>Montant imposable</td><td>${montantImposable.toLocaleString()} Ø</td></tr>
+
                 <tr><td>Résultat net</td><td>${revenusDuMois.toLocaleString()} Ø</td></tr>
 
                 <!-- BILAN -->
