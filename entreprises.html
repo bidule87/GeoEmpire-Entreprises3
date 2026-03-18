@@ -33,9 +33,10 @@
     <button data-tab="proprietes">Propriétés</button>
     <button data-tab="personnel">Personnel</button>
 
-    <!-- CORRECTION : bouton FINANCES utilise data-tab -->
-    <button data-tab="finances">Finances</button>
+    <!-- ⭐ AJOUT DU BOUTON MARKETING ⭐ -->
+    <button data-tab="marketing">Marketing</button>
 
+    <button data-tab="finances">Finances</button>
     <button data-tab="patrimoine">Patrimoine</button>
 </div>
 
@@ -53,12 +54,14 @@
     <div id="assurances" class="tab" style="display:none;"></div>
     <div id="renovation" class="tab" style="display:none;"></div>
 
-    <!-- CORRECTION : FINANCES devient un onglet normal -->
     <div id="finances" class="tab" style="display:none;"></div>
 
     <div id="proprietes" class="tab" style="display:none;"></div>
     <div id="personnel" class="tab" style="display:none;"></div>
     <div id="actionnaires" class="tab" style="display:none;"></div>
+
+    <!-- ⭐ AJOUT DE L’ONGLET MARKETING ⭐ -->
+    <div id="marketing" class="tab" style="display:none;"></div>
 
     <div id="patrimoine" class="tab" style="display:none;">
         <div id="patrimoine-monnaies"></div>
@@ -85,8 +88,6 @@
 <script type="module" src="./js/core/modules/actionnaires.js"></script>
 <script type="module" src="./js/core/modules/personnel.js"></script>
 <script type="module" src="./js/core/modules/patrimoine.js"></script>
-
-<!-- AJOUT : module finances -->
 <script type="module" src="./js/core/modules/finances.js"></script>
 
 <script>
@@ -107,9 +108,9 @@
             if (target === "proprietes" && window.initProprietes) initProprietes();
             if (target === "personnel" && window.initPersonnel) initPersonnel();
 
-            /* CORRECTION : appel FINANCES */
-            if (target === "finances" && window.initFinances) initFinances();
+            if (target === "marketing" && window.initMarketing) initMarketing();
 
+            if (target === "finances" && window.initFinances) initFinances();
             if (target === "patrimoine" && window.initPatrimoine) initPatrimoine();
         });
     });
