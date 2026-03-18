@@ -16,11 +16,15 @@ export function initEntreprise() {
     zone.innerHTML = `
         <h2>Informations de l'entreprise</h2>
 
+        <div class="entreprise-menu">
+            <button id="btn-marketing" class="menu-btn">Marketing</button>
+            <button id="btn-gestion" class="menu-btn">Gestion</button>
+        </div>
+
         <div class="entreprise-bloc">
 
             <div class="entreprise-photo-section">
 
-                <!-- ⭐ CADRE AJOUTÉ SANS RIEN CHANGER AU RESTE ⭐ -->
                 <div class="entreprise-photo-frame">
                     <img src="${e.logo}" class="entreprise-photo" id="entreprise-photo">
                 </div>
@@ -45,14 +49,26 @@ export function initEntreprise() {
             </div>
 
         </div>
+
+        <!-- ⭐ ZONE MARKETING ⭐ -->
+        <div id="marketing" class="section" style="display:none;"></div>
+
+        <!-- ⭐ ZONE GESTION ⭐ -->
+        <div id="gestion" class="section" style="display:none;"></div>
     `;
 
+    // ===============================
+    //  SAUVEGARDE DU NOM
+    // ===============================
     document.getElementById("btn-save-nom").onclick = () => {
         const nouveauNom = document.getElementById("nom-entreprise").value;
         changerNomEntreprise(nouveauNom);
         initEntreprise();
     };
 
+    // ===============================
+    //  PHOTO
+    // ===============================
     document.getElementById("btn-photo").onclick = () => {
         document.getElementById("upload-photo").click();
     };
@@ -69,14 +85,24 @@ export function initEntreprise() {
         reader.readAsDataURL(file);
     };
 
-    if (document.getElementById("marketing")) {
+    // ===============================
+    //  ONGLET MARKETING
+    // ===============================
+    document.getElementById("btn-marketing").onclick = () => {
+        document.querySelectorAll(".section").forEach(sec => sec.style.display = "none");
+        document.getElementById("marketing").style.display = "block";
         initMarketing();
-    }
+    };
 
-    if (document.getElementById("gestion")) {
+    // ===============================
+    //  ONGLET GESTION
+    // ===============================
+    document.getElementById("btn-gestion").onclick = () => {
+        document.querySelectorAll(".section").forEach(sec => sec.style.display = "none");
+        document.getElementById("gestion").style.display = "block";
         initGestion();
-    }
+    };
 }
 
-// ⭐ AJOUT ESSENTIEL ⭐
+// ⭐ ESSENTIEL POUR L’APPEL GLOBAL ⭐
 window.initEntreprise = initEntreprise;
