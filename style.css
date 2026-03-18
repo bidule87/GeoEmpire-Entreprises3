@@ -696,3 +696,76 @@ header nav a:hover {
 #patrimoine .patrimoine-bloc p {
     margin: 6px 0;
 }
+/* ============================
+   FINANCES PREMIUM
+   ============================ */
+
+.finances-premium {
+    width: 100%;
+    background: rgba(10, 20, 40, 0.85);
+    border: 1px solid #1e3a8a;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 0 15px rgba(30, 60, 150, 0.4);
+    color: #dbeafe;
+    margin-bottom: 25px;
+}
+
+.finances-premium h2 {
+    color: #60a5fa;
+    font-size: 26px;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #1e3a8a;
+    padding-bottom: 8px;
+}
+
+.finances-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.finances-table th {
+    background: #1e3a8a;
+    color: #dbeafe;
+    padding: 10px;
+    text-align: left;
+    font-size: 15px;
+    border-bottom: 1px solid #3b82f6;
+}
+
+.finances-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid rgba(59, 130, 246, 0.25);
+    color: #e2e8f0;
+}
+
+.finances-section-title {
+    background: rgba(30, 58, 138, 0.6);
+    color: #93c5fd;
+    font-weight: bold;
+    padding: 8px 10px;
+    border-left: 3px solid #3b82f6;
+    margin-top: 20px;
+}
+
+.finances-total {
+    font-weight: bold;
+    color: #93c5fd;
+}
+
+.btn-export-premium {
+    background: #1e40af;
+    color: #dbeafe;
+    padding: 10px 18px;
+    border-radius: 8px;
+    border: 1px solid #3b82f6;
+    cursor: pointer;
+    margin-top: 15px;
+    transition: 0.2s;
+}
+
+.btn-export-premium:hover {
+    background: #3b82f6;
+    color: white;
+}
