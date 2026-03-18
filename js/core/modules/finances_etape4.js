@@ -2,7 +2,6 @@ import { getData } from "../geoData.js";
 
 /* ============================================================
    FONCTION INTERNE : calculRevenuNet
-   (remplace totalement l'import de immobilier.js)
    ============================================================ */
 function calculRevenuNet(bien) {
     return (bien.loyer || 0) - (bien.chargesSociales || 0) - (bien.impots || 0);
@@ -231,8 +230,13 @@ export function genererDonneesExcel() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 }
+
+/* ============================================================
+   INTERFACE FINANCES
+   ============================================================ */
 export function initFinances() {
     const zone = document.getElementById("finances");
+    if (!zone) return;
 
     zone.innerHTML = `
         <h2>Finances</h2>
@@ -244,13 +248,11 @@ export function initFinances() {
         </div>
     `;
 
-    // Mise à jour des données
     const t = mettreAJourTresorerie();
     const b = mettreAJourBilan();
     const r = mettreAJourResultat();
     const p = simulerComptesPrevisionnelsDemain();
 
-    // Affichage simple (on fera le design après)
     document.getElementById("finances-tresorerie").innerHTML = `
         <h3>Trésorerie</h3>
         <p>Solde actuel : ${t.soldeActuel}</p>
@@ -258,4 +260,5 @@ export function initFinances() {
         <p>Solde mois prochain : ${t.soldeMoisProchain}</p>
     `;
 }
+
 window.initFinances = initFinances;
