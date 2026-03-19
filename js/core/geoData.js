@@ -4,47 +4,20 @@
 
 let data = {
     entreprise: {
-
-        // CAPITAL DE L’ENTREPRISE
         capital: 0,
-
-        // BÉNÉFICE JOURNALIER (pour les gros joueurs)
         beneficeJournalier: 0,
 
-        // BIENS POSSEDÉS
-        biens: {
-            // Exemple :
-            // "Maisons": {
-            //     "Moderne": { quantite: 3, prixAchatMoyen: 120000 },
-            // }
-        },
+        logo: "",
 
-        // VENTES EN ATTENTE
+        biens: {},
         ventesEnAttente: [],
-
-        // LOCATIONS EN ATTENTE
         locationsEnAttente: [],
 
-        // MARKETING
         marketing: {
-
-            // Total investi par TOUS les joueurs (impact dynamique)
             totalInvestissements: 0,
-
-            // Liste des clients marketing
-            clients: {
-                // Exemple :
-                // "NOVA HABITAT": {
-                //     couleur: "#FF4D4D",
-                //     satisfaction: 0,
-                //     bonus: 0,
-                //     categorie: ["Maisons", "Appartements"],
-                //     investissementInitial: 0
-                // }
-            }
+            clients: {}
         },
 
-        // FINANCES
         finances: {
             depensesMarketing: 0,
             revenusVentes: 0,
@@ -77,13 +50,18 @@ export function loadData() {
 }
 
 // ============================================
-// MODIFIER SATISFACTION (MARKETING)
+// AJOUT D'ARGENT
 // ============================================
-export function modifierSatisfaction(nom, valeur) {
-    const client = data.entreprise.marketing.clients[nom];
-    if (!client) return;
+export function addArgent(montant) {
+    data.entreprise.capital += montant;
+    saveData();
+}
 
-    client.satisfaction = Math.max(0, Math.min(30, client.satisfaction + valeur));
+// ============================================
+// CHANGER LE LOGO
+// ============================================
+export function setLogo(url) {
+    data.entreprise.logo = url;
     saveData();
 }
 
