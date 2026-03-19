@@ -14,7 +14,9 @@ export function initGestion() {
                 ${Object.keys(biens).length === 0 ? `
                     <p>Aucun bien pour le moment.</p>
                 ` : `
-                    ${Object.entries(biens).map(([categorie, styles]) => `
+                    ${Object.entries(biens)
+                        .filter(([categorie, styles]) => Object.keys(styles).length > 0)   // 🔥 Masque les catégories vides
+                        .map(([categorie, styles]) => `
                         <div class="gestion-categorie">
                             <h3>${categorie}</h3>
 
