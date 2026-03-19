@@ -15,7 +15,7 @@ export function initGestion() {
                     <p>Aucun bien pour le moment.</p>
                 ` : `
                     ${Object.entries(biens)
-                        .filter(([categorie, styles]) => Object.keys(styles).length > 0)   // 🔥 Masque les catégories vides
+                        .filter(([categorie, styles]) => Object.keys(styles).length > 0)
                         .map(([categorie, styles]) => `
                         <div class="gestion-categorie">
                             <h3>${categorie}</h3>
@@ -163,7 +163,7 @@ export function initGestion() {
     });
 
     // ===============================
-    //  VENDRE
+    //  VENDRE — VERSION CORRIGÉE (NON INSTANTANÉE)
     // ===============================
     document.querySelectorAll(".btn-vendre").forEach(btn => {
         btn.onclick = () => {
@@ -186,16 +186,19 @@ export function initGestion() {
 
             if (!bien || quantite <= 0 || quantite > bien.quantite) return;
 
-            const prixBase = bien.prixAchatMoyen;
-            const prixFinal = Math.floor(prixBase * (1 + ajustement / 100));
+            // ⭐ Nouvelle logique : on met en attente
+            if (!data.entreprise.ventesEnAttente) {
+                data.entreprise.ventesEnAttente = [];
+            }
 
-            const commissionTaux = data.entreprise.prestigePack ? 0 : 0.02;
-            const montantBrut = prixFinal * quantite;
-            const montantNet = Math.floor(montantBrut * (1 - commissionTaux));
-
-            data.entreprise.argent += montantNet;
-
-            removeBien(cat, style, quantite);
+            data.entreprise.ventesEnAttente.push({
+                categorie: cat,
+                style,
+                quantite,
+                ajustement,
+                prixAchatMoyen: bien.prixAchatMoyen,
+                dateDemande: Date.now()
+            });
 
             saveData();
             initGestion();
