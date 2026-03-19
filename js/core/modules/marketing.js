@@ -32,6 +32,11 @@ window.initMarketing = function () {
                 ${nom}
             </div>
 
+            <!-- AJOUT B : affichage de la catégorie -->
+            <div class="marketing-categorie">
+                Catégorie : <strong>${Array.isArray(client.categorie) ? client.categorie.join(", ") : client.categorie}</strong>
+            </div>
+
             <div class="marketing-satisfaction">
                 Satisfaction : <strong>${client.satisfaction}%</strong>
             </div>
