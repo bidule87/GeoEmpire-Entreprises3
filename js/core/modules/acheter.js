@@ -44,6 +44,11 @@ function afficherBiensDisponibles() {
     const container = document.getElementById("acheter");
     container.innerHTML = "";
 
+    const data = getData();
+    const prixMarche = data.entreprise.prixMarche;
+    const chargesTable = data.entreprise.charges;
+    const impots = data.entreprise.impotsVente;
+
     for (const categorie in immoState.styles) {
 
         if (filtreCategorie !== "tous" && filtreCategorie !== categorie) continue;
@@ -54,7 +59,21 @@ function afficherBiensDisponibles() {
 
         immoState.styles[categorie].forEach(style => {
             const quantite = immoState.quantites[categorie][style];
-            const prix = genererPrix(style);
+
+            // --- PRIX RÉEL ---
+            const prix = prixMarche[categorie];
+
+            // --- LOYER (1.5%) ---
+            const loyer = Math.floor(prix * 0.015);
+
+            // --- CHARGES ---
+            const charges = Math.floor(prix * chargesTable[categorie]);
+
+            // --- IMPÔTS ---
+            const impotsMois = Math.floor((prix * impots) / 12);
+
+            // --- RENTABILITÉ ---
+            const rentabilite = loyer - charges - impotsMois;
 
             const item = document.createElement("div");
             item.className = "bien-item";
@@ -64,20 +83,34 @@ function afficherBiensDisponibles() {
                 <div class="bien-quantite">Stock : ${quantite.toLocaleString()}</div>
                 <div class="bien-prix">Prix : ${prix.toLocaleString()} €</div>
 
-                <div class="achat-boutons">
-                    <button data-qte="1">1</button>
-                    <button data-qte="10">10</button>
-                    <button data-qte="100">100</button>
-                    <button data-qte="1000">1000</button>
-                    <button data-qte="max-stock">MAX STOCK</button>
-                    <button data-qte="max-argent">MAX ARGENT</button>
+                <div class="bien-loyer">Loyer : ${loyer.toLocaleString()} € / mois</div>
+                <div class="bien-charges">Charges : ${charges.toLocaleString()} € / mois</div>
+                <div class="bien-impots">Impôts : ${impotsMois.toLocaleString()} € / mois</div>
+                <div class="bien-rentabilite">Rentabilité nette : ${rentabilite.toLocaleString()} € / mois</div>
+
+                <div class="achat-zone">
+                    <input type="number" class="achat-input" min="1" placeholder="Quantité">
+                    <button class="achat-max-btn">MAX</button>
+                    <button class="achat-valider-btn">Acheter</button>
                 </div>
             `;
 
-            item.querySelectorAll("button").forEach(btn => {
-                btn.addEventListener("click", () => {
-                    gererAchat(categorie, style, prix, quantite, btn.dataset.qte);
-                });
+            const input = item.querySelector(".achat-input");
+            const btnMax = item.querySelector(".achat-max-btn");
+            const btnValider = item.querySelector(".achat-valider-btn");
+
+            btnMax.addEventListener("click", () => {
+                const argent = data.entreprise.argent;
+                const maxArgent = Math.floor(argent / prix);
+                const maxPossible = Math.min(maxArgent, quantite);
+                input.value = maxPossible;
+            });
+
+            btnValider.addEventListener("click", () => {
+                const qte = parseInt(input.value);
+                if (isNaN(qte) || qte <= 0) return;
+
+                gererAchat(categorie, style, prix, quantite, qte);
             });
 
             bloc.appendChild(item);
@@ -87,26 +120,9 @@ function afficherBiensDisponibles() {
     }
 }
 
-function genererPrix(style) {
-    if (style.includes("Penthouse")) return 500000;
-    if (style.includes("Luxe")) return 300000;
-    if (style.includes("Moderne")) return 200000;
-    return 150000;
-}
-
-function gererAchat(categorie, style, prix, quantiteDisponible, typeAchat) {
+function gererAchat(categorie, style, prix, quantiteDisponible, quantiteAchetee) {
     const data = getData();
     const entreprise = data.entreprise;
-
-    let quantiteAchetee = 0;
-
-    if (typeAchat === "max-stock") {
-        quantiteAchetee = quantiteDisponible;
-    } else if (typeAchat === "max-argent") {
-        quantiteAchetee = Math.floor(entreprise.argent / prix);
-    } else {
-        quantiteAchetee = parseInt(typeAchat);
-    }
 
     quantiteAchetee = Math.min(quantiteAchetee, quantiteDisponible);
     if (quantiteAchetee <= 0) return;
@@ -141,7 +157,7 @@ function exporterAcheter() {
     for (const categorie in immoState.styles) {
         immoState.styles[categorie].forEach(style => {
             const quantite = immoState.quantites[categorie][style];
-            const prix = genererPrix(style);
+            const prix = getData().entreprise.prixMarche[categorie];
 
             lignes.push({
                 categorie,
