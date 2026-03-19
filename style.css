@@ -1000,21 +1000,22 @@ header nav a:hover {
 
 .marketing-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
     gap: 25px;
     padding: 10px;
 }
 
-/* Bloc entreprise */
+/* Carte client */
 .marketing-item {
     background: rgba(255, 255, 255, 0.08);
     border: 1px solid rgba(120, 170, 255, 0.25);
     border-radius: 14px;
     padding: 20px;
     box-shadow: 0 0 15px rgba(0, 80, 255, 0.25);
+    backdrop-filter: blur(6px);
 }
 
-/* Nom entreprise */
+/* Nom client */
 .marketing-nom {
     font-size: 26px;
     font-weight: 700;
@@ -1029,7 +1030,22 @@ header nav a:hover {
     color: #d0e0ff;
 }
 
-/* Input + bouton */
+/* Barre de satisfaction */
+.satisfaction-bar {
+    height: 12px;
+    background: rgba(120, 170, 255, 0.15);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 15px;
+}
+
+.satisfaction-fill {
+    height: 100%;
+    background: #3aa0ff;
+    transition: width 0.3s ease;
+}
+
+/* Actions */
 .marketing-actions {
     display: flex;
     gap: 12px;
@@ -1040,7 +1056,7 @@ header nav a:hover {
     width: 120px;
     padding: 8px;
     border-radius: 6px;
-    border: 1px solid #7aa4ff;
+    border: 1px solid rgba(120, 170, 255, 0.35);
     background: rgba(255, 255, 255, 0.15);
     color: #d9e6ff;
     font-size: 18px;
@@ -1063,8 +1079,8 @@ header nav a:hover {
 
 /* Couleurs entreprises */
 .marketing-red    { border-left: 8px solid #ff4d4d; }
-.marketing-orange { border-left: 8px solid #ffa64d; }
-.marketing-yellow { border-left: 8px solid #ffe44d; }
-.marketing-green  { border-left: 8px solid #4dff88; }
-.marketing-blue   { border-left: 8px solid #4da6ff; }
-.marketing-purple { border-left: 8px solid #b84dff; }
+.marketing-orange { border-left: 8px solid #ff8c42; }
+.marketing-yellow { border-left: 8px solid #ffd93d; }
+.marketing-green  { border-left: 8px solid #4caf50; }
+.marketing-blue   { border-left: 8px solid #2196f3; }
+.marketing-purple { border-left: 8px solid #9c27b0; }
