@@ -7,6 +7,7 @@ let data = {
         capital: 0,
         beneficeJournalier: 0,
 
+        nom: "",
         logo: "",
 
         biens: {},
@@ -50,7 +51,7 @@ export function loadData() {
 }
 
 // ============================================
-// AJOUT D'ARGENT (utilisé par core.js et systeme.js)
+// AJOUT D'ARGENT
 // ============================================
 export function addArgent(montant) {
     data.entreprise.capital += montant;
@@ -58,7 +59,24 @@ export function addArgent(montant) {
 }
 
 // ============================================
-// CHANGER LE LOGO (utilisé par entrepriseCore.js)
+// RETIRER DE L'ARGENT
+// ============================================
+export function removeArgent(montant) {
+    data.entreprise.capital -= montant;
+    if (data.entreprise.capital < 0) data.entreprise.capital = 0;
+    saveData();
+}
+
+// ============================================
+// CHANGER LE NOM DE L'ENTREPRISE
+// ============================================
+export function setNom(nouveauNom) {
+    data.entreprise.nom = nouveauNom;
+    saveData();
+}
+
+// ============================================
+// CHANGER LE LOGO
 // ============================================
 export function setLogo(url) {
     data.entreprise.logo = url;
