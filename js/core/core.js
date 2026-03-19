@@ -82,22 +82,20 @@ window.addEventListener("load", ge_afficherBilan);
 // ===============================
 
 document.getElementById("btn-cheat-argent").onclick = () => {
-    const data = getData();
-    data.entreprise.argent += 1000000;
-    saveData();
-    if (window.ge_afficherBilan) window.ge_afficherBilan();
+    addArgent(1000000);
+    ge_afficherBilan();
 };
 
 document.getElementById("btn-cheat-tokens").onclick = () => {
     const data = getData();
-    data.entreprise.tokens += 100;
-    saveData();
-    if (window.ge_afficherBilan) window.ge_afficherBilan();
+    data.entreprise.tokens = (data.entreprise.tokens || 0) + 100;
+    localStorage.setItem("geoEmpireData", JSON.stringify(data));
+    ge_afficherBilan();
 };
 
 document.getElementById("btn-cheat-crowns").onclick = () => {
     const data = getData();
-    data.entreprise.crowns += 50;
-    saveData();
-    if (window.ge_afficherBilan) window.ge_afficherBilan();
+    data.entreprise.crowns = (data.entreprise.crowns || 0) + 50;
+    localStorage.setItem("geoEmpireData", JSON.stringify(data));
+    ge_afficherBilan();
 };
