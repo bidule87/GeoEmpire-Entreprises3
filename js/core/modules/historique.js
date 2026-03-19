@@ -1,31 +1,72 @@
-import { getEntreprise } from "./entreprises.js";
+// ============================================
+// HISTORIQUE — MODULE ENTREPRISES
+// ============================================
 
-document.addEventListener("DOMContentLoaded", () => {
+import { getData } from "../geoData.js";
 
-    const tbody = document.getElementById("historique-tbody");
+window.initHistorique = function () {
+    const zone = document.getElementById("historique-contenu");
+    if (!zone) return;
 
-    function render() {
-        const e = getEntreprise();
-        const hist = e.historique || [];
+    const data = getData();
 
-        tbody.innerHTML = "";
+    const ventes = data.entreprise.ventesEnAttente || [];
+    const locations = data.entreprise.locationsEnAttente || [];
+    const finances = data.entreprise.finances || {};
 
-        hist.slice().reverse().forEach(entry => {
+    zone.innerHTML = `
+        <div class="historique-panel">
 
-            const date = new Date(entry.date).toLocaleString("fr-FR");
+            <h2 class="historique-title">Historique des opérations</h2>
 
-            const tr = document.createElement("tr");
+            <div class="historique-section">
+                <h3>Ventes en attente</h3>
+                ${ventes.length === 0 ? `
+                    <p>Aucune vente en attente.</p>
+                ` : `
+                    <div class="historique-liste">
+                        ${ventes.map(v => `
+                            <div class="historique-item">
+                                <div><strong>${v.categorie}</strong> — ${v.style}</div>
+                                <div>Quantité : ${v.quantite}</div>
+                                <div>Ajustement : ${v.ajustement > 0 ? "+" : ""}${v.ajustement}%</div>
+                                <div>Prix moyen : ${Math.floor(v.prixAchatMoyen).toLocaleString("fr-FR")} €</div>
+                                <div>Date : ${new Date(v.dateDemande).toLocaleString("fr-FR")}</div>
+                            </div>
+                        `).join("")}
+                    </div>
+                `}
+            </div>
 
-            tr.innerHTML = `
-                <td>${date}</td>
-                <td>${entry.type}</td>
-                <td>${entry.details || ""}</td>
-                <td>${entry.montant ? entry.montant.toLocaleString("fr-FR") + " €" : ""}</td>
-            `;
+            <div class="historique-section">
+                <h3>Locations en attente</h3>
+                ${locations.length === 0 ? `
+                    <p>Aucune location en attente.</p>
+                ` : `
+                    <div class="historique-liste">
+                        ${locations.map(l => `
+                            <div class="historique-item">
+                                <div><strong>${l.categorie}</strong> — ${l.style}</div>
+                                <div>Quantité : ${l.quantite}</div>
+                                <div>Ajustement : ${l.ajustement > 0 ? "+" : ""}${l.ajustement}%</div>
+                                <div>Prix moyen : ${Math.floor(l.prixAchatMoyen).toLocaleString("fr-FR")} €</div>
+                                <div>Date : ${new Date(l.dateDemande).toLocaleString("fr-FR")}</div>
+                            </div>
+                        `).join("")}
+                    </div>
+                `}
+            </div>
 
-            tbody.appendChild(tr);
-        });
-    }
+            <div class="historique-section">
+                <h3>Finances</h3>
+                <div class="historique-finances">
+                    <div>Dépenses marketing : ${finances.depensesMarketing?.toLocaleString("fr-FR") || 0} €</div>
+                    <div>Revenus ventes : ${finances.revenusVentes?.toLocaleString("fr-FR") || 0} €</div>
+                    <div>Revenus locations : ${finances.revenusLocations?.toLocaleString("fr-FR") || 0} €</div>
+                    <div>Primes : ${finances.primes?.toLocaleString("fr-FR") || 0} €</div>
+                </div>
+            </div>
 
-    render();
-});
+        </div>
+    `;
+};
