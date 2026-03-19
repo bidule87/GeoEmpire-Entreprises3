@@ -63,6 +63,20 @@ function initialiserStyles() {
     }
 }
 
+function synchroniserQuantites() {
+    for (const categorie in immoState.styles) {
+        if (!immoState.quantites[categorie]) {
+            immoState.quantites[categorie] = {};
+        }
+
+        immoState.styles[categorie].forEach(style => {
+            if (immoState.quantites[categorie][style] == null) {
+                immoState.quantites[categorie][style] = quantiteAleatoire();
+            }
+        });
+    }
+}
+
 function regenererQuantites() {
     for (const categorie in immoState.styles) {
         if (!immoState.quantites[categorie]) {
@@ -100,5 +114,7 @@ export function refreshSiNecessaire() {
 export function initImmoCore() {
     chargerEtat();
     initialiserStyles();
+    synchroniserQuantites(); // 🔥 LA SEULE LIGNE QUI RÈGLE TON BUG
     refreshSiNecessaire();
+    sauvegarderEtat();
 }
