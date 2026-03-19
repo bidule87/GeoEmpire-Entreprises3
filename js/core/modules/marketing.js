@@ -4,9 +4,12 @@
 
 import { getData, modifierSatisfaction } from "../geoData.js";
 
-window.initMarketing = function () {
+// ⭐ Fonction interne (non attachée à window)
+function initMarketing() {
     const zone = document.getElementById("marketing-contenu");
     const clients = getData().entreprise.marketing.clients;
+
+    if (!zone) return;
 
     zone.innerHTML = "";
 
@@ -32,7 +35,6 @@ window.initMarketing = function () {
                 ${nom}
             </div>
 
-            <!-- AJOUT B : affichage de la catégorie -->
             <div class="marketing-categorie">
                 Catégorie : <strong>${Array.isArray(client.categorie) ? client.categorie.join(", ") : client.categorie}</strong>
             </div>
@@ -51,7 +53,6 @@ window.initMarketing = function () {
             </div>
         `;
 
-        // Bouton d’action
         const btn = bloc.querySelector(".marketing-btn");
         const input = bloc.querySelector(".marketing-input");
 
@@ -65,4 +66,7 @@ window.initMarketing = function () {
 
         zone.appendChild(bloc);
     });
-};
+}
+
+// ⭐ REND LA FONCTION ACCESSIBLE AU SYSTÈME D’ONGLETS
+window.initMarketing = initMarketing;
