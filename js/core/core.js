@@ -77,3 +77,27 @@ window.ge_afficherBilan = function () {
 
 // Auto-init
 window.addEventListener("load", ge_afficherBilan);
+// ===============================
+// MODE CHEAT (visible pour tous)
+// ===============================
+
+document.getElementById("btn-cheat-argent").onclick = () => {
+    const data = getData();
+    data.entreprise.argent += 1000000;
+    saveData();
+    if (window.ge_afficherBilan) window.ge_afficherBilan();
+};
+
+document.getElementById("btn-cheat-tokens").onclick = () => {
+    const data = getData();
+    data.entreprise.tokens += 100;
+    saveData();
+    if (window.ge_afficherBilan) window.ge_afficherBilan();
+};
+
+document.getElementById("btn-cheat-crowns").onclick = () => {
+    const data = getData();
+    data.entreprise.crowns += 50;
+    saveData();
+    if (window.ge_afficherBilan) window.ge_afficherBilan();
+};
