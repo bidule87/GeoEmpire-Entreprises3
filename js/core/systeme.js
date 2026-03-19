@@ -7,14 +7,13 @@ import {
     getData, 
     saveData, 
     addArgent, 
-    removeArgent, 
-    appliquerVentesAutomatiques 
+    removeArgent
 } from "./geoData.js";
 
-import { initImmoCore } from "./modules/immo-core.js"; // AJOUT
+import { initImmoCore } from "./modules/immo-core.js";
 
 // ===============================
-//  INITIALISATION ENTREPRISE (AJOUT)
+//  INITIALISATION ENTREPRISE
 // ===============================
 const data = getData();
 const e = data.entreprise;
@@ -91,13 +90,10 @@ export function ge_retirerArgent(montant) {
 // ===============================
 export function ge_initialiser() {
 
-    // 🔥 Mise à jour du solde
+    // Mise à jour du solde
     ge_afficherBilan();
 
-    // 🔥 Activation du cycle marketing 24h
-    appliquerVentesAutomatiques();
-
-    // 🔥 Initialisation du module immobilier
+    // Initialisation du module immobilier
     initImmoCore();
 
     console.log("GeoEmpire 3 initialisé (version geoData).");
