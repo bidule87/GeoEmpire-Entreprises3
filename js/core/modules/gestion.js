@@ -4,74 +4,93 @@
 
 import { getData, saveData } from "../geoData.js";
 
-// ============================================
-//  INITIALISATION
-// ============================================
 export function initGestion() {
     const zone = document.getElementById("gestion");
-    const data = getData();
-
     if (!zone) return;
 
-    const biens = data.entreprise.biens;
+    const data = getData();
+    const biens = data.entreprise.biens || {};
 
     zone.innerHTML = `
         <div class="premium-panel">
-            <div class="premium-title">Gestion — Entreprises</div>
+            <h2 class="premium-title">Gestion des biens</h2>
 
-            <div class="premium-box gestion-box">
+            <div class="premium-box">
+
                 ${Object.keys(biens).length === 0 ? `
-                    <p>Aucun bien disponible.</p>
+                    <p>Aucun bien pour le moment.</p>
                 ` : `
-                    ${Object.entries(biens).map(([cat, styles]) => `
+                    ${Object.entries(biens)
+                        .filter(([categorie, styles]) => Object.keys(styles).length > 0)
+                        .map(([categorie, styles]) => `
                         <div class="gestion-categorie">
-                            <h3>${cat}</h3>
+                            <h3>${categorie}</h3>
 
                             ${Object.entries(styles).map(([style, bien]) => `
                                 <div class="gestion-item">
-                                    <div class="gestion-info">
-                                        <strong>${style}</strong><br>
-                                        Quantité : ${bien.quantite}<br>
-                                        Prix moyen : ${Math.floor(bien.prixAchatMoyen).toLocaleString("fr-FR")} €
+
+                                    <div class="gestion-nom">${style}</div>
+
+                                    <div class="gestion-infos">
+                                        <div>Quantité : ${bien.quantite}</div>
+                                        <div>Prix moyen : ${Math.floor(bien.prixAchatMoyen).toLocaleString("fr-FR")} €</div>
                                     </div>
 
                                     <div class="gestion-actions">
 
-                                        <input type="number" 
-                                               class="input-quantite" 
-                                               data-cat="${cat}" 
-                                               data-style="${style}" 
-                                               min="1" 
-                                               max="${bien.quantite}" 
-                                               value="1">
+                                        <label>Quantité :</label>
+                                        <input type="number"
+                                            class="input-quantite"
+                                            data-cat="${categorie}"
+                                            data-style="${style}"
+                                            min="1"
+                                            max="${bien.quantite}"
+                                            value="1">
 
-                                        <input type="range" 
-                                               class="slider-prix" 
-                                               data-cat="${cat}" 
-                                               data-style="${style}" 
-                                               min="-30" 
-                                               max="30" 
-                                               value="0">
+                                        <button class="btn-tous"
+                                            data-cat="${categorie}"
+                                            data-style="${style}"
+                                            data-max="${bien.quantite}">
+                                            Tous
+                                        </button>
 
-                                        <div class="gestion-btns">
-                                            <button class="btn-vendre" 
-                                                    data-cat="${cat}" 
-                                                    data-style="${style}">
-                                                Vendre
-                                            </button>
+                                        <label>Ajustement :</label>
+                                        <input type="range"
+                                            class="slider-prix"
+                                            data-cat="${categorie}"
+                                            data-style="${style}"
+                                            min="-30"
+                                            max="30"
+                                            value="0">
 
-                                            <button class="btn-louer" 
-                                                    data-cat="${cat}" 
-                                                    data-style="${style}">
+                                        <span class="prix-affiche"
+                                            id="prix-${categorie}-${style}">
+                                            0%
+                                        </span>
+
+                                        <div class="gestion-boutons-double">
+                                            <button class="btn-louer"
+                                                data-cat="${categorie}"
+                                                data-style="${style}">
                                                 Louer
                                             </button>
+
+                                            <button class="btn-vendre"
+                                                data-cat="${categorie}"
+                                                data-style="${style}">
+                                                Vendre
+                                            </button>
                                         </div>
+
                                     </div>
+
                                 </div>
                             `).join("")}
+
                         </div>
                     `).join("")}
                 `}
+
             </div>
         </div>
     `;
@@ -79,36 +98,48 @@ export function initGestion() {
     bindGestionEvents();
 }
 
-// ============================================
-//  BIND DES BOUTONS
-// ============================================
 function bindGestionEvents() {
 
-    // ===============================
-    //  VENDRE — EN ATTENTE
-    // ===============================
-    document.querySelectorAll(".btn-vendre").forEach(btn => {
+    // BOUTON "TOUS"
+    document.querySelectorAll(".btn-tous").forEach(btn => {
+        btn.onclick = () => {
+            const input = document.querySelector(
+                `.input-quantite[data-cat="${btn.dataset.cat}"][data-style="${btn.dataset.style}"]`
+            );
+            if (input) input.value = btn.dataset.max;
+        };
+    });
+
+    // SLIDER PRIX
+    document.querySelectorAll(".slider-prix").forEach(slider => {
+        slider.oninput = () => {
+            const span = document.getElementById(`prix-${slider.dataset.cat}-${slider.dataset.style}`);
+            if (span) span.textContent = (slider.value > 0 ? "+" : "") + slider.value + "%";
+        };
+    });
+
+    // LOUER — EN ATTENTE
+    document.querySelectorAll(".btn-louer").forEach(btn => {
         btn.onclick = () => {
             const cat = btn.dataset.cat;
             const style = btn.dataset.style;
 
-            const input = document.querySelector(
-                `.input-quantite[data-cat="${cat}"][data-style="${style}"]`
-            );
+            const input = document.querySelector(`.input-quantite[data-cat="${cat}"][data-style="${style}"]`);
+            const slider = document.querySelector(`.slider-prix[data-cat="${cat}"][data-style="${style}"]`);
 
-            const slider = document.querySelector(
-                `.slider-prix[data-cat="${cat}"][data-style="${style}"]`
-            );
-
-            const quantite = Number(input.value);
-            const ajustement = Number(slider.value);
+            const quantite = Number(input?.value || 0);
+            const ajustement = Number(slider?.value || 0);
 
             const data = getData();
-            const bien = data.entreprise.biens[cat][style];
+            const bien = data.entreprise.biens?.[cat]?.[style];
 
             if (!bien || quantite <= 0 || quantite > bien.quantite) return;
 
-            data.entreprise.ventesEnAttente.push({
+            if (!Array.isArray(data.entreprise.locationsEnAttente)) {
+                data.entreprise.locationsEnAttente = [];
+            }
+
+            data.entreprise.locationsEnAttente.push({
                 categorie: cat,
                 style,
                 quantite,
@@ -122,31 +153,28 @@ function bindGestionEvents() {
         };
     });
 
-    // ===============================
-    //  LOUER — IDENTIQUE À VENDRE
-    // ===============================
-    document.querySelectorAll(".btn-louer").forEach(btn => {
+    // VENDRE — EN ATTENTE
+    document.querySelectorAll(".btn-vendre").forEach(btn => {
         btn.onclick = () => {
             const cat = btn.dataset.cat;
             const style = btn.dataset.style;
 
-            const input = document.querySelector(
-                `.input-quantite[data-cat="${cat}"][data-style="${style}"]`
-            );
+            const input = document.querySelector(`.input-quantite[data-cat="${cat}"][data-style="${style}"]`);
+            const slider = document.querySelector(`.slider-prix[data-cat="${cat}"][data-style="${style}"]`);
 
-            const slider = document.querySelector(
-                `.slider-prix[data-cat="${cat}"][data-style="${style}"]`
-            );
-
-            const quantite = Number(input.value);
-            const ajustement = Number(slider.value);
+            const quantite = Number(input?.value || 0);
+            const ajustement = Number(slider?.value || 0);
 
             const data = getData();
-            const bien = data.entreprise.biens[cat][style];
+            const bien = data.entreprise.biens?.[cat]?.[style];
 
             if (!bien || quantite <= 0 || quantite > bien.quantite) return;
 
-            data.entreprise.locationsEnAttente.push({
+            if (!Array.isArray(data.entreprise.ventesEnAttente)) {
+                data.entreprise.ventesEnAttente = [];
+            }
+
+            data.entreprise.ventesEnAttente.push({
                 categorie: cat,
                 style,
                 quantite,
