@@ -994,3 +994,77 @@ header nav a:hover {
     display: flex;
     gap: 10px;
 }
+/* ================================
+   MARKETING — PREMIUM BLEU
+   ================================ */
+
+.marketing-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+    gap: 25px;
+    padding: 10px;
+}
+
+/* Bloc entreprise */
+.marketing-item {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(120, 170, 255, 0.25);
+    border-radius: 14px;
+    padding: 20px;
+    box-shadow: 0 0 15px rgba(0, 80, 255, 0.25);
+}
+
+/* Nom entreprise */
+.marketing-nom {
+    font-size: 26px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    text-shadow: 0 0 6px rgba(255, 255, 255, 0.3);
+}
+
+/* Satisfaction */
+.marketing-satisfaction {
+    font-size: 20px;
+    margin-bottom: 15px;
+    color: #d0e0ff;
+}
+
+/* Input + bouton */
+.marketing-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.marketing-input {
+    width: 120px;
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid #7aa4ff;
+    background: rgba(255, 255, 255, 0.15);
+    color: #d9e6ff;
+    font-size: 18px;
+}
+
+.marketing-btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-weight: 700;
+    background: #1a3f7a;
+    color: #d9e6ff;
+    transition: 0.2s;
+}
+
+.marketing-btn:hover {
+    background: #25529d;
+}
+
+/* Couleurs entreprises */
+.marketing-red    { border-left: 8px solid #ff4d4d; }
+.marketing-orange { border-left: 8px solid #ffa64d; }
+.marketing-yellow { border-left: 8px solid #ffe44d; }
+.marketing-green  { border-left: 8px solid #4dff88; }
+.marketing-blue   { border-left: 8px solid #4da6ff; }
+.marketing-purple { border-left: 8px solid #b84dff; }
