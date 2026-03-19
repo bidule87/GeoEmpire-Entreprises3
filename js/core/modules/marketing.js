@@ -1,104 +1,63 @@
-// ======================================================
-//  GEO EMPIRE – MARKETING PREMIUM (VERSION CHAMP DE TEXTE)
-// ======================================================
+// ============================================
+// MARKETING — MODULE PREMIUM BLEU
+// ============================================
 
-import { getData, saveData, modifierSatisfaction } from "../geoData.js";
+import { getData, modifierSatisfaction } from "../geoData.js";
 
-// ======================================================
-//  ACCÈS / SÉCURISATION DES DONNÉES
-// ======================================================
+window.initMarketing = function () {
+    const zone = document.getElementById("marketing-contenu");
+    const clients = getData().entreprise.marketing.clients;
 
-function getMarketingRoot() {
-    const data = getData();
-    if (!data.entreprise) data.entreprise = {};
-    if (!data.entreprise.marketing) data.entreprise.marketing = {};
-    if (!data.entreprise.marketing.clients) data.entreprise.marketing.clients = {};
+    zone.innerHTML = "";
 
-    return { data, entreprise: data.entreprise, marketing: data.entreprise.marketing };
-}
+    Object.entries(clients).forEach(([nom, client]) => {
+        const bloc = document.createElement("div");
+        bloc.className = "marketing-item";
 
-// ======================================================
-//  INITIALISATION MARKETING
-// ======================================================
+        // Détection automatique de la classe couleur
+        let couleurClass = "";
+        const c = client.couleur.toLowerCase();
 
-export function initMarketing() {
-    const zone = document.getElementById("marketing");
-    if (!zone) return;
+        if (c.includes("ff4d4d")) couleurClass = "marketing-red";
+        else if (c.includes("8c42") || c.includes("a64d")) couleurClass = "marketing-orange";
+        else if (c.includes("d93d") || c.includes("e44d")) couleurClass = "marketing-yellow";
+        else if (c.includes("4caf50") || c.includes("4dff88")) couleurClass = "marketing-green";
+        else if (c.includes("2196f3") || c.includes("4da6ff")) couleurClass = "marketing-blue";
+        else if (c.includes("9c27b0") || c.includes("b84dff")) couleurClass = "marketing-purple";
 
-    const { data, entreprise, marketing } = getMarketingRoot();
+        bloc.classList.add(couleurClass);
 
-    // Si aucun client → on en crée 1
-    if (Object.keys(marketing.clients).length === 0) {
-        marketing.clients["client 1"] = {
-            couleur: "rgb(120,180,255)",
-            satisfaction: 0
-        };
-        saveData(data);
-    }
+        bloc.innerHTML = `
+            <div class="marketing-nom" style="color:${client.couleur}">
+                ${nom}
+            </div>
 
-    const clients = marketing.clients;
+            <div class="marketing-satisfaction">
+                Satisfaction : <strong>${client.satisfaction}%</strong>
+            </div>
 
-    zone.innerHTML = `
-        <h2>Marketing</h2>
+            <div class="satisfaction-bar">
+                <div class="satisfaction-fill" style="width:${client.satisfaction}%;"></div>
+            </div>
 
-        <div class="clients-container">
-            ${Object.entries(clients).map(([nom, c]) => `
-                <div class="client-card" style="border-color:${c.couleur}">
-                    <div class="client-header" style="background:${c.couleur}">
-                        ${nom}
-                    </div>
+            <div class="marketing-actions">
+                <input type="number" class="marketing-input" placeholder="+ / - %" value="0">
+                <button class="marketing-btn">Appliquer</button>
+            </div>
+        `;
 
-                    <div class="client-body">
-                        <p>Satisfaction : <strong>${c.satisfaction ?? 0}</strong></p>
+        // Bouton d’action
+        const btn = bloc.querySelector(".marketing-btn");
+        const input = bloc.querySelector(".marketing-input");
 
-                        <div class="client-invest">
-                            <input type="number" class="input-invest" data-client="${nom}" placeholder="Montant en GEO">
-                            <button class="btn-invest" data-client="${nom}">Valider</button>
-                        </div>
-                    </div>
-                </div>
-            `).join("")}
-        </div>
-    `;
+        btn.addEventListener("click", () => {
+            const valeur = parseInt(input.value);
+            if (isNaN(valeur)) return;
 
-    // ======================================================
-    //  BOUTON INVESTIR (CHAMP DE TEXTE)
-    // ======================================================
+            modifierSatisfaction(nom, valeur);
+            initMarketing(); // refresh visuel
+        });
 
-    document.querySelectorAll(".btn-invest").forEach(btn => {
-        btn.onclick = () => {
-            const client = btn.dataset.client;
-            const input = document.querySelector(`.input-invest[data-client="${client}"]`);
-            const montant = Number(input.value);
-
-            const { data, entreprise } = getMarketingRoot();
-
-            if (!montant || montant <= 0) {
-                alert("Entre un montant valide.");
-                return;
-            }
-
-            if (entreprise.argent < montant) {
-                alert("Fonds insuffisants !");
-                return;
-            }
-
-            // Débit
-            entreprise.argent -= montant;
-
-            // Bonus satisfaction invisible
-            modifierSatisfaction(client, +1);
-
-            saveData(data);
-            initMarketing();
-        };
+        zone.appendChild(bloc);
     });
-}
-
-// ======================================================
-//  APPEL AUTOMATIQUE (REMIS COMME AVANT)
-// ======================================================
-
-document.addEventListener("DOMContentLoaded", () => {
-    initMarketing();
-});
+};
