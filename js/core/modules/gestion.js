@@ -2,7 +2,7 @@
 //  GESTION — MODULE ENTREPRISES
 // ============================================
 
-import { getData, saveData, removeBien } from "../geoData.js";
+import { getData, saveData } from "../geoData.js";
 
 // ============================================
 //  INITIALISATION
@@ -85,7 +85,7 @@ export function initGestion() {
 function bindGestionEvents() {
 
     // ===============================
-    //  VENDRE
+    //  VENDRE — EN ATTENTE
     // ===============================
     document.querySelectorAll(".btn-vendre").forEach(btn => {
         btn.onclick = () => {
@@ -108,10 +108,6 @@ function bindGestionEvents() {
 
             if (!bien || quantite <= 0 || quantite > bien.quantite) return;
 
-            if (!data.entreprise.ventesEnAttente) {
-                data.entreprise.ventesEnAttente = [];
-            }
-
             data.entreprise.ventesEnAttente.push({
                 categorie: cat,
                 style,
@@ -127,7 +123,7 @@ function bindGestionEvents() {
     });
 
     // ===============================
-    //  LOUER — VERSION FINALE
+    //  LOUER — IDENTIQUE À VENDRE
     // ===============================
     document.querySelectorAll(".btn-louer").forEach(btn => {
         btn.onclick = () => {
@@ -150,18 +146,12 @@ function bindGestionEvents() {
 
             if (!bien || quantite <= 0 || quantite > bien.quantite) return;
 
-            const prixBase = bien.prixAchatMoyen;
-
-            if (!data.entreprise.locationsEnAttente) {
-                data.entreprise.locationsEnAttente = [];
-            }
-
             data.entreprise.locationsEnAttente.push({
                 categorie: cat,
                 style,
                 quantite,
                 ajustement,
-                prixAchatMoyen: prixBase,
+                prixAchatMoyen: bien.prixAchatMoyen,
                 dateDemande: Date.now()
             });
 
