@@ -82,20 +82,20 @@ window.addEventListener("load", ge_afficherBilan);
 // ===============================
 
 document.getElementById("btn-cheat-argent").onclick = () => {
-    addArgent(1000000);
+    addArgent(1000000); // utilise ton système officiel
     ge_afficherBilan();
 };
 
 document.getElementById("btn-cheat-tokens").onclick = () => {
     const data = getData();
     data.entreprise.tokens = (data.entreprise.tokens || 0) + 100;
-    localStorage.setItem("geoEmpireData", JSON.stringify(data));
+    saveData();
     ge_afficherBilan();
 };
 
 document.getElementById("btn-cheat-crowns").onclick = () => {
     const data = getData();
     data.entreprise.crowns = (data.entreprise.crowns || 0) + 50;
-    localStorage.setItem("geoEmpireData", JSON.stringify(data));
+    saveData();
     ge_afficherBilan();
 };
