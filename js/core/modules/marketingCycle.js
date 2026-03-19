@@ -6,73 +6,83 @@ export function runMarketingCycle() {
 
     if (!entreprise) return;
 
-    const maintenant = Date.now();
+    // ===============================
+    //  HEURE LOCALE PARIS
+    // ===============================
+    const maintenantParis = new Date(
+        new Date().toLocaleString("fr-FR", { timeZone: "Europe/Paris" })
+    );
 
-    // Initialisation si manquant
-    if (!entreprise.dernierCycleMarketing) entreprise.dernierCycleMarketing = 0;
+    const last = entreprise.dernierCycleMarketing
+        ? new Date(entreprise.dernierCycleMarketing)
+        : null;
+
+    // Si aucun cycle → on initialise et on attend demain
+    if (!last) {
+        entreprise.dernierCycleMarketing = maintenantParis.toISOString();
+        saveData();
+        return;
+    }
+
+    // Comparaison des dates (AAAA-MM-JJ)
+    const jourActuel = maintenantParis.toISOString().split("T")[0];
+    const jourDernier = last.toISOString().split("T")[0];
+
+    // Si même jour → cycle déjà fait → on ne fait rien
+    if (jourActuel === jourDernier) return;
+
+    // ===============================
+    //  NOUVEAU JOUR → CYCLE
+    // ===============================
+    entreprise.dernierCycleMarketing = maintenantParis.toISOString();
+
     if (!entreprise.ventesEnAttente) entreprise.ventesEnAttente = [];
     if (!entreprise.locationsEnAttente) entreprise.locationsEnAttente = [];
     if (!entreprise.historique) entreprise.historique = [];
 
-    // 24h = 86 400 000 ms
-    const cycle24h = 86400000;
-
-    // Pas encore 24h → on ne fait rien
-    if (maintenant - entreprise.dernierCycleMarketing < cycle24h) return;
-
-    // Mise à jour du timestamp
-    entreprise.dernierCycleMarketing = maintenant;
-
-    // ============================
-    // TRAITEMENT DES VENTES
-    // ============================
+    // ===============================
+    //  TRAITEMENT DES VENTES
+    // ===============================
     entreprise.ventesEnAttente.forEach(v => {
-        const prixBase = v.prixAchatMoyen;
-        const prixFinal = Math.floor(prixBase * (1 + v.ajustement / 100));
+        const prixFinal = Math.floor(v.prixAchatMoyen * (1 + v.ajustement / 100));
+        const montant = prixFinal * v.quantite;
 
-        const commissionTaux = entreprise.prestigePack ? 0 : 0.02;
-        const montantBrut = prixFinal * v.quantite;
-        const montantNet = Math.floor(montantBrut * (1 - commissionTaux));
-
-        entreprise.argent += montantNet;
+        entreprise.argent += montant;
 
         removeBien(v.categorie, v.style, v.quantite);
 
         entreprise.historique.push({
-            date: maintenant,
+            date: maintenantParis.toISOString(),
             role: "PDG",
             action: "vente",
             categorie: v.categorie,
             style: v.style,
             quantite: v.quantite,
             ajustement: v.ajustement,
-            montant: montantNet
+            montant
         });
     });
 
-    // On vide la liste
     entreprise.ventesEnAttente = [];
 
-    // ============================
-    // TRAITEMENT DES LOCATIONS
-    // ============================
+    // ===============================
+    //  TRAITEMENT DES LOCATIONS
+    // ===============================
     entreprise.locationsEnAttente.forEach(l => {
-        const prixBase = l.prixAchatMoyen || 1000; // fallback si pas encore défini
-        const prixFinal = Math.floor(prixBase * (1 + l.ajustement / 100));
-
+        const prixFinal = Math.floor(l.prixAchatMoyen * (1 + l.ajustement / 100));
         const montant = prixFinal * l.quantite;
 
         entreprise.argent += montant;
 
         entreprise.historique.push({
-            date: maintenant,
+            date: maintenantParis.toISOString(),
             role: "PDG",
             action: "location",
             categorie: l.categorie,
             style: l.style,
             quantite: l.quantite,
             ajustement: l.ajustement,
-            montant: montant
+            montant
         });
     });
 
