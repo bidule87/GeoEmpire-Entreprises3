@@ -1084,3 +1084,12 @@ header nav a:hover {
 .marketing-green  { border-left: 8px solid #4caf50; }
 .marketing-blue   { border-left: 8px solid #2196f3; }
 .marketing-purple { border-left: 8px solid #9c27b0; }
+
+/* Fond d'écran uniquement pour la page entreprises */
+body.entreprises-page {
+    background-image: url("https://i.postimg.cc/QdbYqVf0/unnamed_(26).jpg");
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+}
