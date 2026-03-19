@@ -24,37 +24,46 @@ let data = {
 
         biens: {},
 
+        // Ajout pour la logique 24h (A)
+        lastUpdateMarketing: null,
+
         marketing: {
             clients: {
                 "NOVA HABITAT": {
                     couleur: "#FF4D4D",
                     satisfaction: 0,
-                    bonus: 0
+                    bonus: 0,
+                    categorie: "immobilier"   // A
                 },
                 "LUMEN CAPITAL": {
                     couleur: "#FF8C42",
                     satisfaction: 0,
-                    bonus: 0
+                    bonus: 0,
+                    categorie: "finance"       // A
                 },
                 "AURION INDUSTRIES": {
                     couleur: "#FFD93D",
                     satisfaction: 0,
-                    bonus: 0
+                    bonus: 0,
+                    categorie: "industrie"     // A
                 },
                 "VELION STARTERS": {
                     couleur: "#4CAF50",
                     satisfaction: 0,
-                    bonus: 0
+                    bonus: 0,
+                    categorie: "technologie"   // A
                 },
                 "SOLARIS GROUP": {
                     couleur: "#2196F3",
                     satisfaction: 0,
-                    bonus: 0
+                    bonus: 0,
+                    categorie: "energie"       // A
                 },
                 "EMPYREON TRUST": {
                     couleur: "#9C27B0",
                     satisfaction: 0,
-                    bonus: 0
+                    bonus: 0,
+                    categorie: "commerce"      // A
                 }
             }
         }
