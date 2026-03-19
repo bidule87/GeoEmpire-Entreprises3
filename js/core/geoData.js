@@ -50,7 +50,7 @@ export function loadData() {
 }
 
 // ============================================
-// AJOUT D'ARGENT
+// AJOUT D'ARGENT (utilisé par core.js et systeme.js)
 // ============================================
 export function addArgent(montant) {
     data.entreprise.capital += montant;
@@ -58,7 +58,7 @@ export function addArgent(montant) {
 }
 
 // ============================================
-// CHANGER LE LOGO
+// CHANGER LE LOGO (utilisé par entrepriseCore.js)
 // ============================================
 export function setLogo(url) {
     data.entreprise.logo = url;
