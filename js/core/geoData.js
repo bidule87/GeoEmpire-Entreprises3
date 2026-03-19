@@ -1,6 +1,5 @@
 // ======================================================
 //  GEO EMPIRE — FICHIER CENTRAL DE DONNÉES
-//  (Entreprise, biens, marketing, finances internes)
 // ======================================================
 
 // ===============================
@@ -24,8 +23,10 @@ let data = {
 
         biens: {},
 
-        // Pour la logique 24h
-        lastUpdateMarketing: null,
+        // === NOUVEAU SYSTÈME MARKETING 24H ===
+        ventesEnAttente: [],
+        locationsEnAttente: [],
+        dernierCycleMarketing: 0,
 
         // === BASE ÉCONOMIQUE SIMPLE ===
         prixMarche: {
@@ -104,6 +105,12 @@ export function loadData() {
     const saved = localStorage.getItem("geoEmpireData");
     if (saved) {
         data = JSON.parse(saved);
+
+        // Sécurisation des nouveaux champs
+        if (!data.entreprise.ventesEnAttente) data.entreprise.ventesEnAttente = [];
+        if (!data.entreprise.locationsEnAttente) data.entreprise.locationsEnAttente = [];
+        if (!data.entreprise.dernierCycleMarketing) data.entreprise.dernierCycleMarketing = 0;
+        if (!data.entreprise.historique) data.entreprise.historique = [];
     }
 }
 
@@ -204,73 +211,7 @@ export function modifierSatisfaction(client, valeur) {
 }
 
 // ===============================
-//  MARKETING — VENTES AUTOMATIQUES
-// ===============================
-export function appliquerVentesAutomatiques() {
-    const now = Date.now();
-    const last = data.entreprise.lastUpdateMarketing;
-
-    // 24h = 86 400 000 ms
-    if (last && now - last < 86400000) return;
-
-    data.entreprise.lastUpdateMarketing = now;
-
-    const prixMarche = data.entreprise.prixMarche;
-    const charges = data.entreprise.charges;
-    const impots = data.entreprise.impotsVente;
-
-    for (const nomClient in data.entreprise.marketing.clients) {
-        const client = data.entreprise.marketing.clients[nomClient];
-        const categorie = client.categorie;
-
-        if (!data.entreprise.biens[categorie]) continue;
-
-        // Déterminer le % selon la satisfaction
-        let taux = 0;
-
-        if (client.satisfaction <= 20) taux = 0.05;
-        else if (client.satisfaction <= 40) taux = 0.10;
-        else if (client.satisfaction <= 60) taux = 0.20;
-        else if (client.satisfaction <= 80) taux = 0.30;
-        else taux = 0.40 + Math.random() * 0.10; // 40–50%
-
-        for (const style in data.entreprise.biens[categorie]) {
-            const bien = data.entreprise.biens[categorie][style];
-
-            const quantiteVendue = Math.floor(bien.quantite * taux);
-            if (quantiteVendue <= 0) continue;
-
-            const prix = prixMarche[categorie];
-            const totalBrut = prix * quantiteVendue;
-
-            const totalCharges = totalBrut * charges[categorie];
-            const totalImpots = totalBrut * impots;
-
-            const totalNet = totalBrut - totalCharges - totalImpots;
-
-            // Ajouter argent
-            data.entreprise.argent += totalNet;
-
-            // Retirer biens
-            bien.quantite -= quantiteVendue;
-            if (bien.quantite <= 0) {
-                delete data.entreprise.biens[categorie][style];
-            }
-
-            // Historique
-            ajouterHistorique(
-                "vente-auto",
-                `${quantiteVendue} ${style} (${categorie}) vendus automatiquement`,
-                Math.floor(totalNet)
-            );
-        }
-    }
-
-    saveData();
-}
-
-// ===============================
-//  HISTORIQUE
+//  HISTORIQUE ENTREPRISES
 // ===============================
 export function ajouterHistorique(type, details, montant) {
     data.entreprise.historique.push({
