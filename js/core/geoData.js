@@ -24,7 +24,7 @@ let data = {
 
         biens: {},
 
-        // Ajout pour la logique 24h (A)
+        // Ajout pour la logique 24h
         lastUpdateMarketing: null,
 
         marketing: {
@@ -33,37 +33,37 @@ let data = {
                     couleur: "#FF4D4D",
                     satisfaction: 0,
                     bonus: 0,
-                    categorie: "immobilier"   // A
+                    categorie: "Maisons"
                 },
                 "LUMEN CAPITAL": {
                     couleur: "#FF8C42",
                     satisfaction: 0,
                     bonus: 0,
-                    categorie: "finance"       // A
+                    categorie: "Bureaux"
                 },
                 "AURION INDUSTRIES": {
                     couleur: "#FFD93D",
                     satisfaction: 0,
                     bonus: 0,
-                    categorie: "industrie"     // A
+                    categorie: "Entrepôts"
                 },
                 "VELION STARTERS": {
                     couleur: "#4CAF50",
                     satisfaction: 0,
                     bonus: 0,
-                    categorie: "technologie"   // A
+                    categorie: "Commerces"
                 },
                 "SOLARIS GROUP": {
                     couleur: "#2196F3",
                     satisfaction: 0,
                     bonus: 0,
-                    categorie: "energie"       // A
+                    categorie: "Hôtels"
                 },
                 "EMPYREON TRUST": {
                     couleur: "#9C27B0",
                     satisfaction: 0,
                     bonus: 0,
-                    categorie: "commerce"      // A
+                    categorie: "Appartements"
                 }
             }
         }
