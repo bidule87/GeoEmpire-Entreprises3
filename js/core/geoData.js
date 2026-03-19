@@ -1,225 +1,93 @@
-// ======================================================
-//  GEO EMPIRE — FICHIER CENTRAL DE DONNÉES
-// ======================================================
+// ============================================
+// GEO DATA — STOCKAGE GLOBAL DU JEU
+// ============================================
 
-// ===============================
-//  STRUCTURE PAR DÉFAUT
-// ===============================
 let data = {
     entreprise: {
-        nom: "",
-        logo: "",
-        argent: 0,
-        patrimoine: 0,
-        dateCreation: null,
 
-        historique: [],
+        // CAPITAL DE L’ENTREPRISE
+        capital: 0,
 
-        primes: {
-            pdg: 0,
-            dg: 0,
-            dc: 0
+        // BÉNÉFICE JOURNALIER (pour les gros joueurs)
+        beneficeJournalier: 0,
+
+        // BIENS POSSEDÉS
+        biens: {
+            // Exemple :
+            // "Maisons": {
+            //     "Moderne": { quantite: 3, prixAchatMoyen: 120000 },
+            // }
         },
 
-        biens: {},
-
-        // === NOUVEAU SYSTÈME MARKETING 24H ===
+        // VENTES EN ATTENTE
         ventesEnAttente: [],
+
+        // LOCATIONS EN ATTENTE
         locationsEnAttente: [],
-        dernierCycleMarketing: 0,
 
-        // === BASE ÉCONOMIQUE SIMPLE ===
-        prixMarche: {
-            "Appartements": 200000,
-            "Maisons": 300000,
-            "Commerces": 150000,
-            "Bureaux": 250000,
-            "Entrepôts": 180000,
-            "Hôtels": 400000,
-            "Restaurants": 220000
-        },
-
-        charges: {
-            "Appartements": 0.01,
-            "Maisons": 0.015,
-            "Commerces": 0.02,
-            "Bureaux": 0.02,
-            "Entrepôts": 0.01,
-            "Hôtels": 0.03,
-            "Restaurants": 0.025
-        },
-
-        impotsVente: 0.05,
-
+        // MARKETING
         marketing: {
+
+            // Total investi par TOUS les joueurs (impact dynamique)
+            totalInvestissements: 0,
+
+            // Liste des clients marketing
             clients: {
-                "NOVA HABITAT": {
-                    couleur: "#FF4D4D",
-                    satisfaction: 0,
-                    bonus: 0,
-                    categorie: "Maisons"
-                },
-                "LUMEN CAPITAL": {
-                    couleur: "#FF8C42",
-                    satisfaction: 0,
-                    bonus: 0,
-                    categorie: "Bureaux"
-                },
-                "AURION INDUSTRIES": {
-                    couleur: "#FFD93D",
-                    satisfaction: 0,
-                    bonus: 0,
-                    categorie: "Entrepôts"
-                },
-                "VELION STARTERS": {
-                    couleur: "#4CAF50",
-                    satisfaction: 0,
-                    bonus: 0,
-                    categorie: "Commerces"
-                },
-                "SOLARIS GROUP": {
-                    couleur: "#2196F3",
-                    satisfaction: 0,
-                    bonus: 0,
-                    categorie: "Hôtels"
-                },
-                "EMPYREON TRUST": {
-                    couleur: "#9C27B0",
-                    satisfaction: 0,
-                    bonus: 0,
-                    categorie: "Appartements"
-                }
+                // Exemple :
+                // "NOVA HABITAT": {
+                //     couleur: "#FF4D4D",
+                //     satisfaction: 0,
+                //     bonus: 0,
+                //     categorie: ["Maisons", "Appartements"],
+                //     investissementInitial: 0
+                // }
             }
+        },
+
+        // FINANCES
+        finances: {
+            depensesMarketing: 0,
+            revenusVentes: 0,
+            revenusLocations: 0,
+            primes: 0
         }
     }
 };
 
-// ===============================
-//  SAUVEGARDE / CHARGEMENT
-// ===============================
-export function saveData() {
-    localStorage.setItem("geoEmpireData", JSON.stringify(data));
-}
-
-export function loadData() {
-    const saved = localStorage.getItem("geoEmpireData");
-    if (saved) {
-        data = JSON.parse(saved);
-
-        // Sécurisation des nouveaux champs
-        if (!data.entreprise.ventesEnAttente) data.entreprise.ventesEnAttente = [];
-        if (!data.entreprise.locationsEnAttente) data.entreprise.locationsEnAttente = [];
-        if (!data.entreprise.dernierCycleMarketing) data.entreprise.dernierCycleMarketing = 0;
-        if (!data.entreprise.historique) data.entreprise.historique = [];
-    }
-}
-
-loadData();
-
-// ===============================
-//  ACCÈS PRINCIPAL
-// ===============================
+// ============================================
+// GETTER
+// ============================================
 export function getData() {
     return data;
 }
 
-export function updateEntreprise(obj) {
-    Object.assign(data.entreprise, obj);
+// ============================================
+// SAUVEGARDE
+// ============================================
+export function saveData() {
+    localStorage.setItem("geoEmpireData", JSON.stringify(data));
+}
+
+// ============================================
+// CHARGEMENT
+// ============================================
+export function loadData() {
+    const saved = localStorage.getItem("geoEmpireData");
+    if (saved) data = JSON.parse(saved);
+}
+
+// ============================================
+// MODIFIER SATISFACTION (MARKETING)
+// ============================================
+export function modifierSatisfaction(nom, valeur) {
+    const client = data.entreprise.marketing.clients[nom];
+    if (!client) return;
+
+    client.satisfaction = Math.max(0, Math.min(30, client.satisfaction + valeur));
     saveData();
 }
 
-// ===============================
-//  NOM + LOGO
-// ===============================
-export function setNom(nom) {
-    data.entreprise.nom = nom;
-    saveData();
-}
-
-export function setLogo(base64) {
-    data.entreprise.logo = base64;
-    saveData();
-}
-
-// ===============================
-//  ARGENT
-// ===============================
-export function addArgent(montant) {
-    data.entreprise.argent += montant;
-    saveData();
-}
-
-export function removeArgent(montant) {
-    data.entreprise.argent -= montant;
-    if (data.entreprise.argent < 0) data.entreprise.argent = 0;
-    saveData();
-}
-
-// ===============================
-//  BIENS
-// ===============================
-export function addBien(categorie, style, prixAchat) {
-    if (!data.entreprise.biens[categorie]) {
-        data.entreprise.biens[categorie] = {};
-    }
-
-    if (!data.entreprise.biens[categorie][style]) {
-        data.entreprise.biens[categorie][style] = {
-            quantite: 0,
-            prixAchatMoyen: 0,
-            renovation: null,
-            assurance: null
-        };
-    }
-
-    const bien = data.entreprise.biens[categorie][style];
-
-    bien.prixAchatMoyen =
-        (bien.prixAchatMoyen * bien.quantite + prixAchat) /
-        (bien.quantite + 1);
-
-    bien.quantite++;
-
-    saveData();
-}
-
-export function removeBien(categorie, style, quantite) {
-    const bien = data.entreprise.biens[categorie]?.[style];
-    if (!bien) return;
-
-    bien.quantite -= quantite;
-    if (bien.quantite <= 0) {
-        delete data.entreprise.biens[categorie][style];
-    }
-
-    saveData();
-}
-
-// ===============================
-//  MARKETING — SATISFACTION
-// ===============================
-export function modifierSatisfaction(client, valeur) {
-    const c = data.entreprise.marketing.clients[client];
-    if (!c) return;
-
-    c.satisfaction += valeur;
-
-    // Bonus caché
-    c.bonus = Math.min(0.20, Math.max(0, c.satisfaction / 100));
-
-    saveData();
-}
-
-// ===============================
-//  HISTORIQUE ENTREPRISES
-// ===============================
-export function ajouterHistorique(type, details, montant) {
-    data.entreprise.historique.push({
-        date: Date.now(),
-        type,
-        details,
-        montant
-    });
-
-    saveData();
-}
+// ============================================
+// INITIALISATION
+// ============================================
+loadData();
