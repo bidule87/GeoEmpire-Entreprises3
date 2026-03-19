@@ -154,10 +154,13 @@ function gererAchat(categorie, style, prix, quantiteDisponible, quantiteAchetee)
 function exporterAcheter() {
     let lignes = [];
 
+    const data = getData();
+    const prixMarche = data.entreprise.prixMarche;
+
     for (const categorie in immoState.styles) {
         immoState.styles[categorie].forEach(style => {
             const quantite = immoState.quantites[categorie][style];
-            const prix = getData().entreprise.prixMarche[categorie];
+            const prix = prixMarche[categorie];
 
             lignes.push({
                 categorie,
