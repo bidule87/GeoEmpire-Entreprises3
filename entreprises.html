@@ -37,16 +37,17 @@
     <button data-tab="finances">Finances</button>
     <button data-tab="patrimoine">Patrimoine</button>
     <button data-tab="gestion">Gestion</button>
+
+    <!-- ⭐ AJOUT ICI ⭐ -->
+    <button data-tab="historique">Historique</button>
 </div>
 
 <main id="entreprises-container">
 
     <div id="entreprise" class="tab"></div>
 
-    <!-- ⭐ FILTRE ACHETER (doit être en dehors du div #acheter) ⭐ -->
     <select id="filtre-acheter" style="display:none;"></select>
 
-    <!-- ⭐ ONGLET ACHETER ⭐ -->
     <div id="acheter" class="tab" style="display:none;">
         <button id="export-acheter" style="display:none;">Exporter CSV</button>
     </div>
@@ -56,7 +57,6 @@
     <div id="proprietes" class="tab" style="display:none;"></div>
     <div id="personnel" class="tab" style="display:none;"></div>
 
-    <!-- ⭐ ONGLET MARKETING — PREMIUM BLEU + COULEURS ENTREPRISES ⭐ -->
     <div id="marketing" class="tab" style="display:none;">
         <div class="premium-panel">
             <div class="premium-title">Marketing — Entreprises</div>
@@ -67,8 +67,10 @@
     <div id="finances" class="tab" style="display:none;"></div>
     <div id="patrimoine" class="tab" style="display:none;"></div>
 
-    <!-- ⭐ ONGLET GESTION ⭐ -->
     <div id="gestion" class="tab" style="display:none;"></div>
+
+    <!-- ⭐ AJOUT DU CONTAINER HISTORIQUE ⭐ -->
+    <div id="historique" class="tab" style="display:none;"></div>
 
 </main>
 
@@ -90,6 +92,9 @@
 <script type="module" src="./js/core/modules/finances.js"></script>
 <script type="module" src="./js/core/modules/patrimoine.js"></script>
 <script type="module" src="./js/core/modules/gestion.js"></script>
+
+<!-- ⭐ AJOUT DU MODULE HISTORIQUE ENTREPRISES ⭐ -->
+<script type="module" src="./js/core/modules/historiqueEntreprises.js"></script>
 
 <!-- ⭐ SYSTÈME D’ONGLETS ⭐ -->
 <script>
