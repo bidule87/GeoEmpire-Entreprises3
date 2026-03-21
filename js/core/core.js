@@ -57,6 +57,9 @@ window.ouvrirPage = function (id) {
 
     const page = document.getElementById(id);
     if (page) page.style.display = "block";
+
+    // Activation dynamique des modules
+    if (id === "gestion") initGestion();
 };
 
 // ===============================
