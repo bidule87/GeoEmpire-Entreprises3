@@ -17,42 +17,34 @@ const prixStyles = {
         "Studio": 100000,
         "T2": 150000,
         "T3": 200000,
-        "Loft": 300000,
-        "Penthouse": 500000
+        "Loft": 300000
     },
     "Maisons": {
         "Maison de ville": 250000,
         "Pavillon": 350000,
-        "Villa": 450000,
-        "Manoir": 800000
+        "Villa": 450000
     },
     "Commerces": {
         "Boutique": 120000,
         "Superette": 180000,
-        "Magasin": 260000,
-        "Centre commercial": 600000
+        "Magasin": 260000
     },
     "Bureaux": {
         "Open space": 200000,
-        "Bureau pro": 300000,
-        "Plateau complet": 500000
+        "Bureau pro": 300000
     },
     "Entrepôts": {
         "Petit entrepôt": 150000,
-        "Entrepôt moyen": 250000,
-        "Grand entrepôt": 400000
+        "Entrepôt moyen": 250000
     },
     "Hôtels": {
         "Hôtel 2★": 300000,
-        "Hôtel 3★": 450000,
-        "Hôtel 4★": 700000,
-        "Hôtel 5★": 1200000
+        "Hôtel 3★": 450000
     },
     "Restaurants": {
         "Snack": 80000,
         "Bistro": 150000,
-        "Restaurant": 250000,
-        "Gastronomique": 500000
+        "Restaurant": 250000
     }
 };
 
@@ -98,16 +90,21 @@ function afficherBiensDisponibles() {
 
         if (filtreCategorie !== "tous" && filtreCategorie !== categorie) continue;
 
+        // 🔥 Sécurité : si la catégorie n'existe pas dans prixStyles → on saute
+        if (!prixStyles[categorie]) continue;
+
         const bloc = document.createElement("div");
         bloc.className = "categorie-bloc";
         bloc.innerHTML = `<h2>${categorie}</h2>`;
 
         immoState.styles[categorie].forEach(style => {
 
-            // 🔥 Sécurisation : quantité toujours définie
+            // 🔥 Sécurité : si le style n'existe pas dans prixStyles → on saute
+            if (!prixStyles[categorie][style]) return;
+
+            // 🔥 Sécurité : quantité toujours définie
             const quantite = immoState.quantites[categorie]?.[style] ?? 0;
 
-            // 🔥 Prix par style (Pack B)
             const prix = prixStyles[categorie][style];
 
             const loyer = Math.floor(prix * 0.015);
