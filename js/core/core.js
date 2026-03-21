@@ -2,7 +2,7 @@
 //  GEOEMPIRE 3 - CORE SYSTEM (VERSION GEO DATA)
 // ===============================
 
-import { getData, addArgent, removeArgent } from "./geoData.js";
+import { getData, addArgent, removeArgent, saveData } from "./geoData.js";
 
 // ===============================
 //  FORMATAGE
@@ -77,25 +77,43 @@ window.ge_afficherBilan = function () {
 
 // Auto-init
 window.addEventListener("load", ge_afficherBilan);
+
 // ===============================
-// MODE CHEAT (visible pour tous)
+// MODE CHEAT (sécurisé)
 // ===============================
 
-document.getElementById("btn-cheat-argent").onclick = () => {
-    addArgent(1000000); // utilise ton système officiel
-    ge_afficherBilan();
-};
+function ge_initCheat() {
 
-document.getElementById("btn-cheat-tokens").onclick = () => {
-    const data = getData();
-    data.entreprise.tokens = (data.entreprise.tokens || 0) + 100;
-    saveData();
-    ge_afficherBilan();
-};
+    const cheatArgent = document.getElementById("btn-cheat-argent");
+    if (cheatArgent) {
+        cheatArgent.onclick = () => {
+            addArgent(1000000);
+            ge_afficherBilan();
+            ge_notif("Cheat GEO +1.000.000", "success");
+        };
+    }
 
-document.getElementById("btn-cheat-crowns").onclick = () => {
-    const data = getData();
-    data.entreprise.crowns = (data.entreprise.crowns || 0) + 50;
-    saveData();
-    ge_afficherBilan();
-};
+    const cheatTokens = document.getElementById("btn-cheat-tokens");
+    if (cheatTokens) {
+        cheatTokens.onclick = () => {
+            const data = getData();
+            data.entreprise.tokens = (data.entreprise.tokens || 0) + 100;
+            saveData();
+            ge_afficherBilan();
+            ge_notif("Cheat GT +100", "success");
+        };
+    }
+
+    const cheatCrowns = document.getElementById("btn-cheat-crowns");
+    if (cheatCrowns) {
+        cheatCrowns.onclick = () => {
+            const data = getData();
+            data.entreprise.crowns = (data.entreprise.crowns || 0) + 50;
+            saveData();
+            ge_afficherBilan();
+            ge_notif("Cheat 👑 +50", "success");
+        };
+    }
+}
+
+window.addEventListener("load", ge_initCheat);
