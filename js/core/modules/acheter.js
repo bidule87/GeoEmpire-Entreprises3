@@ -13,8 +13,6 @@ export function initAcheter() {
     refreshSiNecessaire();
 
     const select = document.getElementById("filtre-acheter");
-    if (!select) return;
-
     select.style.display = "block";
 
     select.innerHTML = `<option value="tous">Tous</option>`;
@@ -31,10 +29,8 @@ export function initAcheter() {
     const data = getData();
     const prestige = data.entreprise?.prestigePack === true;
 
-    if (btnExport) {
-        btnExport.style.display = prestige ? "block" : "none";
-        btnExport.onclick = () => exporterAcheter();
-    }
+    btnExport.style.display = prestige ? "block" : "none";
+    btnExport.onclick = () => exporterAcheter();
 
     afficherBiensDisponibles();
 }
@@ -45,7 +41,6 @@ function afficherBiensDisponibles() {
 
     const data = getData();
 
-    // 🔥 Sécurisation prixMarche
     const prixMarche = data.entreprise.prixMarche || {
         "Appartements": 200000,
         "Maisons": 300000,
@@ -67,16 +62,17 @@ function afficherBiensDisponibles() {
         bloc.className = "categorie-bloc";
         bloc.innerHTML = `<h2>${categorie}</h2>`;
 
-        const prixCategorie = prixMarche[categorie];
-        if (!prixCategorie) continue; // sécurité
+        const prixBase = prixMarche[categorie];
+        if (!prixBase) continue;
 
-        const coefParIndex = [0.8, 1, 1.2, 1.5, 2];
+        const coef = [0.8, 1, 1.2, 1.5, 2];
 
         immoState.styles[categorie].forEach((style, index) => {
             const quantite = immoState.quantites[categorie][style];
 
-            const coef = coefParIndex[index] || coefParIndex[coefParIndex.length - 1];
-            const prix = Math.floor(prixCategorie * coef);
+            // ⭐ PRIX PAR STYLE (simple, compatible, sans crash)
+            const multiplicateur = coef[index] || coef[coef.length - 1];
+            const prix = Math.floor(prixBase * multiplicateur);
 
             const loyer = Math.floor(prix * 0.015);
             const charges = Math.floor(prix * (chargesTable[categorie] || 0));
@@ -163,14 +159,15 @@ function exporterAcheter() {
     const data = getData();
     const prixMarche = data.entreprise.prixMarche || {};
 
+    const coef = [0.8, 1, 1.2, 1.5, 2];
+
     for (const categorie in immoState.styles) {
         const prixBase = prixMarche[categorie] || 0;
-        const coefParIndex = [0.8, 1, 1.2, 1.5, 2];
 
         immoState.styles[categorie].forEach((style, index) => {
             const quantite = immoState.quantites[categorie][style];
-            const coef = coefParIndex[index] || coefParIndex[coefParIndex.length - 1];
-            const prix = Math.floor(prixBase * coef);
+            const multiplicateur = coef[index] || coef[coef.length - 1];
+            const prix = Math.floor(prixBase * multiplicateur);
 
             lignes.push({
                 categorie,
