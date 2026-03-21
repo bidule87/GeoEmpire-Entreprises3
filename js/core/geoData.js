@@ -5,12 +5,14 @@
 let data = {
     entreprise: {
         capital: 0,
+        argent: 0, // utilisé par acheter.js
         beneficeJournalier: 0,
 
         nom: "",
         logo: "",
 
-        biens: {},
+        biens: {}, // { categorie: { style: { quantite, prixAchatMoyen } } }
+
         ventesEnAttente: [],
         locationsEnAttente: [],
 
@@ -51,43 +53,61 @@ export function loadData() {
 }
 
 // ============================================
-// AJOUT D'ARGENT
+// ARGENT
 // ============================================
 export function addArgent(montant) {
-    data.entreprise.capital += montant;
+    data.entreprise.argent += montant;
     saveData();
 }
 
-// ============================================
-// RETIRER DE L'ARGENT
-// ============================================
 export function removeArgent(montant) {
-    data.entreprise.capital -= montant;
-    if (data.entreprise.capital < 0) data.entreprise.capital = 0;
+    data.entreprise.argent -= montant;
+    if (data.entreprise.argent < 0) data.entreprise.argent = 0;
     saveData();
 }
 
 // ============================================
-// CHANGER LE NOM DE L'ENTREPRISE
+// NOM + LOGO
 // ============================================
 export function setNom(nouveauNom) {
     data.entreprise.nom = nouveauNom;
     saveData();
 }
 
-// ============================================
-// CHANGER LE LOGO
-// ============================================
 export function setLogo(url) {
     data.entreprise.logo = url;
     saveData();
 }
 
 // ============================================
-// AJOUTER UN BIEN  ⭐ (AJOUTÉ, RIEN D'AUTRE TOUCHÉ)
+// AJOUTER UN BIEN (VERSION COMPATIBLE ACHETER + GESTION)
 // ============================================
-export function addBien(id, bienData) {
-    data.entreprise.biens[id] = bienData;
+
+export function addBien(categorie, style, prixAchat) {
+    const e = data.entreprise;
+
+    // Création catégorie si absente
+    if (!e.biens[categorie]) {
+        e.biens[categorie] = {};
+    }
+
+    // Création style si absent
+    if (!e.biens[categorie][style]) {
+        e.biens[categorie][style] = {
+            quantite: 0,
+            prixAchatMoyen: 0
+        };
+    }
+
+    const bien = e.biens[categorie][style];
+
+    // Mise à jour du prix moyen
+    const totalAncien = bien.prixAchatMoyen * bien.quantite;
+    const totalNouveau = totalAncien + prixAchat;
+
+    bien.quantite += 1;
+    bien.prixAchatMoyen = totalNouveau / bien.quantite;
+
     saveData();
 }
 
