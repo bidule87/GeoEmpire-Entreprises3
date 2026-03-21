@@ -103,7 +103,9 @@ function afficherBiensDisponibles() {
         bloc.innerHTML = `<h2>${categorie}</h2>`;
 
         immoState.styles[categorie].forEach(style => {
-            const quantite = immoState.quantites[categorie][style];
+
+            // 🔥 Sécurisation : quantité toujours définie
+            const quantite = immoState.quantites[categorie]?.[style] ?? 0;
 
             // 🔥 Prix par style (Pack B)
             const prix = prixStyles[categorie][style];
@@ -192,7 +194,7 @@ function exporterAcheter() {
 
     for (const categorie in prixStyles) {
         for (const style in prixStyles[categorie]) {
-            const quantite = immoState.quantites[categorie][style];
+            const quantite = immoState.quantites[categorie]?.[style] ?? 0;
             const prix = prixStyles[categorie][style];
 
             lignes.push({
