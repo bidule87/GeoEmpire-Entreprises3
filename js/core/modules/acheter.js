@@ -9,10 +9,59 @@ import { immoState, refreshSiNecessaire } from "./immo-core.js";
 
 let filtreCategorie = "tous";
 
+// ===============================
+// TABLE DE PRIX — PACK B (équilibré)
+// ===============================
+const prixStyles = {
+    "Appartements": {
+        "Studio": 100000,
+        "T2": 150000,
+        "T3": 200000,
+        "Loft": 300000,
+        "Penthouse": 500000
+    },
+    "Maisons": {
+        "Maison de ville": 250000,
+        "Pavillon": 350000,
+        "Villa": 450000,
+        "Manoir": 800000
+    },
+    "Commerces": {
+        "Boutique": 120000,
+        "Superette": 180000,
+        "Magasin": 260000,
+        "Centre commercial": 600000
+    },
+    "Bureaux": {
+        "Open space": 200000,
+        "Bureau pro": 300000,
+        "Plateau complet": 500000
+    },
+    "Entrepôts": {
+        "Petit entrepôt": 150000,
+        "Entrepôt moyen": 250000,
+        "Grand entrepôt": 400000
+    },
+    "Hôtels": {
+        "Hôtel 2★": 300000,
+        "Hôtel 3★": 450000,
+        "Hôtel 4★": 700000,
+        "Hôtel 5★": 1200000
+    },
+    "Restaurants": {
+        "Snack": 80000,
+        "Bistro": 150000,
+        "Restaurant": 250000,
+        "Gastronomique": 500000
+    }
+};
+
 export function initAcheter() {
     refreshSiNecessaire();
 
     const select = document.getElementById("filtre-acheter");
+    if (!select) return;
+
     select.style.display = "block";
 
     select.innerHTML = `<option value="tous">Tous</option>`;
@@ -29,8 +78,10 @@ export function initAcheter() {
     const data = getData();
     const prestige = data.entreprise?.prestigePack === true;
 
-    btnExport.style.display = prestige ? "block" : "none";
-    btnExport.onclick = () => exporterAcheter();
+    if (btnExport) {
+        btnExport.style.display = prestige ? "block" : "none";
+        btnExport.onclick = () => exporterAcheter();
+    }
 
     afficherBiensDisponibles();
 }
@@ -40,18 +91,6 @@ function afficherBiensDisponibles() {
     container.innerHTML = "";
 
     const data = getData();
-
-    // 🔥 Sécurisation prixMarche
-    const prixMarche = data.entreprise.prixMarche || {
-        "Appartements": 200000,
-        "Maisons": 300000,
-        "Commerces": 150000,
-        "Bureaux": 250000,
-        "Entrepôts": 180000,
-        "Hôtels": 400000,
-        "Restaurants": 220000
-    };
-
     const chargesTable = data.entreprise.charges || {};
     const impots = data.entreprise.impotsVente || 0.05;
 
@@ -63,13 +102,11 @@ function afficherBiensDisponibles() {
         bloc.className = "categorie-bloc";
         bloc.innerHTML = `<h2>${categorie}</h2>`;
 
-        const prixCategorie = prixMarche[categorie];
-        if (!prixCategorie) continue; // sécurité
-
         immoState.styles[categorie].forEach(style => {
             const quantite = immoState.quantites[categorie][style];
 
-            const prix = prixCategorie;
+            // 🔥 Prix par style (Pack B)
+            const prix = prixStyles[categorie][style];
 
             const loyer = Math.floor(prix * 0.015);
             const charges = Math.floor(prix * (chargesTable[categorie] || 0));
@@ -153,14 +190,10 @@ function gererAchat(categorie, style, prix, quantiteDisponible, quantiteAchetee)
 function exporterAcheter() {
     let lignes = [];
 
-    const data = getData();
-    const prixMarche = data.entreprise.prixMarche || {};
-
-    for (const categorie in immoState.styles) {
-        const prix = prixMarche[categorie] || 0;
-
-        immoState.styles[categorie].forEach(style => {
+    for (const categorie in prixStyles) {
+        for (const style in prixStyles[categorie]) {
             const quantite = immoState.quantites[categorie][style];
+            const prix = prixStyles[categorie][style];
 
             lignes.push({
                 categorie,
@@ -168,7 +201,7 @@ function exporterAcheter() {
                 quantite,
                 prix
             });
-        });
+        }
     }
 
     let csv = "Catégorie;Style;Stock;Prix\n";
