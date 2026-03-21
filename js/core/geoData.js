@@ -84,6 +84,14 @@ export function setLogo(url) {
 }
 
 // ============================================
+// AJOUTER UN BIEN  ⭐ (AJOUTÉ, RIEN D'AUTRE TOUCHÉ)
+// ============================================
+export function addBien(id, bienData) {
+    data.entreprise.biens[id] = bienData;
+    saveData();
+}
+
+// ============================================
 // INITIALISATION
 // ============================================
 loadData();
