@@ -1,17 +1,43 @@
 // ============================================
-// GEO DATA — STOCKAGE GLOBAL DU JEU
+// GEO DATA — STOCKAGE GLOBAL DU JEU (UNIFIÉ)
 // ============================================
 
-let data = {
+const SAVE_KEY = "geoEmpireData";
+
+const defaultData = {
     entreprise: {
-        capital: 0,
-        argent: 0, // utilisé par acheter.js
+        capital: 50000,
+        argent: 50000, // Argent disponible (Ø)
+        tokens: 10,    // GeoTokens (GT)
+        crowns: 0,     // Crowns (CRW)
         beneficeJournalier: 0,
 
-        nom: "",
+        nom: "Mon Empire",
         logo: "",
+        discord: "",
+        description: "",
 
-        biens: {}, // { categorie: { style: { quantite, prixAchatMoyen } } }
+        // Biens immobiliers / stocks : { categorie: { style: { quantite, prixAchatMoyen } } }
+        biens: {},
+
+        // Commerces achetés via le GPS : [{ id, nom, type, lat, lng, prixAchat, revenuJour, directeur }]
+        commercesGPS: [],
+
+        // Équipe et joueurs gérants
+        employes: [],
+        actionnaires: [],
+
+        // Protections contre les catastrophes / cambriolages
+        assurances: {
+            incendie: false,
+            cambriolage: false,
+            catastrophe: false
+        },
+
+        // Inventaire boutique (ex: cartes de téléportation)
+        inventaire: {
+            cartesTeleportation: 0
+        },
 
         ventesEnAttente: [],
         locationsEnAttente: [],
@@ -25,10 +51,18 @@ let data = {
             depensesMarketing: 0,
             revenusVentes: 0,
             revenusLocations: 0,
-            primes: 0
-        }
+            revenusCommerces: 0,
+            primes: 0,
+            pertesSinistres: 0
+        },
+
+        // Journal des actions et événements IA (cambriolages, incendies, achats...)
+        historique: []
     }
 };
+
+// Clone profond pour éviter de modifier defaultData par référence
+let data = JSON.parse(JSON.stringify(defaultData));
 
 // ============================================
 // GETTER
@@ -38,32 +72,100 @@ export function getData() {
 }
 
 // ============================================
-// SAUVEGARDE
+// SAUVEGARDE & HISTORIQUE
 // ============================================
 export function saveData() {
-    localStorage.setItem("geoEmpireData", JSON.stringify(data));
+    try {
+        localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+    } catch (e) {
+        console.error("Erreur lors de la sauvegarde :", e);
+    }
+}
+
+export function ajouterHistorique(message, type = "info") {
+    data.entreprise.historique.unshift({
+        date: new Date().toLocaleString("fr-FR"),
+        message,
+        type
+    });
+    // On garde les 100 derniers événements maximum
+    if (data.entreprise.historique.length > 100) {
+        data.entreprise.historique.pop();
+    }
+    saveData();
 }
 
 // ============================================
-// CHARGEMENT
+// CHARGEMENT (AVEC FUSION SÉCURISÉE)
 // ============================================
 export function loadData() {
-    const saved = localStorage.getItem("geoEmpireData");
-    if (saved) data = JSON.parse(saved);
+    try {
+        const saved = localStorage.getItem(SAVE_KEY);
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            if (parsed && parsed.entreprise) {
+                data.entreprise = {
+                    ...defaultData.entreprise,
+                    ...parsed.entreprise,
+                    assurances: { ...defaultData.entreprise.assurances, ...(parsed.entreprise.assurances || {}) },
+                    inventaire: { ...defaultData.entreprise.inventaire, ...(parsed.entreprise.inventaire || {}) },
+                    marketing: { ...defaultData.entreprise.marketing, ...(parsed.entreprise.marketing || {}) },
+                    finances: { ...defaultData.entreprise.finances, ...(parsed.entreprise.finances || {}) }
+                };
+            }
+        }
+    } catch (e) {
+        console.error("Erreur lors du chargement :", e);
+    }
+}
+
+export function resetData() {
+    localStorage.removeItem(SAVE_KEY);
+    data = JSON.parse(JSON.stringify(defaultData));
+    saveData();
 }
 
 // ============================================
-// ARGENT
+// ARGENT, TOKENS & CROWNS
 // ============================================
-export function addArgent(montant) {
+export function addArgent(montant, raison = "") {
     data.entreprise.argent += montant;
+    if (raison) ajouterHistorique(`+${montant.toLocaleString("fr-FR")} Ø : ${raison}`, "gain");
+    else saveData();
+}
+
+export function removeArgent(montant, raison = "") {
+    if (data.entreprise.argent < montant) {
+        return false; // Fonds insuffisants
+    }
+    data.entreprise.argent -= montant;
+    if (raison) ajouterHistorique(`-${montant.toLocaleString("fr-FR")} Ø : ${raison}`, "depense");
+    else saveData();
+    return true;
+}
+
+export function addTokens(n) {
+    data.entreprise.tokens += n;
     saveData();
 }
 
-export function removeArgent(montant) {
-    data.entreprise.argent -= montant;
-    if (data.entreprise.argent < 0) data.entreprise.argent = 0;
+export function removeTokens(n) {
+    if (data.entreprise.tokens < n) return false;
+    data.entreprise.tokens -= n;
     saveData();
+    return true;
+}
+
+export function addCrowns(n) {
+    data.entreprise.crowns += n;
+    saveData();
+}
+
+export function removeCrowns(n) {
+    if (data.entreprise.crowns < n) return false;
+    data.entreprise.crowns -= n;
+    saveData();
+    return true;
 }
 
 // ============================================
@@ -80,18 +182,15 @@ export function setLogo(url) {
 }
 
 // ============================================
-// AJOUTER UN BIEN (VERSION COMPATIBLE ACHETER + GESTION)
+// AJOUTER UN BIEN (COMPATIBLE ACHETER + GESTION)
 // ============================================
-
 export function addBien(categorie, style, prixAchat) {
     const e = data.entreprise;
 
-    // Création catégorie si absente
     if (!e.biens[categorie]) {
         e.biens[categorie] = {};
     }
 
-    // Création style si absent
     if (!e.biens[categorie][style]) {
         e.biens[categorie][style] = {
             quantite: 0,
@@ -101,14 +200,13 @@ export function addBien(categorie, style, prixAchat) {
 
     const bien = e.biens[categorie][style];
 
-    // Mise à jour du prix moyen
     const totalAncien = bien.prixAchatMoyen * bien.quantite;
     const totalNouveau = totalAncien + prixAchat;
 
     bien.quantite += 1;
     bien.prixAchatMoyen = totalNouveau / bien.quantite;
 
-    saveData();
+    ajouterHistorique(`Achat d'un bien (${categorie} - ${style}) pour ${prixAchat.toLocaleString("fr-FR")} Ø`, "achat");
 }
 
 // ============================================
