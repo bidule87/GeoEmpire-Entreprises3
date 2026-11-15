@@ -14,16 +14,51 @@ body {
 .menu-container {
     width: 100%;
     max-width: 900px;
-    margin: 60px auto;
+    margin: 30px auto;
     text-align: center;
     padding: 20px;
+}
+
+/* --- BARRE DE RESSOURCES (TOPBAR) --- */
+.topbar-resources {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(79, 172, 254, 0.3);
+    border-radius: 12px;
+    padding: 14px 22px;
+    margin-bottom: 35px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.entreprise-badge {
+    font-weight: 700;
+    font-size: 18px;
+    color: #00f2fe;
+    letter-spacing: 1px;
+}
+
+.monnaies {
+    display: flex;
+    gap: 20px;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.monnaie-item span {
+    color: #fbbf24;
+    font-weight: 800;
 }
 
 /* --- TITRE --- */
 .title {
     font-size: 52px;
     font-weight: 900;
-    margin-bottom: 50px;
+    margin: 10px 0 10px 0;
     letter-spacing: 6px;
     text-transform: uppercase;
     background: linear-gradient(180deg, #fff 0%, #4facfe 50%, #00f2fe 100%);
@@ -32,11 +67,26 @@ body {
     filter: drop-shadow(0 0 15px rgba(79, 172, 254, 0.5));
 }
 
+.subtitle {
+    color: #94a3b8;
+    font-size: 16px;
+    margin-bottom: 40px;
+}
+
 /* --- GRILLE --- */
 .menu-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 20px;
+}
+
+@media (max-width: 600px) {
+    .menu-grid {
+        grid-template-columns: 1fr;
+    }
+    .title {
+        font-size: 36px;
+    }
 }
 
 /* --- BOUTONS --- */
@@ -63,19 +113,21 @@ body {
 }
 
 /* --- BORDURES ÉLECTRIQUES --- */
-.finances { border-left: 5px solid #4facfe; box-shadow: inset 10px 0 15px -10px #4facfe; }
-.immobilier { border-left: 5px solid #fbbf24; box-shadow: inset 10px 0 15px -10px #fbbf24; }
-.entreprises { border-left: 5px solid #34d399; box-shadow: inset 10px 0 15px -10px #34d399; }
 .carte { border-left: 5px solid #a855f7; box-shadow: inset 10px 0 15px -10px #a855f7; }
-.prestige { border-left: 5px solid #f43f5e; box-shadow: inset 10px 0 15px -10px #f43f5e; }
+.entreprises { border-left: 5px solid #34d399; box-shadow: inset 10px 0 15px -10px #34d399; }
+.immobilier { border-left: 5px solid #fbbf24; box-shadow: inset 10px 0 15px -10px #fbbf24; }
+.finances { border-left: 5px solid #4facfe; box-shadow: inset 10px 0 15px -10px #4facfe; }
 .boutique { border-left: 5px solid #ff00ff; box-shadow: inset 10px 0 15px -10px #ff00ff; }
+.historique { border-left: 5px solid #f97316; box-shadow: inset 10px 0 15px -10px #f97316; }
+.prestige { border-left: 5px solid #f43f5e; box-shadow: inset 10px 0 15px -10px #f43f5e; }
 .profil { border-left: 5px solid #22d3ee; box-shadow: inset 10px 0 15px -10px #22d3ee; }
 
 /* Glow spécifique au survol */
-.menu-btn:hover.finances { box-shadow: 0 0 25px rgba(79, 172, 254, 0.5); }
-.menu-btn:hover.immobilier { box-shadow: 0 0 25px rgba(251, 191, 36, 0.5); }
-.menu-btn:hover.entreprises { box-shadow: 0 0 25px rgba(52, 211, 153, 0.5); }
 .menu-btn:hover.carte { box-shadow: 0 0 25px rgba(168, 85, 247, 0.5); }
-.menu-btn:hover.prestige { box-shadow: 0 0 25px rgba(244, 63, 94, 0.5); }
+.menu-btn:hover.entreprises { box-shadow: 0 0 25px rgba(52, 211, 153, 0.5); }
+.menu-btn:hover.immobilier { box-shadow: 0 0 25px rgba(251, 191, 36, 0.5); }
+.menu-btn:hover.finances { box-shadow: 0 0 25px rgba(79, 172, 254, 0.5); }
 .menu-btn:hover.boutique { box-shadow: 0 0 25px rgba(255, 0, 255, 0.5); }
+.menu-btn:hover.historique { box-shadow: 0 0 25px rgba(249, 115, 22, 0.5); }
+.menu-btn:hover.prestige { box-shadow: 0 0 25px rgba(244, 63, 94, 0.5); }
 .menu-btn:hover.profil { box-shadow: 0 0 25px rgba(34, 211, 238, 0.5); }
