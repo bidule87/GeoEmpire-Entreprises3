@@ -1,6 +1,6 @@
 // =======================================
-// GEO EMPIRE — MODULE ACHETER
-// Compatible geoData + entrepriseCore
+// GEO EMPIRE — MODULE ACHETER (OPTION C)
+// Lié aux sièges achetés sur la Carte GPS
 // =======================================
 
 import { getEntreprise } from "../entrepriseCore.js";
@@ -8,6 +8,41 @@ import { getData, saveData, addBien } from "../geoData.js";
 import { immoState, refreshSiNecessaire } from "./immo-core.js";
 
 let filtreCategorie = "tous";
+
+const CATEGORIE_VERS_SECTEUR = {
+    "Restaurants": "Alimentaire & Restauration",
+    "Commerces": "Alimentaire & Restauration ou Commerce & Distribution",
+    "Appartements": "Bâtiment & Immobilier",
+    "Maisons": "Bâtiment & Immobilier",
+    "Bureaux": "Bâtiment & Immobilier ou Hôtellerie & Services",
+    "Entrepôts": "Commerce & Distribution",
+    "Hôtels": "Hôtellerie & Services"
+};
+
+function getCategoriesDebloquees() {
+    const sieges = getEntreprise().commercesGPS || [];
+    const secteurs = new Set(sieges.map(s => s.secteur));
+    const autorisees = new Set();
+
+    if (secteurs.has("Alimentaire & Restauration")) {
+        autorisees.add("Restaurants");
+        autorisees.add("Commerces");
+    }
+    if (secteurs.has("Bâtiment & Immobilier")) {
+        autorisees.add("Appartements");
+        autorisees.add("Maisons");
+        autorisees.add("Bureaux");
+    }
+    if (secteurs.has("Commerce & Distribution")) {
+        autorisees.add("Commerces");
+        autorisees.add("Entrepôts");
+    }
+    if (secteurs.has("Hôtellerie & Services")) {
+        autorisees.add("Hôtels");
+        autorisees.add("Bureaux");
+    }
+    return autorisees;
+}
 
 export function initAcheter() {
     refreshSiNecessaire();
@@ -40,6 +75,7 @@ function afficherBiensDisponibles() {
     container.innerHTML = "";
 
     const data = getData();
+    const debloquees = getCategoriesDebloquees();
 
     const prixMarche = data.entreprise.prixMarche || {
         "Appartements": 200000,
@@ -55,12 +91,25 @@ function afficherBiensDisponibles() {
     const impots = data.entreprise.impotsVente || 0.05;
 
     for (const categorie in immoState.styles) {
-
         if (filtreCategorie !== "tous" && filtreCategorie !== categorie) continue;
+
+        const estDebloquee = debloquees.has(categorie);
+        const secteurRequis = CATEGORIE_VERS_SECTEUR[categorie] || "un secteur adapté";
 
         const bloc = document.createElement("div");
         bloc.className = "categorie-bloc";
-        bloc.innerHTML = `<h2>${categorie}</h2>`;
+        bloc.innerHTML = `<h2>${categorie} ${estDebloquee ? "" : "🔒"}</h2>`;
+
+        if (!estDebloquee) {
+            bloc.innerHTML += `
+                <div style="text-align:center; padding:15px; background:rgba(0,0,0,0.35); border-radius:10px;">
+                    <p style="margin:0 0 10px 0; color:#fbbf24;">Secteur requis : <strong>${secteurRequis}</strong></p>
+                    <a href="carte.html" class="premium-btn" style="display:inline-block; text-decoration:none;">Acheter un siège sur la Carte GPS</a>
+                </div>
+            `;
+            container.appendChild(bloc);
+            continue;
+        }
 
         const prixBase = prixMarche[categorie];
         if (!prixBase) continue;
@@ -69,8 +118,6 @@ function afficherBiensDisponibles() {
 
         immoState.styles[categorie].forEach((style, index) => {
             const quantite = immoState.quantites[categorie][style];
-
-            // ⭐ PRIX PAR STYLE (simple, compatible, sans crash)
             const multiplicateur = coef[index] || coef[coef.length - 1];
             const prix = Math.floor(prixBase * multiplicateur);
 
@@ -85,12 +132,12 @@ function afficherBiensDisponibles() {
             item.innerHTML = `
                 <div class="bien-nom">${style}</div>
                 <div class="bien-quantite">Stock : ${quantite.toLocaleString()}</div>
-                <div class="bien-prix">Prix : ${prix.toLocaleString()} €</div>
+                <div class="bien-prix">Prix : ${prix.toLocaleString()} Ø</div>
 
-                <div class="bien-loyer">Loyer : ${loyer.toLocaleString()} € / mois</div>
-                <div class="bien-charges">Charges : ${charges.toLocaleString()} € / mois</div>
-                <div class="bien-impots">Impôts : ${impotsMois.toLocaleString()} € / mois</div>
-                <div class="bien-rentabilite">Rentabilité nette : ${rentabilite.toLocaleString()} € / mois</div>
+                <div class="bien-loyer">Loyer : ${loyer.toLocaleString()} Ø / mois</div>
+                <div class="bien-charges">Charges : ${charges.toLocaleString()} Ø / mois</div>
+                <div class="bien-impots">Impôts : ${impotsMois.toLocaleString()} Ø / mois</div>
+                <div class="bien-rentabilite">Rentabilité nette : ${rentabilite.toLocaleString()} Ø / mois</div>
 
                 <div class="achat-zone">
                     <input type="number" class="achat-input" min="1" placeholder="Quantité">
@@ -155,10 +202,8 @@ function gererAchat(categorie, style, prix, quantiteDisponible, quantiteAchetee)
 
 function exporterAcheter() {
     let lignes = [];
-
     const data = getData();
     const prixMarche = data.entreprise.prixMarche || {};
-
     const coef = [0.8, 1, 1.2, 1.5, 2];
 
     for (const categorie in immoState.styles) {
@@ -169,12 +214,7 @@ function exporterAcheter() {
             const multiplicateur = coef[index] || coef[coef.length - 1];
             const prix = Math.floor(prixBase * multiplicateur);
 
-            lignes.push({
-                categorie,
-                style,
-                quantite,
-                prix
-            });
+            lignes.push({ categorie, style, quantite, prix });
         });
     }
 
