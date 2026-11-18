@@ -5,42 +5,109 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Geo Empire – Entreprises</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        .nav-principale { display: flex; gap: 10px; flex-wrap: wrap; }
+        .pole-bar {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 15px auto 8px auto;
+            max-width: 1050px;
+            padding: 10px 14px;
+            background: rgba(0, 25, 45, 0.82);
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            border-radius: 12px;
+            backdrop-filter: blur(8px);
+        }
+        .pole-btn {
+            padding: 10px 18px;
+            border-radius: 9px;
+            border: 1px solid rgba(56, 189, 248, 0.45);
+            background: rgba(0, 55, 100, 0.85);
+            color: #d9eaff;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .pole-btn:hover, .pole-btn.actif {
+            background: linear-gradient(90deg, #0284c7, #38bdf8);
+            color: #fff;
+            border-color: #fff;
+            box-shadow: 0 0 12px rgba(56, 189, 248, 0.5);
+        }
+        .sous-menu-bar {
+            display: none;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 0 auto 16px auto;
+            max-width: 1050px;
+            padding: 8px 12px;
+            background: rgba(0, 15, 30, 0.78);
+            border-radius: 10px;
+            border: 1px solid rgba(0, 150, 255, 0.25);
+        }
+        .sous-menu-bar.visible { display: flex; }
+        .sous-btn {
+            padding: 7px 14px;
+            border-radius: 7px;
+            border: 1px solid rgba(126, 200, 255, 0.35);
+            background: rgba(0, 40, 75, 0.85);
+            color: #bae6fd;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .sous-btn.actif, .sous-btn:hover {
+            background: #0369a1;
+            color: #fff;
+        }
+    </style>
 </head>
 
 <body class="entreprises-page">
 
 <header>
     <h1>Entreprises</h1>
-    <nav style="display: flex; flex-wrap: wrap; gap: 10px;">
+    <nav class="nav-principale">
         <a href="index.html">Accueil</a>
         <a href="carte.html">Carte GPS</a>
-        <a href="immobilier.html">Immobilier</a>
-        <a href="finances.html">Finances</a>
         <a href="boutique.html">Boutique</a>
-        <a href="historique.html">Historique</a>
-        <a href="prestige.html">Prestige</a>
-        <a href="profil.html">Profil</a>
     </nav>
 </header>
 
 <div id="topbar">
-    <span id="solde">0</span> Ø
-    | Tokens : <span id="tokens">0</span> GT
+    <span id="solde">50 000</span> Ø
+    | Tokens : <span id="tokens">10</span> GT
     | Crowns : <span id="crowns">0</span> CRW
 </div>
 
-<div id="entreprises-menu">
-    <button data-tab="entreprise">Entreprise</button>
-    <button data-tab="acheter">Acheter</button>
-    <button data-tab="assurances">Assurances</button>
-    <button data-tab="renovation">Rénovation</button>
-    <button data-tab="proprietes">Propriétés</button>
-    <button data-tab="personnel">Personnel</button>
-    <button data-tab="marketing">Marketing</button>
-    <button data-tab="finances">Finances</button>
-    <button data-tab="patrimoine">Patrimoine</button>
-    <button data-tab="gestion">Gestion</button>
-    <button data-tab="historique">Historique</button>
+<div class="pole-bar">
+    <button class="pole-btn actif" data-pole="empire">🏛️ Mon Empire & Holding</button>
+    <button class="pole-btn" data-pole="biens">🏢 Catalogue & Gestion</button>
+    <button class="pole-btn" data-pole="operations">⚙️ Opérations</button>
+    <button class="pole-btn" data-pole="compta">📊 Comptabilité</button>
+</div>
+
+<div id="sous-menu-biens" class="sous-menu-bar">
+    <button class="sous-btn actif" data-tab="acheter">Acheter des biens</button>
+    <button class="sous-btn" data-tab="gestion">Loyers & Ventes</button>
+    <button class="sous-btn" data-tab="proprietes">Mes Propriétés</button>
+</div>
+
+<div id="sous-menu-operations" class="sous-menu-bar">
+    <button class="sous-btn actif" data-tab="assurances">Assurances</button>
+    <button class="sous-btn" data-tab="renovation">Rénovation</button>
+    <button class="sous-btn" data-tab="personnel">Personnel</button>
+    <button class="sous-btn" data-tab="marketing">Marketing</button>
+</div>
+
+<div id="sous-menu-compta" class="sous-menu-bar">
+    <button class="sous-btn actif" data-tab="finances">Finances</button>
+    <button class="sous-btn" data-tab="patrimoine">Patrimoine</button>
+    <button class="sous-btn" data-tab="historique">Historique</button>
 </div>
 
 <main id="entreprises-container">
@@ -69,30 +136,35 @@
     <div id="historique" class="tab" style="display:none;"></div>
 </main>
 
-<!-- CORE -->
-<script type="module" src="./js/core/geoData.js"></script>
-<script type="module" src="./js/core/entrepriseCore.js"></script>
-<script type="module" src="./js/core/core.js"></script>
-<script type="module" src="./js/core/systeme.js"></script>
-<script type="module" src="./js/core/ui.js"></script>
-
-<!-- MODULES -->
-<script type="module" src="./js/core/modules/entreprises.js"></script>
-<script type="module" src="./js/core/modules/acheter.js"></script>
-<script type="module" src="./js/core/modules/assurances.js"></script>
-<script type="module" src="./js/core/modules/renovation.js"></script>
-<script type="module" src="./js/core/modules/proprietes.js"></script>
-<script type="module" src="./js/core/modules/personnel.js"></script>
-<script type="module" src="./js/core/modules/marketing.js"></script>
-<script type="module" src="./js/core/modules/finances.js"></script>
-<script type="module" src="./js/core/modules/patrimoine.js"></script>
-<script type="module" src="./js/core/modules/gestion.js"></script>
-<script type="module" src="./js/core/modules/historiqueEntreprises.js"></script>
-
-<!-- SYSTÈME D'ONGLETS EN MODULE (s'exécute après le chargement des scripts) -->
 <script type="module">
+    import { getData } from "./js/core/geoData.js";
+    import { initEntreprise } from "./js/core/modules/entreprises.js";
+
+    function majTopbar() {
+        const e = getData().entreprise;
+        document.getElementById("solde").textContent = (e.argent || 0).toLocaleString("fr-FR");
+        document.getElementById("tokens").textContent = (e.tokens || 0).toLocaleString("fr-FR");
+        document.getElementById("crowns").textContent = (e.crowns || 0).toLocaleString("fr-FR");
+    }
+    majTopbar();
+
+    const modulesSecondaires = [
+        "./js/core/modules/acheter.js",
+        "./js/core/modules/assurances.js",
+        "./js/core/modules/renovation.js",
+        "./js/core/modules/proprietes.js",
+        "./js/core/modules/personnel.js",
+        "./js/core/modules/marketing.js",
+        "./js/core/modules/finances.js",
+        "./js/core/modules/patrimoine.js",
+        "./js/core/modules/gestion.js",
+        "./js/core/modules/historiqueEntreprises.js"
+    ];
+    modulesSecondaires.forEach(src => import(src).catch(err => console.warn("Module secondaire :", src, err)));
+
     const tabs = document.querySelectorAll(".tab");
-    const buttons = document.querySelectorAll("#entreprises-menu button");
+    const poleBtns = document.querySelectorAll(".pole-btn");
+    const sousMenus = document.querySelectorAll(".sous-menu-bar");
 
     function ouvrirOnglet(target) {
         tabs.forEach(t => t.style.display = "none");
@@ -102,14 +174,49 @@
         const cible = document.getElementById(target);
         if (cible) cible.style.display = "block";
 
+        majTopbar();
+
+        if (target === "entreprise") {
+            initEntreprise();
+            return;
+        }
         const fnName = "init" + target.charAt(0).toUpperCase() + target.slice(1);
         if (typeof window[fnName] === "function") {
             window[fnName]();
         }
     }
 
-    buttons.forEach(btn => {
-        btn.addEventListener("click", () => ouvrirOnglet(btn.dataset.tab));
+    poleBtns.forEach(btn => {
+        btn.addEventListener("click", () => {
+            poleBtns.forEach(b => b.classList.remove("actif"));
+            btn.classList.add("actif");
+            sousMenus.forEach(sm => sm.classList.remove("visible"));
+
+            const pole = btn.dataset.pole;
+            if (pole === "empire") {
+                ouvrirOnglet("entreprise");
+            } else {
+                const sm = document.getElementById(`sous-menu-${pole}`);
+                if (sm) {
+                    sm.classList.add("visible");
+                    const premier = sm.querySelector(".sous-btn");
+                    sm.querySelectorAll(".sous-btn").forEach(b => b.classList.remove("actif"));
+                    if (premier) {
+                        premier.classList.add("actif");
+                        ouvrirOnglet(premier.dataset.tab);
+                    }
+                }
+            }
+        });
+    });
+
+    document.querySelectorAll(".sous-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const parent = btn.closest(".sous-menu-bar");
+            parent.querySelectorAll(".sous-btn").forEach(b => b.classList.remove("actif"));
+            btn.classList.add("actif");
+            ouvrirOnglet(btn.dataset.tab);
+        });
     });
 
     ouvrirOnglet("entreprise");
