@@ -28,14 +28,29 @@ import { getInfosTempsJeu, saveData } from "../geoData.js";
 
 export function migrerAnciensBiensVersSiege(e) {
     const sieges = e.commercesGPS || [];
-    if (sieges.length === 0 || !e.biens) return;
+    if (sieges.length === 0) return;
+
+    let modifie = false;
+    sieges.forEach((s, idx) => {
+        if (s.id === undefined || s.id === null || s.id === "") {
+            s.id = `siege_${Date.now()}_${idx}`;
+            modifie = true;
+        }
+    });
+
+    if (!e.biens) {
+        if (modifie) saveData();
+        return;
+    }
 
     const aDejaDesBiensParSiege = sieges.some(s =>
         s.biens && Object.values(s.biens).some(styles => Object.values(styles).some(b => (b.quantite || 0) > 0))
     );
-    if (aDejaDesBiensParSiege) return;
+    if (aDejaDesBiensParSiege) {
+        if (modifie) saveData();
+        return;
+    }
 
-    let migre = false;
     const premierSiege = sieges[0];
     if (!premierSiege.biens) premierSiege.biens = {};
 
@@ -49,21 +64,21 @@ export function migrerAnciensBiensVersSiege(e) {
                     enLocation: 0,
                     ajustementLoyer: 0
                 };
-                migre = true;
+                modifie = true;
             }
         }
     }
-    if (migre) saveData();
+    if (modifie) saveData();
 }
 
 function compterBiensDuSiege(siege, e) {
-    let liste = [];
-    if (!siege || !siege.biens) return liste;
+    const liste = [];
+    if (!siege || !siege.biens || typeof siege.biens !== "object") return liste;
 
     for (const [cat, styles] of Object.entries(siege.biens)) {
-        if (!styles) continue;
+        if (!styles || typeof styles !== "object") continue;
         for (const [style, info] of Object.entries(styles)) {
-            if (info && info.quantite > 0) {
+            if (info && Number(info.quantite) > 0) {
                 const progLoc = (e.locationsEnAttente || [])
                     .filter(o => String(o.siegeId) === String(siege.id) && o.categorie === cat && o.style === style)
                     .reduce((acc, o) => acc + (o.quantite || 0), 0);
@@ -74,8 +89,8 @@ function compterBiensDuSiege(siege, e) {
                 liste.push({
                     categorie: cat,
                     style,
-                    quantite: info.quantite,
-                    enLocation: info.enLocation || 0,
+                    quantite: Number(info.quantite),
+                    enLocation: Number(info.enLocation || 0),
                     progLoc,
                     progVen
                 });
@@ -138,7 +153,7 @@ export function initEntreprise() {
                             <option value="louee" ${a.droits === "louee" ? "selected" : ""}>Location uniquement (Vente bloquée)</option>
                         </select>
                         ${estPdg ? `
-                            <button class="btn-virer-holding" data-nom="${a.nom}" style="background:#b91c1c; color:#fff; border:none; border-radius:6px; padding:4px 9px; cursor:pointer; font-size:12px; font-weight:bold;">
+                            <button type="button" class="btn-virer-holding" data-nom="${a.nom}" style="background:#b91c1c; color:#fff; border:none; border-radius:6px; padding:4px 9px; cursor:pointer; font-size:12px; font-weight:bold;">
                                 Virer (-${PECULE_DEPART_ASSOCIE.toLocaleString("fr-FR")} Ø)
                             </button>
                         ` : ""}
@@ -156,7 +171,7 @@ export function initEntreprise() {
                             Créée le ${e.holding.dateCreation} • <strong>${nbSieges} filiales rattachées</strong>
                         </p>
                     </div>
-                    <button id="btn-sync-holding" class="premium-btn" style="background:#d97706; margin:0;">Synchroniser les filiales</button>
+                    <button type="button" id="btn-sync-holding" class="premium-btn" style="background:#d97706; margin:0;">Synchroniser les filiales</button>
                 </div>
 
                 <div style="margin-top:14px; padding-top:12px; border-top:1px solid rgba(251,191,36,0.3);">
@@ -169,7 +184,7 @@ export function initEntreprise() {
                             <option value="achetee">Vente uniquement (Location bloquée)</option>
                             <option value="louee">Location uniquement (Vente bloquée)</option>
                         </select>
-                        <button id="btn-add-associe-holding" class="premium-btn" style="margin:0; padding:7px 14px; background:#b45309;">+ Nommer Directeur Général</button>
+                        <button type="button" id="btn-add-associe-holding" class="premium-btn" style="margin:0; padding:7px 14px; background:#b45309;">+ Nommer Directeur Général</button>
                     </div>
                 </div>
             </div>
@@ -180,7 +195,7 @@ export function initEntreprise() {
                 <h3 style="margin-top:0; color:#34d399;">🎉 Seuil atteint (${nbSieges}/${SEUIL_HOLDING} entreprises) : Fondez votre Holding !</h3>
                 <div style="display:flex; gap:10px; flex-wrap:wrap;">
                     <input type="text" id="input-nom-holding" class="input-text" style="max-width:320px; margin:0;" value="${e.nom} Holding">
-                    <button id="btn-creer-holding" class="premium-btn" style="margin:0; background:#059669;">Fonder la Holding</button>
+                    <button type="button" id="btn-creer-holding" class="premium-btn" style="margin:0; background:#059669;">Fonder la Holding</button>
                 </div>
             </div>
         `;
@@ -203,7 +218,7 @@ export function initEntreprise() {
     }
 
     // =====================================================
-    // ENTREPRISES SUR LE TERRAIN (PHOTO + HIÉRARCHIE + VERROUS)
+    // ENTREPRISES SUR LE TERRAIN
     // =====================================================
     const siegesHTML = nbSieges === 0
         ? `<div class="premium-box" style="text-align:center;">
@@ -225,9 +240,9 @@ export function initEntreprise() {
                     return `<span style="display:inline-block; background:rgba(16,185,129,0.2); border:1px solid #10b981; color:#a7f3d0; padding:4px 9px; border-radius:6px; font-size:12px; margin:2px;">${b.style} : <strong>${b.quantite}</strong>${infoTexte}</span>`;
                 }).join("");
 
-            const membres = s.associes || [];
+            const membres = Array.isArray(s.associes) ? s.associes : [];
             const membresHTML = membres.length === 0
-                ? `<span style="color:#94a3b8; font-size:13px;">Aucun Directeur Général ou Directeur Commercial recruté</span>`
+                ? `<div style="color:#94a3b8; font-size:13px; margin-bottom:6px;">Aucun Directeur Général ou Directeur Commercial recruté pour l'instant</div>`
                 : membres.map(a => {
                     const estDG = a.role === "dg";
                     return `
@@ -237,14 +252,14 @@ export function initEntreprise() {
                             <span style="font-size:12px; color:#cbd5e1; margin-left:6px;">• ${estDG ? "Directeur Général (Associé)" : "Directeur Commercial (Joueur)"}</span>
                         </div>
                         <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
-                            <select class="select-droits-siege" data-id="${s.id}" data-nom="${a.nom}" ${peutControler ? "" : "disabled"} style="padding:4px 8px; border-radius:6px; background:#0f294a; color:#fff; border:1px solid #38bdf8; font-size:12px;">
+                            <select class="select-droits-siege" data-id="${String(s.id)}" data-nom="${a.nom}" ${peutControler ? "" : "disabled"} style="padding:4px 8px; border-radius:6px; background:#0f294a; color:#fff; border:1px solid #38bdf8; font-size:12px;">
                                 <option value="complet" ${a.droits === "complet" ? "selected" : ""}>✅ Tout autoriser (Louer + Vendre)</option>
                                 <option value="achetee" ${a.droits === "achetee" ? "selected" : ""}>🔒 Bloquer la location (Vente seule)</option>
                                 <option value="louee" ${a.droits === "louee" ? "selected" : ""}>🔒 Bloquer la vente (Location seule)</option>
                                 <option value="bloque" ${a.droits === "bloque" ? "selected" : ""}>⛔ Tout bloquer (Lecture seule)</option>
                             </select>
                             ${estPdg ? `
-                                <button class="btn-virer-siege" data-id="${s.id}" data-nom="${a.nom}" style="background:#b91c1c; color:#fff; border:none; border-radius:6px; padding:4px 9px; cursor:pointer; font-size:12px; font-weight:bold;">
+                                <button type="button" class="btn-virer-siege" data-id="${String(s.id)}" data-nom="${a.nom}" style="background:#b91c1c; color:#fff; border:none; border-radius:6px; padding:4px 9px; cursor:pointer; font-size:12px; font-weight:bold;">
                                     Licencier (-${PECULE_DEPART_ASSOCIE.toLocaleString("fr-FR")} Ø)
                                 </button>
                             ` : ""}
@@ -258,17 +273,17 @@ export function initEntreprise() {
                 : `<div style="width:74px; height:74px; min-width:74px; border-radius:12px; border:1px dashed #38bdf8; background:rgba(0,30,65,0.8); display:flex; align-items:center; justify-content:center; font-size:26px;">🏢</div>`;
 
             return `
-            <div class="premium-box" data-siege-id="${s.id}" style="border-left: 4px solid #38bdf8;">
+            <div class="premium-box" data-siege-id="${String(s.id)}" style="border-left: 4px solid #38bdf8;">
                 <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
                     <div style="display:flex; align-items:center; gap:12px;">
                         ${photoSiegeHTML}
                         <div>
                             <span style="background:rgba(56,189,248,0.2); color:#38bdf8; padding:3px 8px; border-radius:6px; font-size:12px; font-weight:bold;">${s.secteur}</span>
                             <div style="color:#94a3b8; font-size:12px; margin-top:4px;">Acquis le ${s.dateAchat || "Aujourd'hui"} • ${(s.prixAchat || 0).toLocaleString("fr-FR")} Ø</div>
-                            <label for="logo-siege-${s.id}" style="display:inline-block; margin-top:5px; font-size:12px; color:#38bdf8; cursor:pointer; text-decoration:underline;">
+                            <label for="logo-siege-${String(s.id)}" style="display:inline-block; margin-top:5px; font-size:12px; color:#38bdf8; cursor:pointer; text-decoration:underline;">
                                 📷 Changer la photo de cette entreprise
                             </label>
-                            <input type="file" id="logo-siege-${s.id}" class="input-logo-siege" data-id="${s.id}" accept="image/*" style="display:none;">
+                            <input type="file" id="logo-siege-${String(s.id)}" class="input-logo-siege" data-id="${String(s.id)}" accept="image/*" style="display:none;">
                         </div>
                     </div>
                     <a href="carte.html" style="color:#7ec8ff; font-size:13px; text-decoration:none; font-weight:bold;">📍 Voir sur la carte</a>
@@ -287,7 +302,7 @@ export function initEntreprise() {
 
                 <div style="margin-bottom:12px;">
                     <div style="font-size:12px; color:#7ec8ff; font-weight:bold; margin-bottom:6px;">
-                        Équipe & Verrous d'action (Fondateur / Directeur Général Associé / Directeur Commercial) :
+                        Équipe & Verrous d'action (${membres.length} membre(s)) :
                     </div>
                     ${membresHTML}
                     ${peutControler ? `
@@ -303,7 +318,7 @@ export function initEntreprise() {
                                 <option value="louee">Bloquer la vente</option>
                                 <option value="bloque">Tout bloquer</option>
                             </select>
-                            <button class="btn-add-associe-siege premium-btn" style="margin:0; padding:6px 12px; font-size:13px;">+ Recruter dans l'équipe</button>
+                            <button type="button" class="btn-add-associe-siege premium-btn" style="margin:0; padding:6px 12px; font-size:13px;">+ Recruter dans l'équipe</button>
                         </div>
                     ` : ""}
                 </div>
@@ -313,7 +328,7 @@ export function initEntreprise() {
                     <div>${biensHTML}</div>
                 </div>
 
-                <button class="btn-save-siege premium-btn" style="margin:0; padding:8px 16px; font-size:13px; background:#0284c7;">Enregistrer cette entreprise</button>
+                <button type="button" class="btn-save-siege premium-btn" style="margin:0; padding:8px 16px; font-size:13px; background:#0284c7;">Enregistrer cette entreprise</button>
             </div>
             `;
         }).join("");
@@ -351,7 +366,7 @@ export function initEntreprise() {
                         <input id="joueur-nom-input" class="input-text" value="${e.pdg}" style="margin-bottom:10px;">
 
                         <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-                            <button id="btn-save-nom" class="premium-btn" style="margin:0;">Enregistrer le groupe</button>
+                            <button type="button" id="btn-save-nom" class="premium-btn" style="margin:0;">Enregistrer le groupe</button>
                             <label for="input-logo" class="premium-btn" style="cursor:pointer; margin:0; background:#0369a1;">Changer le logo du groupe</label>
                             <input id="input-logo" type="file" accept="image/*" style="display:none;">
                         </div>
@@ -418,9 +433,13 @@ export function initEntreprise() {
     const btnAddH = document.getElementById("btn-add-associe-holding");
     if (btnAddH) {
         btnAddH.onclick = () => {
-            const nom = document.getElementById("input-associe-holding").value;
+            const nom = document.getElementById("input-associe-holding").value.trim();
+            if (!nom) return alert("Veuillez saisir le nom du Directeur Général.");
             const droits = document.getElementById("droits-associe-holding").value;
-            if (ajouterAssocieHolding(nom, droits)) initEntreprise();
+            if (ajouterAssocieHolding(nom, droits)) {
+                alert(`${nom} a été nommé Directeur Général de la Holding !`);
+                initEntreprise();
+            }
         };
     }
 
@@ -463,10 +482,19 @@ export function initEntreprise() {
         const btnAdd = bloc.querySelector(".btn-add-associe-siege");
         if (btnAdd) {
             btnAdd.onclick = () => {
-                const nom = bloc.querySelector(".siege-associe-input").value;
-                const role = bloc.querySelector(".siege-associe-role").value;
-                const droits = bloc.querySelector(".siege-associe-droits").value;
-                if (ajouterMembreSiege(id, nom, role, droits)) initEntreprise();
+                const inputNom = bloc.querySelector(".siege-associe-input");
+                const nom = (inputNom?.value || "").trim();
+                if (!nom) {
+                    alert("Entrez d'abord le nom du joueur ou de l'associé dans la case à gauche du bouton.");
+                    inputNom?.focus();
+                    return;
+                }
+                const role = bloc.querySelector(".siege-associe-role")?.value || "commercial";
+                const droits = bloc.querySelector(".siege-associe-droits")?.value || "complet";
+                if (ajouterMembreSiege(id, nom, role, droits)) {
+                    alert(`${nom} a été recruté dans cette entreprise ! Vous pouvez aussi basculer sur sa session en haut à droite.`);
+                    initEntreprise();
+                }
             };
         }
 
@@ -489,13 +517,16 @@ export function initEntreprise() {
             };
         });
 
-        bloc.querySelector(".btn-save-siege").onclick = () => {
-            const nom = bloc.querySelector(".siege-nom-input").value.trim();
-            const pdg = bloc.querySelector(".siege-pdg-input").value.trim();
-            majSiegeGPS(id, { nom: nom || "Entreprise", pdg: pdg || e.pdg });
-            alert("Entreprise enregistrée !");
-            initEntreprise();
-        };
+        const btnSaveSiege = bloc.querySelector(".btn-save-siege");
+        if (btnSaveSiege) {
+            btnSaveSiege.onclick = () => {
+                const nom = bloc.querySelector(".siege-nom-input").value.trim();
+                const pdg = bloc.querySelector(".siege-pdg-input").value.trim();
+                majSiegeGPS(id, { nom: nom || "Entreprise", pdg: pdg || e.pdg });
+                alert("Entreprise enregistrée !");
+                initEntreprise();
+            };
+        }
     });
 }
 
