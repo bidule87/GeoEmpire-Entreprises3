@@ -2,6 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Geo Empire – Entreprises</title>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -10,22 +11,24 @@
 
 <header>
     <h1>Entreprises</h1>
-    <nav>
+    <nav style="display: flex; flex-wrap: wrap; gap: 10px;">
         <a href="index.html">Accueil</a>
+        <a href="carte.html">Carte GPS</a>
+        <a href="immobilier.html">Immobilier</a>
+        <a href="finances.html">Finances</a>
+        <a href="boutique.html">Boutique</a>
+        <a href="historique.html">Historique</a>
+        <a href="prestige.html">Prestige</a>
+        <a href="profil.html">Profil</a>
     </nav>
 </header>
 
 <div id="topbar">
-  <span id="solde">0</span> GEO
-    | Tokens : <span id="tokens">0</span>
-    | Crowns : <span id="crowns">0</span>
-
-    | <button id="btn-cheat-argent">+1M €</button>
-    | <button id="btn-cheat-tokens">+100 Tokens</button>
-    | <button id="btn-cheat-crowns">+50 Crowns</button>
+    <span id="solde">0</span> Ø
+    | Tokens : <span id="tokens">0</span> GT
+    | Crowns : <span id="crowns">0</span> CRW
 </div>
 
-<!-- ⭐ MENU ENTREPRISES ⭐ -->
 <div id="entreprises-menu">
     <button data-tab="entreprise">Entreprise</button>
     <button data-tab="acheter">Acheter</button>
@@ -37,17 +40,13 @@
     <button data-tab="finances">Finances</button>
     <button data-tab="patrimoine">Patrimoine</button>
     <button data-tab="gestion">Gestion</button>
-
-    <!-- ⭐ AJOUT ICI ⭐ -->
     <button data-tab="historique">Historique</button>
 </div>
 
 <main id="entreprises-container">
-
     <div id="entreprise" class="tab"></div>
 
     <select id="filtre-acheter" style="display:none;"></select>
-
     <div id="acheter" class="tab" style="display:none;">
         <button id="export-acheter" style="display:none;">Exporter CSV</button>
     </div>
@@ -66,12 +65,8 @@
 
     <div id="finances" class="tab" style="display:none;"></div>
     <div id="patrimoine" class="tab" style="display:none;"></div>
-
     <div id="gestion" class="tab" style="display:none;"></div>
-
-    <!-- ⭐ AJOUT DU CONTAINER HISTORIQUE ⭐ -->
     <div id="historique" class="tab" style="display:none;"></div>
-
 </main>
 
 <!-- CORE -->
@@ -92,29 +87,32 @@
 <script type="module" src="./js/core/modules/finances.js"></script>
 <script type="module" src="./js/core/modules/patrimoine.js"></script>
 <script type="module" src="./js/core/modules/gestion.js"></script>
-
-<!-- ⭐ AJOUT DU MODULE HISTORIQUE ENTREPRISES ⭐ -->
 <script type="module" src="./js/core/modules/historiqueEntreprises.js"></script>
 
-<!-- ⭐ SYSTÈME D’ONGLETS ⭐ -->
-<script>
+<!-- SYSTÈME D'ONGLETS EN MODULE (s'exécute après le chargement des scripts) -->
+<script type="module">
     const tabs = document.querySelectorAll(".tab");
     const buttons = document.querySelectorAll("#entreprises-menu button");
 
+    function ouvrirOnglet(target) {
+        tabs.forEach(t => t.style.display = "none");
+        const filtre = document.getElementById("filtre-acheter");
+        if (filtre && target !== "acheter") filtre.style.display = "none";
+
+        const cible = document.getElementById(target);
+        if (cible) cible.style.display = "block";
+
+        const fnName = "init" + target.charAt(0).toUpperCase() + target.slice(1);
+        if (typeof window[fnName] === "function") {
+            window[fnName]();
+        }
+    }
+
     buttons.forEach(btn => {
-        btn.addEventListener("click", () => {
-            const target = btn.dataset.tab;
-
-            tabs.forEach(t => t.style.display = "none");
-            document.getElementById(target).style.display = "block";
-
-            if (window["init" + target.charAt(0).toUpperCase() + target.slice(1)]) {
-                window["init" + target.charAt(0).toUpperCase() + target.slice(1)]();
-            }
-        });
+        btn.addEventListener("click", () => ouvrirOnglet(btn.dataset.tab));
     });
 
-    document.querySelector('#entreprises-menu button[data-tab="entreprise"]').click();
+    ouvrirOnglet("entreprise");
 </script>
 
 </body>
