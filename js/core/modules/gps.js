@@ -1,10 +1,9 @@
-import { getData, saveData, removeArgent, ajouterHistorique } from "../geoData.js";
+import { getData, saveData, removeArgent, ajouterHistorique, loadData } from "../geoData.js";
 
 const latEl = document.getElementById("lat");
 const lngEl = document.getElementById("lng");
 const statutEl = document.getElementById("statut-gps");
 const listeEl = document.getElementById("liste-entreprises");
-const compteurDispoEl = document.getElementById("compteur-dispo");
 const rayonSelect = document.getElementById("rayon-select");
 const filtreSecteurSelect = document.getElementById("filtre-secteur-map");
 const btnScanner = document.getElementById("btn-scanner");
@@ -30,6 +29,13 @@ const VISUELS_SECTEUR = {
     "Commerce & Distribution": "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=800&q=80",
     "Hôtellerie & Services": "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80"
 };
+
+window.addEventListener("storage", () => {
+    loadData();
+    majTopbar();
+    afficherEmpireSurCarte();
+    afficherOpportunitesDisponibles(dernieresOpportunites);
+});
 
 function majTexteBoutonVolet() {
     const span = document.getElementById("compteur-dispo");
@@ -202,8 +208,9 @@ function classifierSecteur(tags) {
 }
 
 function ouvrirFicheEtablissement(item, estDejaAcquis = false) {
+    loadData();
     const e = getData().entreprise;
-    const visuel = item.photo || VISUELS_SECTEUR[item.secteur] || VISUELS_SECTEUR["Commerce & Distribution"];
+    const visuel = item.logo || item.photo || VISUELS_SECTEUR[item.secteur] || VISUELS_SECTEUR["Commerce & Distribution"];
     const couleur = estDejaAcquis ? "#38bdf8" : (item.couleur || "#34d399");
 
     ficheBanniere.style.backgroundImage = `url('${visuel}')`;
@@ -214,7 +221,7 @@ function ouvrirFicheEtablissement(item, estDejaAcquis = false) {
     if (estDejaAcquis) {
         ficheBody.innerHTML = `
             <div class="fiche-row"><span>Statut :</span><strong style="color:#38bdf8;">Entreprise acquise</strong></div>
-            <div class="fiche-row"><span>Directeur Général :</span><strong>${item.directeur || e.pdg || "Fondateur"}</strong></div>
+            <div class="fiche-row"><span>Fondateur référent :</span><strong>${item.pdg || item.directeur || e.pdg || "Fondateur"}</strong></div>
             <div class="fiche-row"><span>Valeur d'acquisition :</span><strong>${(item.prixAchat || 0).toLocaleString("fr-FR")} Ø</strong></div>
             <div class="fiche-row"><span>Date d'acquisition :</span><strong>${item.dateAchat || "Aujourd'hui"}</strong></div>
             <div class="fiche-actions">
@@ -386,6 +393,7 @@ function afficherOpportunitesDisponibles(liste) {
 }
 
 function acheterSiege(siege) {
+    loadData();
     const e = getData().entreprise;
 
     if (e.argent < siege.prix) {
@@ -398,22 +406,24 @@ function acheterSiege(siege) {
 
     if (!e.commercesGPS) e.commercesGPS = [];
     e.commercesGPS.push({
-        id: siege.id,
+        id: String(siege.id),
         nom: siege.nom,
         secteur: siege.secteur,
         lat: siege.lat,
         lng: siege.lng,
         prixAchat: siege.prix,
+        pdg: e.pdg || "Fondateur",
         directeur: e.pdg || "Fondateur",
         associes: [],
+        biens: {},
         dateAchat: new Date().toLocaleDateString("fr-FR")
     });
 
     saveData();
-    ajouterHistorique(`Siège implanté (${siege.secteur}) : ${siege.nom}`, "achat");
     majTopbar();
     afficherEmpireSurCarte();
     afficherOpportunitesDisponibles(dernieresOpportunites);
+    alert(`Entreprise "${siege.nom}" acquise ! Elle est maintenant disponible dans Entreprises et dans le Catalogue d'achat.`);
 }
 
 export function majPosition(lat, lng, lancerScan = false) {
