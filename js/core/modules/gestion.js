@@ -1,5 +1,5 @@
 // ============================================
-//  GESTION — LOYERS & VENTES (TRAÇABILITÉ JOUEURS + LOCATION RÉCURRENTE)
+//  GESTION — LOYERS & VENTES (STOCK STRICT + VERROUS ÉQUIPE)
 // ============================================
 
 import { saveData, getInfosTempsJeu, traiterCloture, ajouterHistorique } from "../geoData.js";
@@ -8,7 +8,7 @@ import { migrerAnciensBiensVersSiege } from "./entreprises.js";
 
 let timerClotureId = null;
 
-function getDroitsUtilisateurActif() {
+function getDroitsUtilisateurActif(siege = null) {
     const e = getEntreprise();
     if (estPdgGeneral()) return "complet";
 
@@ -17,11 +17,28 @@ function getDroitsUtilisateurActif() {
         const assocH = e.holding.associes.find(a => a.nom === actif);
         if (assocH) return assocH.droits || "complet";
     }
-    for (const siege of (e.commercesGPS || [])) {
-        const assocS = (siege.associes || []).find(a => a.nom === actif);
+    if (siege && Array.isArray(siege.associes)) {
+        const assocS = siege.associes.find(a => a.nom === actif);
         if (assocS) return assocS.droits || "complet";
     }
     return "complet";
+}
+
+function getStockDisponiblePourOrdre(e, siege, cat, style, bien) {
+    const total = bien.quantite || 0;
+    const progLoc = (e.locationsEnAttente || [])
+        .filter(o => String(o.siegeId) === String(siege.id) && o.categorie === cat && o.style === style)
+        .reduce((acc, o) => acc + (o.quantite || 0), 0);
+    const progVen = (e.ventesEnAttente || [])
+        .filter(o => String(o.siegeId) === String(siege.id) && o.categorie === cat && o.style === style)
+        .reduce((acc, o) => acc + (o.quantite || 0), 0);
+
+    return {
+        total,
+        progLoc,
+        progVen,
+        libre: Math.max(0, total - progLoc - progVen)
+    };
 }
 
 export function initGestion() {
@@ -37,12 +54,8 @@ export function initGestion() {
     }
 
     const sieges = e.commercesGPS || [];
-    const droits = getDroitsUtilisateurActif();
     const temps = getInfosTempsJeu();
     const auteurActuel = e.utilisateurActif || e.pdg || "Fondateur";
-
-    const peutVendre = droits === "complet" || droits === "achetee";
-    const peutLouer = droits === "complet" || droits === "louee";
 
     const siegesAvecBiens = sieges.filter(s =>
         s.biens && Object.values(s.biens).some(styles => Object.values(styles).some(b => (b.quantite || 0) > 0))
@@ -102,16 +115,21 @@ export function initGestion() {
                 ${siegesAvecBiens.length === 0 ? `
                     <p>Aucun bien rattaché à vos entreprises pour le moment. Allez dans <strong>Acheter des biens</strong>.</p>
                 ` : `
-                    ${siegesAvecBiens.map(siege => `
+                    ${siegesAvecBiens.map(siege => {
+                        const droits = getDroitsUtilisateurActif(siege);
+                        const peutVendre = droits === "complet" || droits === "achetee";
+                        const peutLouer = droits === "complet" || droits === "louee";
+
+                        return `
                         <div style="margin-bottom:22px; padding:14px; background:rgba(0,20,40,0.65); border-radius:12px; border:1px solid rgba(56,189,248,0.35);">
                             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; border-bottom:1px solid rgba(56,189,248,0.3); padding-bottom:10px; margin-bottom:12px;">
                                 <h3 style="color:#7ec8ff; margin:0;">🏢 ${siege.nom} <span style="font-size:13px; color:#94a3b8;">(${siege.secteur})</span></h3>
                                 <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                                    <button class="btn-tout-louer-siege premium-btn" data-siege="${siege.id}" style="margin:0; padding:7px 13px; font-size:12px; background:#0284c7;" ${peutLouer ? "" : "disabled"}>
-                                        Tout louer
+                                    <button class="btn-tout-louer-siege premium-btn" data-siege="${siege.id}" style="margin:0; padding:7px 13px; font-size:12px; background:#0284c7; ${peutLouer ? "" : "opacity:0.4; cursor:not-allowed;"}" ${peutLouer ? "" : "disabled"}>
+                                        Tout louer (disponibles)
                                     </button>
-                                    <button class="btn-tout-vendre-siege premium-btn" data-siege="${siege.id}" style="margin:0; padding:7px 13px; font-size:12px; background:#059669;" ${peutVendre ? "" : "disabled"}>
-                                        Tout vendre
+                                    <button class="btn-tout-vendre-siege premium-btn" data-siege="${siege.id}" style="margin:0; padding:7px 13px; font-size:12px; background:#059669; ${peutVendre ? "" : "opacity:0.4; cursor:not-allowed;"}" ${peutVendre ? "" : "disabled"}>
+                                        Tout vendre (disponibles)
                                     </button>
                                 </div>
                             </div>
@@ -121,6 +139,7 @@ export function initGestion() {
                                     .filter(([, bien]) => (bien.quantite || 0) > 0)
                                     .map(([style, bien]) => {
                                         const enLoc = Math.min(bien.quantite, bien.enLocation || 0);
+                                        const stock = getStockDisponiblePourOrdre(e, siege, categorie, style, bien);
                                         const prixMoyen = bien.prixAchatMoyen || 15000;
                                         const loyerUnitaireNet = Math.floor(prixMoyen * 0.02 * 0.75);
                                         const prixReventeUnitaireNet = Math.floor(prixMoyen * 1.25 * 0.90);
@@ -129,10 +148,15 @@ export function initGestion() {
                                         <div style="margin-top:12px; padding:12px; background:rgba(0,35,70,0.75); border-radius:10px; border:1px solid rgba(56,189,248,0.25);">
                                             <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-bottom:6px;">
                                                 <div style="font-size:16px; font-weight:bold; color:#fff;">${style} <span style="font-size:12px; color:#7ec8ff;">(${categorie})</span></div>
-                                                <div style="display:flex; gap:8px; align-items:center;">
-                                                    <span style="background:${enLoc > 0 ? "rgba(52,211,153,0.2)" : "rgba(148,163,184,0.2)"}; color:${enLoc > 0 ? "#34d399" : "#cbd5e1"}; padding:3px 8px; border-radius:6px; font-size:12px; font-weight:bold;">
-                                                        ${enLoc > 0 ? `🔄 Location active reconduite : ${enLoc} / ${bien.quantite}` : `Disponible : ${bien.quantite} unité(s)`}
+                                                <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                                                    <span style="background:rgba(56,189,248,0.2); color:#bae6fd; padding:3px 8px; border-radius:6px; font-size:12px; font-weight:bold;">
+                                                        Stock total : ${stock.total} | Disponibles pour nouvel ordre : ${stock.libre}
                                                     </span>
+                                                    ${enLoc > 0 ? `
+                                                        <span style="background:rgba(52,211,153,0.2); color:#34d399; padding:3px 8px; border-radius:6px; font-size:12px; font-weight:bold;">
+                                                            🔄 Loués : ${enLoc}
+                                                        </span>
+                                                    ` : ""}
                                                     ${enLoc > 0 && peutLouer ? `
                                                         <button class="btn-stopper-loc" data-siege="${siege.id}" data-cat="${categorie}" data-style="${style}" style="background:#475569; color:#fff; border:none; border-radius:5px; padding:3px 8px; cursor:pointer; font-size:11px;">
                                                             Retirer du bail
@@ -150,16 +174,18 @@ export function initGestion() {
                                                 <label style="font-size:13px;">Qté :</label>
                                                 <input type="number" class="input-quantite"
                                                     data-siege="${siege.id}" data-cat="${categorie}" data-style="${style}"
-                                                    min="1" max="${bien.quantite}" value="${bien.quantite}"
+                                                    min="1" max="${Math.max(1, stock.libre)}" value="${Math.max(1, stock.libre)}"
+                                                    ${stock.libre === 0 ? "disabled" : ""}
                                                     style="width:70px; padding:6px 8px; border-radius:6px; border:1px solid #38bdf8; background:#0f294a; color:#fff;">
 
                                                 <button class="btn-tous premium-btn"
-                                                    data-siege="${siege.id}" data-cat="${categorie}" data-style="${style}" data-max="${bien.quantite}"
+                                                    data-siege="${siege.id}" data-cat="${categorie}" data-style="${style}" data-max="${stock.libre}"
+                                                    ${stock.libre === 0 ? "disabled" : ""}
                                                     style="margin:0; padding:6px 10px; font-size:12px; background:#1e40af;">
-                                                    Tous (${bien.quantite})
+                                                    Max (${stock.libre})
                                                 </button>
 
-                                                <label style="font-size:13px;">Positionnement tarifaire :</label>
+                                                <label style="font-size:13px;">Tarif :</label>
                                                 <input type="range" class="slider-prix"
                                                     data-siege="${siege.id}" data-cat="${categorie}" data-style="${style}"
                                                     min="-30" max="40" step="5" value="${bien.ajustementLoyer || 0}">
@@ -172,14 +198,14 @@ export function initGestion() {
                                                 <div style="display:flex; gap:8px; margin-left:auto;">
                                                     <button class="btn-louer premium-btn"
                                                         data-siege="${siege.id}" data-cat="${categorie}" data-style="${style}"
-                                                        style="margin:0; padding:8px 14px; font-size:13px; background:#0284c7;"
-                                                        ${peutLouer ? "" : 'disabled style="opacity:0.4;"'}>
-                                                        🔑 ${enLoc > 0 ? "Mettre à jour la location" : "Louer"}
+                                                        style="margin:0; padding:8px 14px; font-size:13px; background:#0284c7; ${peutLouer && stock.libre > 0 ? "" : "opacity:0.4; cursor:not-allowed;"}"
+                                                        ${peutLouer && stock.libre > 0 ? "" : "disabled"}>
+                                                        🔑 Louer
                                                     </button>
                                                     <button class="btn-vendre premium-btn"
                                                         data-siege="${siege.id}" data-cat="${categorie}" data-style="${style}"
-                                                        style="margin:0; padding:8px 14px; font-size:13px; background:#059669;"
-                                                        ${peutVendre ? "" : 'disabled style="opacity:0.4;"'}>
+                                                        style="margin:0; padding:8px 14px; font-size:13px; background:#059669; ${peutVendre && stock.libre > 0 ? "" : "opacity:0.4; cursor:not-allowed;"}"
+                                                        ${peutVendre && stock.libre > 0 ? "" : "disabled"}>
                                                         💰 Vendre
                                                     </button>
                                                 </div>
@@ -189,7 +215,8 @@ export function initGestion() {
                                     }).join("")
                             ).join("")}
                         </div>
-                    `).join("")}
+                        `;
+                    }).join("")}
                 `}
             </div>
         </div>
@@ -267,6 +294,7 @@ function bindGestionEvents() {
         };
     });
 
+    // PROGRAMMER LOCATION (AVEC VÉRIFICATION DU STOCK DISPONIBLE)
     document.querySelectorAll(".btn-louer").forEach(btn => {
         btn.onclick = () => {
             const { siege: siegeId, cat, style } = btn.dataset;
@@ -276,13 +304,15 @@ function bindGestionEvents() {
             const bien = siege?.biens?.[cat]?.[style];
             if (!bien) return;
 
+            const stock = getStockDisponiblePourOrdre(e, siege, cat, style, bien);
             const qte = Number(document.querySelector(`.input-quantite[data-siege="${siegeId}"][data-cat="${cat}"][data-style="${style}"]`)?.value || 0);
             const ajust = Number(document.querySelector(`.slider-prix[data-siege="${siegeId}"][data-cat="${cat}"][data-style="${style}"]`)?.value || 0);
-            if (qte <= 0 || qte > bien.quantite) return alert("Quantité invalide.");
+
+            if (qte <= 0 || qte > stock.libre) {
+                return alert(`Quantité impossible : il ne reste que ${stock.libre} bien(s) disponible(s) sur cette structure.`);
+            }
 
             if (!Array.isArray(e.locationsEnAttente)) e.locationsEnAttente = [];
-            e.locationsEnAttente = e.locationsEnAttente.filter(o => !(String(o.siegeId) === String(siegeId) && o.categorie === cat && o.style === style));
-
             e.locationsEnAttente.push({
                 siegeId,
                 siegeNom: siege.nom,
@@ -298,6 +328,7 @@ function bindGestionEvents() {
         };
     });
 
+    // PROGRAMMER VENTE (AVEC VÉRIFICATION DU STOCK DISPONIBLE)
     document.querySelectorAll(".btn-vendre").forEach(btn => {
         btn.onclick = () => {
             const { siege: siegeId, cat, style } = btn.dataset;
@@ -307,16 +338,18 @@ function bindGestionEvents() {
             const bien = siege?.biens?.[cat]?.[style];
             if (!bien) return;
 
+            const stock = getStockDisponiblePourOrdre(e, siege, cat, style, bien);
             const qte = Number(document.querySelector(`.input-quantite[data-siege="${siegeId}"][data-cat="${cat}"][data-style="${style}"]`)?.value || 0);
             const ajust = Number(document.querySelector(`.slider-prix[data-siege="${siegeId}"][data-cat="${cat}"][data-style="${style}"]`)?.value || 0);
-            if (qte <= 0 || qte > bien.quantite) return alert("Quantité invalide.");
+
+            if (qte <= 0 || qte > stock.libre) {
+                return alert(`Quantité impossible : il ne reste que ${stock.libre} bien(s) disponible(s) (les autres sont déjà programmés en location ou vente).`);
+            }
 
             const prixMoyen = bien.prixAchatMoyen || 15000;
             const gainNetEstime = Math.floor(prixMoyen * 1.25 * (1 + ajust / 100) * 0.90 * qte);
 
             if (!Array.isArray(e.ventesEnAttente)) e.ventesEnAttente = [];
-            e.ventesEnAttente = e.ventesEnAttente.filter(o => !(String(o.siegeId) === String(siegeId) && o.categorie === cat && o.style === style));
-
             e.ventesEnAttente.push({
                 siegeId,
                 siegeNom: siege.nom,
@@ -341,24 +374,23 @@ function bindGestionEvents() {
             if (!siege?.biens) return;
 
             if (!Array.isArray(e.locationsEnAttente)) e.locationsEnAttente = [];
-            e.locationsEnAttente = e.locationsEnAttente.filter(o => String(o.siegeId) !== String(siege.id));
-
             for (const [cat, styles] of Object.entries(siege.biens)) {
                 for (const [style, bien] of Object.entries(styles)) {
-                    if ((bien.quantite || 0) > 0) {
+                    const stock = getStockDisponiblePourOrdre(e, siege, cat, style, bien);
+                    if (stock.libre > 0) {
                         e.locationsEnAttente.push({
                             siegeId: siege.id,
                             siegeNom: siege.nom,
                             categorie: cat,
                             style,
-                            quantite: bien.quantite,
+                            quantite: stock.libre,
                             ajustement: 0,
                             auteur
                         });
                     }
                 }
             }
-            ajouterHistorique(`[${siege.nom}] Programmation location groupée de tout le parc`, "gestion", auteur);
+            ajouterHistorique(`[${siege.nom}] Programmation location groupée des biens disponibles`, "gestion", auteur);
             initGestion();
         };
     });
@@ -371,26 +403,25 @@ function bindGestionEvents() {
             if (!siege?.biens) return;
 
             if (!Array.isArray(e.ventesEnAttente)) e.ventesEnAttente = [];
-            e.ventesEnAttente = e.ventesEnAttente.filter(o => String(o.siegeId) !== String(siege.id));
-
             for (const [cat, styles] of Object.entries(siege.biens)) {
                 for (const [style, bien] of Object.entries(styles)) {
-                    if ((bien.quantite || 0) > 0) {
+                    const stock = getStockDisponiblePourOrdre(e, siege, cat, style, bien);
+                    if (stock.libre > 0) {
                         const prixMoyen = bien.prixAchatMoyen || 15000;
                         e.ventesEnAttente.push({
                             siegeId: siege.id,
                             siegeNom: siege.nom,
                             categorie: cat,
                             style,
-                            quantite: bien.quantite,
+                            quantite: stock.libre,
                             ajustement: 0,
-                            gainNetEstime: Math.floor(prixMoyen * 1.25 * 0.90 * bien.quantite),
+                            gainNetEstime: Math.floor(prixMoyen * 1.25 * 0.90 * stock.libre),
                             auteur
                         });
                     }
                 }
             }
-            ajouterHistorique(`[${siege.nom}] Programmation vente groupée de tout le parc`, "gestion", auteur);
+            ajouterHistorique(`[${siege.nom}] Programmation vente groupée des biens disponibles`, "gestion", auteur);
             initGestion();
         };
     });
