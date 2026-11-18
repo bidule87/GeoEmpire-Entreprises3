@@ -1,53 +1,52 @@
+// ============================================
+//  HISTORIQUE — COMPTABILITÉ ENTREPRISES
+// ============================================
+
 import { getData } from "../geoData.js";
 
-export function initHistoriqueEntreprises() {
+export function initHistorique() {
     const zone = document.getElementById("historique");
-    const data = getData();
-
     if (!zone) return;
 
-    const hist = data.entreprise.historique || [];
+    const e = getData().entreprise;
+    const liste = e.historique || [];
+
+    const badgesType = {
+        achat: { label: "ACHAT", couleur: "#38bdf8" },
+        gain: { label: "RECETTE", couleur: "#34d399" },
+        depense: { label: "DÉPENSE", couleur: "#f87171" },
+        gestion: { label: "GOUVERNANCE", couleur: "#fbbf24" },
+        prestige: { label: "HOLDING / PRESTIGE", couleur: "#c084fc" },
+        boutique: { label: "BOUTIQUE", couleur: "#f472b6" },
+        info: { label: "INFO", couleur: "#94a3b8" }
+    };
 
     zone.innerHTML = `
         <div class="premium-panel">
-            <h2 class="premium-title">Historique — Entreprises</h2>
-
-            <div class="premium-box historique-box">
-                ${hist.length === 0 ? `
-                    <p>Aucune action enregistrée pour le moment.</p>
+            <h2 class="premium-title">Journal Comptable & Historique (${liste.length})</h2>
+            <div class="premium-box">
+                ${liste.length === 0 ? `
+                    <p style="color:#94a3b8;">Aucune écriture comptable enregistrée pour le moment.</p>
                 ` : `
-                    <table class="historique-table">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Rôle</th>
-                                <th>Action</th>
-                                <th>Catégorie</th>
-                                <th>Style</th>
-                                <th>Qté</th>
-                                <th>Ajust.</th>
-                                <th>Montant</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${hist.slice().reverse().map(entry => `
-                                <tr>
-                                    <td>${new Date(entry.date).toLocaleString("fr-FR")}</td>
-                                    <td>${entry.role || "-"}</td>
-                                    <td>${entry.action}</td>
-                                    <td>${entry.categorie}</td>
-                                    <td>${entry.style}</td>
-                                    <td>${entry.quantite}</td>
-                                    <td>${entry.ajustement > 0 ? "+" : ""}${entry.ajustement}%</td>
-                                    <td>${entry.montant ? entry.montant.toLocaleString("fr-FR") + " €" : "-"}</td>
-                                </tr>
-                            `).join("")}
-                        </tbody>
-                    </table>
+                    <div style="display:flex; flex-direction:column; gap:8px;">
+                        ${liste.map(item => {
+                            const texte = item.message || item.texte || "Opération enregistrée";
+                            const cfg = badgesType[item.type] || badgesType.info;
+                            return `
+                                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; padding:10px 12px; background:rgba(0,25,55,0.75); border-left:4px solid ${cfg.couleur}; border-radius:8px;">
+                                    <div>
+                                        <span style="background:rgba(255,255,255,0.1); color:${cfg.couleur}; padding:2px 7px; border-radius:5px; font-size:11px; font-weight:bold; margin-right:8px;">${cfg.label}</span>
+                                        <span style="font-size:14px; color:#f1f5f9;">${texte}</span>
+                                    </div>
+                                    <span style="font-size:12px; color:#94a3b8;">${item.date || ""}</span>
+                                </div>
+                            `;
+                        }).join("")}
+                    </div>
                 `}
             </div>
         </div>
     `;
 }
 
-window.initHistoriqueEntreprises = initHistoriqueEntreprises;
+window.initHistorique = initHistorique;
