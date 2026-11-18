@@ -1,313 +1,230 @@
-// ==========================
-// ETAT DU JOUEUR
-// ==========================
+// ============================================
+//  GESTION — LOYERS & VENTES (CONNECTÉ GOUVERNANCE)
+// ============================================
 
-const state = {
-  gTokens: 0,
-  crowns: 0,
-  gpsRadius: 5,
-  prestigeOwned: false
-};
+import { getData, saveData } from "../geoData.js";
+import { getEntreprise, estPdgGeneral } from "../entrepriseCore.js";
 
-// ==========================
-// LISTE DES PACKS
-// ==========================
+function getDroitsUtilisateurActif() {
+    const e = getEntreprise();
+    if (estPdgGeneral()) return "complet";
 
-const packs = [
+    const actif = e.utilisateurActif;
+    if (e.holding?.active && Array.isArray(e.holding.associes)) {
+        const assocH = e.holding.associes.find(a => a.nom === actif);
+        if (assocH) return assocH.droits || "complet";
+    }
 
-{
-id:"prestige",
-name:"Pack Prestige",
-subtitle:"Le pack ultime",
-price:"9.99 €",
-oneTime:true,
+    for (const siege of (e.commercesGPS || [])) {
+        const assocS = (siege.associes || []).find(a => a.nom === actif);
+        if (assocS) return assocS.droits || "complet";
+    }
 
-lines:[
-"Rayon GPS étendu à 20 km",
-"Achats illimités de biens",
-"Assurance spéciale",
-"Priorité absolue à minuit",
-"Actions de masse",
-"Export Excel / Sheets",
-"Bonus de vente",
-"Bonus de location",
-"+10 000 G-Tokens",
-"+10 Crowns",
-"+9 cadenas"
-]
-
-},
-
-{
-id:"autoManagers",
-name:"Pack Auto-Managers",
-subtitle:"Prime & Marketing",
-price:"9.99 €",
-
-lines:[
-"Prime automatique pour les managers",
-"Boost marketing des entreprises"
-]
-
-},
-
-{
-id:"gps5",
-name:"Pack GPS 5 km",
-subtitle:"Extension Zone",
-price:"2.99 €",
-
-lines:["Augmente le rayon GPS à 5 km"]
-},
-
-{
-id:"gps10",
-name:"Pack GPS 10 km",
-subtitle:"Double Zone",
-price:"4.99 €",
-
-lines:["Augmente le rayon GPS à 10 km"]
-},
-
-{
-id:"gps20",
-name:"Pack GPS 20 km",
-subtitle:"Max Zone",
-price:"9.99 €",
-
-lines:["Augmente le rayon GPS à 20 km"]
-},
-
-{
-id:"gtokens",
-name:"Pack G-Tokens",
-subtitle:"Valeur & Action",
-price:"4.99 €",
-
-lines:["+10 000 G-Tokens"]
-},
-
-{
-id:"crowns",
-name:"Pack Crowns",
-subtitle:"Chance Royale",
-price:"4.99 €",
-
-lines:["+10 Crowns"]
+    return "complet";
 }
 
-];
+export function initGestion() {
+    const zone = document.getElementById("gestion");
+    if (!zone) return;
 
-// ==========================
-// VARIABLES
-// ==========================
+    const e = getEntreprise();
+    const biens = e.biens || {};
+    const droits = getDroitsUtilisateurActif();
 
-let packsContainer;
-let statusEl;
+    const peutVendre = droits === "complet" || droits === "achetee";
+    const peutLouer = droits === "complet" || droits === "louee";
 
+    const categoriesActives = Object.entries(biens).filter(
+        ([, styles]) => Object.values(styles).some(b => (b.quantite || 0) > 0)
+    );
 
-// ==========================
-// CODE PRESTIGE
-// ==========================
+    zone.innerHTML = `
+        <div class="premium-panel">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
+                <h2 class="premium-title" style="margin:0;">Gestion des Loyers & Ventes</h2>
+                <span style="background:rgba(0,45,85,0.85); border:1px solid #38bdf8; padding:5px 12px; border-radius:8px; font-size:13px; color:#bae6fd;">
+                    Session : <strong>${e.utilisateurActif}</strong> (${droits === "complet" ? "Accès complet" : droits === "achetee" ? "Partie achetée uniquement" : "Partie louée uniquement"})
+                </span>
+            </div>
 
-function validerCodePrestige(){
+            <div class="premium-box">
+                ${categoriesActives.length === 0 ? `
+                    <p>Aucun bien en stock pour le moment. Rendez-vous dans <strong>Acheter des biens</strong>.</p>
+                ` : `
+                    ${categoriesActives.map(([categorie, styles]) => `
+                        <div class="gestion-categorie" style="margin-bottom:18px;">
+                            <h3 style="color:#7ec8ff; border-bottom:1px solid rgba(56,189,248,0.3); padding-bottom:6px;">${categorie}</h3>
 
-const input=document.getElementById("prestige-code").value.trim()
+                            ${Object.entries(styles)
+                                .filter(([, bien]) => (bien.quantite || 0) > 0)
+                                .map(([style, bien]) => {
+                                    const estAssure = bien.assurance && bien.assurance.type;
+                                    const badgeAssurance = estAssure
+                                        ? `<span style="color:#34d399; font-size:12px; font-weight:bold;">🛡️ Assuré (${bien.assurance.type} - ${bien.assurance.couverture}%)</span>`
+                                        : `<span style="color:#f87171; font-size:12px; font-weight:bold;">⚠️ Non assuré (risque de perte)</span>`;
 
-const codesValides=[
-"GEO-9999",
-"PRESTIGE-2025",
-"EMPIRE-VIP"
-]
+                                    return `
+                                    <div class="gestion-item" style="margin-top:10px;">
+                                        <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; align-items:center;">
+                                            <div class="gestion-nom" style="font-size:16px; font-weight:bold;">${style}</div>
+                                            ${badgeAssurance}
+                                        </div>
 
-if(!codesValides.includes(input)){
+                                        <div class="gestion-infos" style="margin:6px 0; font-size:14px;">
+                                            <div>En stock : <strong>${bien.quantite}</strong></div>
+                                            <div>Valeur moyenne : <strong>${Math.floor(bien.prixAchatMoyen).toLocaleString("fr-FR")} Ø</strong></div>
+                                        </div>
 
-showStatus("Code invalide")
-return
+                                        <div class="gestion-actions">
+                                            <label>Quantité :</label>
+                                            <input type="number"
+                                                class="input-quantite"
+                                                data-cat="${categorie}"
+                                                data-style="${style}"
+                                                min="1"
+                                                max="${bien.quantite}"
+                                                value="1">
 
+                                            <button class="btn-tous"
+                                                data-cat="${categorie}"
+                                                data-style="${style}"
+                                                data-max="${bien.quantite}">
+                                                Tous
+                                            </button>
+
+                                            <label>Marge / Ajustement :</label>
+                                            <input type="range"
+                                                class="slider-prix"
+                                                data-cat="${categorie}"
+                                                data-style="${style}"
+                                                min="-30"
+                                                max="40"
+                                                step="5"
+                                                value="0">
+
+                                            <span class="prix-affiche"
+                                                id="prix-${categorie}-${style}"
+                                                style="font-weight:bold; color:#fbbf24; min-width:48px; display:inline-block;">
+                                                0%
+                                            </span>
+
+                                            <div class="gestion-boutons-double">
+                                                <button class="btn-louer"
+                                                    data-cat="${categorie}"
+                                                    data-style="${style}"
+                                                    ${peutLouer ? "" : 'disabled style="opacity:0.4; cursor:not-allowed;" title="Droits réservés à la partie achetée"'}>
+                                                    Louer
+                                                </button>
+
+                                                <button class="btn-vendre"
+                                                    data-cat="${categorie}"
+                                                    data-style="${style}"
+                                                    ${peutVendre ? "" : 'disabled style="opacity:0.4; cursor:not-allowed;" title="Droits réservés à la partie louée"'}>
+                                                    Vendre
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    `;
+                                }).join("")}
+                        </div>
+                    `).join("")}
+                `}
+            </div>
+        </div>
+    `;
+
+    bindGestionEvents();
 }
 
-applyPack(packs.find(p=>p.id==="prestige"))
+function bindGestionEvents() {
+    document.querySelectorAll(".btn-tous").forEach(btn => {
+        btn.onclick = () => {
+            const input = document.querySelector(
+                `.input-quantite[data-cat="${btn.dataset.cat}"][data-style="${btn.dataset.style}"]`
+            );
+            if (input) input.value = btn.dataset.max;
+        };
+    });
 
+    document.querySelectorAll(".slider-prix").forEach(slider => {
+        slider.oninput = () => {
+            const span = document.getElementById(`prix-${slider.dataset.cat}-${slider.dataset.style}`);
+            if (span) {
+                const val = Number(slider.value);
+                span.textContent = (val > 0 ? "+" : "") + val + "%";
+                span.style.color = val > 0 ? "#34d399" : val < 0 ? "#f87171" : "#fbbf24";
+            }
+        };
+    });
+
+    document.querySelectorAll(".btn-louer").forEach(btn => {
+        btn.onclick = () => {
+            if (btn.disabled) return;
+            const cat = btn.dataset.cat;
+            const style = btn.dataset.style;
+            const input = document.querySelector(`.input-quantite[data-cat="${cat}"][data-style="${style}"]`);
+            const slider = document.querySelector(`.slider-prix[data-cat="${cat}"][data-style="${style}"]`);
+
+            const quantite = Number(input?.value || 0);
+            const ajustement = Number(slider?.value || 0);
+            const data = getData();
+            const bien = data.entreprise.biens?.[cat]?.[style];
+
+            if (!bien || quantite <= 0 || quantite > bien.quantite) return;
+
+            if (!Array.isArray(data.entreprise.locationsEnAttente)) {
+                data.entreprise.locationsEnAttente = [];
+            }
+
+            data.entreprise.locationsEnAttente.push({
+                categorie: cat,
+                style,
+                quantite,
+                ajustement,
+                prixAchatMoyen: bien.prixAchatMoyen,
+                dateDemande: Date.now()
+            });
+
+            saveData();
+            alert(`Mise en location enregistrée : ${quantite}× ${style} (${ajustement >= 0 ? "+" : ""}${ajustement}%).`);
+            initGestion();
+        };
+    });
+
+    document.querySelectorAll(".btn-vendre").forEach(btn => {
+        btn.onclick = () => {
+            if (btn.disabled) return;
+            const cat = btn.dataset.cat;
+            const style = btn.dataset.style;
+            const input = document.querySelector(`.input-quantite[data-cat="${cat}"][data-style="${style}"]`);
+            const slider = document.querySelector(`.slider-prix[data-cat="${cat}"][data-style="${style}"]`);
+
+            const quantite = Number(input?.value || 0);
+            const ajustement = Number(slider?.value || 0);
+            const data = getData();
+            const bien = data.entreprise.biens?.[cat]?.[style];
+
+            if (!bien || quantite <= 0 || quantite > bien.quantite) return;
+
+            if (!Array.isArray(data.entreprise.ventesEnAttente)) {
+                data.entreprise.ventesEnAttente = [];
+            }
+
+            data.entreprise.ventesEnAttente.push({
+                categorie: cat,
+                style,
+                quantite,
+                ajustement,
+                prixAchatMoyen: bien.prixAchatMoyen,
+                dateDemande: Date.now()
+            });
+
+            saveData();
+            alert(`Mise en vente enregistrée : ${quantite}× ${style} (${ajustement >= 0 ? "+" : ""}${ajustement}%).`);
+            initGestion();
+        };
+    });
 }
 
-
-// ==========================
-// RENDER PACKS
-// ==========================
-
-function renderPacks(){
-
-packsContainer.innerHTML=""
-
-packs.forEach(pack=>{
-
-const div=document.createElement("div")
-div.className="pack-card"
-
-const linesHtml=pack.lines
-.map(l=>"<li>"+l+"</li>")
-.join("")
-
-div.innerHTML=`
-
-<h3>${pack.name}</h3>
-
-<div class="subtitle">
-${pack.subtitle}
-</div>
-
-<div class="pack-price">
-${pack.price}
-</div>
-
-<ul>
-${linesHtml}
-</ul>
-
-<button class="btn-buy">
-Acheter
-</button>
-
-`
-
-const button=div.querySelector(".btn-buy")
-
-if(pack.oneTime && state.prestigeOwned){
-
-button.disabled=true
-button.textContent="Déjà acheté"
-
-}
-
-button.addEventListener("click",()=>{
-
-applyPack(pack)
-
-})
-
-packsContainer.appendChild(div)
-
-})
-
-}
-
-
-// ==========================
-// APPLICATION DES PACKS
-// ==========================
-
-function applyPack(pack){
-
-switch(pack.id){
-
-case "prestige":
-
-if(state.prestigeOwned){
-
-showStatus("Pack déjà possédé")
-return
-
-}
-
-state.gpsRadius=20
-state.gTokens+=10000
-state.crowns+=10
-state.prestigeOwned=true
-
-break
-
-
-case "autoManagers":
-
-showStatus("Prime automatique & marketing activés !")
-break
-
-
-case "gps5":
-
-state.gpsRadius=Math.max(state.gpsRadius,5)
-break
-
-
-case "gps10":
-
-state.gpsRadius=Math.max(state.gpsRadius,10)
-break
-
-
-case "gps20":
-
-state.gpsRadius=Math.max(state.gpsRadius,20)
-break
-
-
-case "gtokens":
-
-state.gTokens+=10000
-break
-
-
-case "crowns":
-
-state.crowns+=10
-break
-
-}
-
-renderState()
-
-showStatus(pack.name+" activé !")
-
-renderPacks()
-
-}
-
-
-// ==========================
-// RENDER STATE
-// ==========================
-
-function renderState(){
-
-document.getElementById("gtokens").textContent=state.gTokens
-
-document.getElementById("crowns").textContent=state.crowns
-
-document.getElementById("gps-radius").textContent=state.gpsRadius
-
-}
-
-
-// ==========================
-// MESSAGE TEMPORAIRE
-// ==========================
-
-function showStatus(msg){
-
-statusEl.textContent=msg
-
-setTimeout(()=>{
-
-statusEl.textContent=""
-
-},3000)
-
-}
-
-
-// ==========================
-// INIT
-// ==========================
-
-document.addEventListener("DOMContentLoaded",()=>{
-
-packsContainer=document.getElementById("packs")
-
-statusEl=document.getElementById("status")
-
-renderState()
-
-renderPacks()
-
-})
+window.initGestion = initGestion;
