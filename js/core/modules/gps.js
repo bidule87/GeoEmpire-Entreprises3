@@ -4,9 +4,55 @@ const latEl = document.getElementById("lat");
 const lngEl = document.getElementById("lng");
 const statutEl = document.getElementById("statut-gps");
 const listeEl = document.getElementById("liste-entreprises");
+const compteurDispoEl = document.getElementById("compteur-dispo");
 const rayonSelect = document.getElementById("rayon-select");
+const toggleBeta = document.getElementById("toggle-beta-rayon");
+const filtreSecteurSelect = document.getElementById("filtre-secteur-map");
 const btnScanner = document.getElementById("btn-scanner");
+const btnVueEmpire = document.getElementById("btn-vue-empire");
+const nbEmpireEl = document.getElementById("nb-empire");
 const btnReset = document.getElementById("btn-reset");
+
+// Volet latéral rétractable
+const voletLateral = document.getElementById("volet-lateral");
+const btnToggleVolet = document.getElementById("btn-toggle-volet");
+
+// Modale Fiche Entreprise
+const modalFiche = document.getElementById("modal-fiche");
+const btnFermerFiche = document.getElementById("btn-fermer-fiche");
+const ficheBanniere = document.getElementById("fiche-banniere");
+const ficheBadgeSecteur = document.getElementById("fiche-badge-secteur");
+const ficheNom = document.getElementById("fiche-nom");
+const ficheBody = document.getElementById("fiche-body");
+
+let dernieresOpportunites = [];
+
+// Visuels futuristes par secteur pour la fiche détaillée
+const VISUELS_SECTEUR = {
+    "Alimentaire & Restauration": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80",
+    "Bâtiment & Immobilier": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80",
+    "Commerce & Distribution": "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=800&q=80",
+    "Hôtellerie & Services": "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80"
+};
+
+function majTexteBoutonVolet() {
+    const nb = compteurDispoEl ? compteurDispoEl.textContent : "0";
+    const ouvert = !voletLateral.classList.contains("ferme");
+    btnToggleVolet.innerHTML = ouvert
+        ? `▶ Masquer (<span id="compteur-dispo">${nb}</span>)`
+        : `◀ Opportunités (<span id="compteur-dispo">${nb}</span>)`;
+}
+
+btnToggleVolet.addEventListener("click", () => {
+    voletLateral.classList.toggle("ferme");
+    majTexteBoutonVolet();
+    setTimeout(() => map.invalidateSize(), 310);
+});
+
+btnFermerFiche.addEventListener("click", () => modalFiche.classList.remove("active"));
+modalFiche.addEventListener("click", ev => {
+    if (ev.target === modalFiche) modalFiche.classList.remove("active");
+});
 
 function majTopbar() {
     const e = getData().entreprise;
@@ -16,11 +62,44 @@ function majTopbar() {
     if (soldeEl) soldeEl.textContent = (e.argent || 0).toLocaleString("fr-FR");
     if (tokensEl) tokensEl.textContent = (e.tokens || 0).toLocaleString("fr-FR");
     if (crownsEl) crownsEl.textContent = (e.crowns || 0).toLocaleString("fr-FR");
+    if (nbEmpireEl) nbEmpireEl.textContent = (e.commercesGPS || []).length;
+}
+
+function majOptionsRayon() {
+    const e = getData().entreprise;
+    const estPremium = e.prestigePack === true || toggleBeta.checked;
+
+    const opt10 = rayonSelect.querySelector('option[value="10"]');
+    const opt20 = rayonSelect.querySelector('option[value="20"]');
+
+    if (estPremium) {
+        opt10.disabled = false;
+        opt10.textContent = "10 km (Premium)";
+        opt20.disabled = false;
+        opt20.textContent = "20 km (Premium)";
+    } else {
+        opt10.disabled = true;
+        opt10.textContent = "10 km 🔒 (Pack Premium)";
+        opt20.disabled = true;
+        opt20.textContent = "20 km 🔒 (Pack Premium)";
+        rayonSelect.value = "5";
+    }
 }
 
 majTopbar();
+majOptionsRayon();
 
-// Bouton pour réinitialiser l'ancienne sauvegarde à 0 Ø
+toggleBeta.addEventListener("change", () => {
+    majOptionsRayon();
+    if (positionActuelle) {
+        scannerCommercesReels(positionActuelle.lat, positionActuelle.lng, Number(rayonSelect.value));
+    }
+});
+
+filtreSecteurSelect.addEventListener("change", () => {
+    afficherOpportunitesDisponibles(dernieresOpportunites);
+});
+
 btnReset.addEventListener("click", () => {
     if (confirm("Réinitialiser la partie avec le capital de départ de 50 000 Ø ?")) {
         localStorage.removeItem("geoEmpireData");
@@ -29,7 +108,7 @@ btnReset.addEventListener("click", () => {
     }
 });
 
-// Initialisation de la carte Leaflet
+// Initialisation carte Leaflet
 const map = L.map("map").setView([46.8, 2.4], 6);
 
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -39,16 +118,23 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
 
 let markerJoueur = null;
 let cercleRayon = null;
-let layerCommerces = L.layerGroup().addTo(map);
-let layerBiensImmo = L.layerGroup().addTo(map);
+let layerDisponibles = L.layerGroup().addTo(map);
+let layerEmpire = L.layerGroup().addTo(map);
 let positionActuelle = null;
 
-// Icônes CSS garanties visibles sur Leaflet
-function creerIcone(couleur, estJoueur = false) {
-    if (estJoueur) {
+function creerIcone(couleur, type = "dispo") {
+    if (type === "joueur") {
         return L.divIcon({
             className: "",
             html: `<div class="geo-pin-joueur"></div>`,
+            iconSize: [22, 22],
+            iconAnchor: [11, 11]
+        });
+    }
+    if (type === "empire") {
+        return L.divIcon({
+            className: "",
+            html: `<div class="geo-pin-empire"></div>`,
             iconSize: [22, 22],
             iconAnchor: [11, 11]
         });
@@ -73,93 +159,139 @@ function calcDistance(lat1, lon1, lat2, lon2) {
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-// Filtrage selon les 4 grands secteurs du jeu (hors banques)
 function classifierSecteur(tags) {
     const shop = tags.shop || "";
     const amenity = tags.amenity || "";
     const tourism = tags.tourism || "";
     const office = tags.office || "";
+    const adresse = [tags["addr:housenumber"], tags["addr:street"], tags["addr:city"]].filter(Boolean).join(" ") || "Secteur local";
 
-    // 1. Alimentaire & Restauration
     if (["restaurant", "fast_food", "cafe", "bar", "pub"].includes(amenity) ||
         ["bakery", "butcher", "supermarket", "convenience", "greengrocer", "pastry"].includes(shop)) {
         return {
             secteur: "Alimentaire & Restauration",
             couleur: "#34d399",
             categoriesDebloquees: "Restaurants & Commerces alimentaires",
+            adresse,
             prix: 15000
         };
     }
 
-    // 2. Bâtiment & Immobilier
     if (["estate_agent", "architect", "construction", "company"].includes(office) ||
         ["diy", "hardware", "trade", "furniture"].includes(shop)) {
         return {
             secteur: "Bâtiment & Immobilier",
             couleur: "#fbbf24",
             categoriesDebloquees: "Appartements, Maisons & Bureaux",
+            adresse,
             prix: 25000
         };
     }
 
-    // 3. Hôtellerie & Services
     if (["hotel", "motel", "guest_house", "hostel"].includes(tourism) ||
         ["pharmacy", "hairdresser", "beauty", "laundry"].includes(shop)) {
         return {
             secteur: "Hôtellerie & Services",
             couleur: "#f43f5e",
             categoriesDebloquees: "Hôtels & Services",
+            adresse,
             prix: 30000
         };
     }
 
-    // 4. Commerce & Distribution (si shop générique non bancaire)
     if (shop) {
         return {
             secteur: "Commerce & Distribution",
             couleur: "#a855f7",
             categoriesDebloquees: "Commerces & Entrepôts",
+            adresse,
             prix: 18000
         };
     }
 
-    return null; // Ignorer les banques, écoles, mairies, etc.
+    return null;
 }
 
-// Afficher les biens immobiliers déjà possédés autour de la position
-function afficherBiensPossedesSurCarte(lat, lng) {
-    layerBiensImmo.clearLayers();
+// Ouvre la fiche détaillée (modale visuelle) au clic sur un point ou sur le volet
+function ouvrirFicheEtablissement(item, estDejaAcquis = false) {
     const e = getData().entreprise;
-    const biens = e.biens || [];
+    const visuel = item.photo || VISUELS_SECTEUR[item.secteur] || VISUELS_SECTEUR["Commerce & Distribution"];
+    const couleur = estDejaAcquis ? "#38bdf8" : (item.couleur || "#34d399");
 
-    biens.forEach((b, idx) => {
-        // Génère une position stable autour du joueur si le bien n'a pas encore de coordonnées
-        if (!b.lat || !b.lng) {
-            const angle = (idx * 137.5) * (Math.PI / 180);
-            const rayonOffset = 0.005 + ((idx % 10) * 0.002);
-            b.lat = lat + Math.cos(angle) * rayonOffset;
-            b.lng = lng + Math.sin(angle) * rayonOffset;
-        }
+    ficheBanniere.style.backgroundImage = `url('${visuel}')`;
+    ficheBadgeSecteur.style.color = couleur;
+    ficheBadgeSecteur.textContent = estDejaAcquis ? `★ VOTRE FILIALE • ${item.secteur}` : item.secteur;
+    ficheNom.textContent = item.nom;
 
-        const marker = L.marker([b.lat, b.lng], { icon: creerIcone("#38bdf8") }).addTo(layerBiensImmo);
-        marker.bindPopup(`
-            <b>Bien possédé : ${b.style || b.categorie}</b><br>
-            Catégorie : ${b.categorie}<br>
-            Valeur : ${(b.prixAchat || 0).toLocaleString("fr-FR")} Ø
-        `);
+    if (estDejaAcquis) {
+        ficheBody.innerHTML = `
+            <div class="fiche-row"><span>Statut :</span><strong style="color:#38bdf8;">Entreprise acquise</strong></div>
+            <div class="fiche-row"><span>Directeur Général :</span><strong>${item.directeur || e.pdg || "Fondateur"}</strong></div>
+            <div class="fiche-row"><span>Valeur d'acquisition :</span><strong>${(item.prixAchat || 0).toLocaleString("fr-FR")} Ø</strong></div>
+            <div class="fiche-row"><span>Date d'acquisition :</span><strong>${item.dateAchat || "Aujourd'hui"}</strong></div>
+            <div class="fiche-actions">
+                <a href="entreprises.html" class="btn-fiche-achat" style="text-align:center; text-decoration:none; background:linear-gradient(90deg, #0284c7, #38bdf8);">Gérer dans Entreprises →</a>
+            </div>
+        `;
+    } else {
+        const peutPayer = (e.argent || 0) >= item.prix;
+        ficheBody.innerHTML = `
+            <div class="fiche-row"><span>Localisation :</span><strong>${item.adresse || "Secteur local"} (${item.distance.toFixed(2)} km)</strong></div>
+            <div class="fiche-row"><span>Catalogue débloqué :</span><strong style="color:#7ec8ff;">${item.categoriesDebloquees}</strong></div>
+            <div class="fiche-row"><span>Coût d'implantation :</span><strong style="color:#fbbf24;">${item.prix.toLocaleString("fr-FR")} Ø</strong></div>
+            <div class="fiche-row"><span>Votre trésorerie :</span><strong style="color:${peutPayer ? "#34d399" : "#f87171"};">${(e.argent || 0).toLocaleString("fr-FR")} Ø</strong></div>
+            <div class="fiche-actions">
+                <button id="btn-confirmer-achat-fiche" class="btn-fiche-achat" ${peutPayer ? "" : "style='opacity:0.6;'"}>
+                    Acheter ce siège (${item.prix.toLocaleString("fr-FR")} Ø)
+                </button>
+            </div>
+        `;
+
+        document.getElementById("btn-confirmer-achat-fiche").onclick = () => {
+            acheterSiege(item);
+            modalFiche.classList.remove("active");
+        };
+    }
+
+    modalFiche.classList.add("active");
+}
+
+function afficherEmpireSurCarte() {
+    layerEmpire.clearLayers();
+    const e = getData().entreprise;
+    const sieges = e.commercesGPS || [];
+    if (nbEmpireEl) nbEmpireEl.textContent = sieges.length;
+
+    sieges.forEach(s => {
+        if (!s.lat || !s.lng) return;
+        const marker = L.marker([s.lat, s.lng], { icon: creerIcone("#38bdf8", "empire") }).addTo(layerEmpire);
+        marker.on("click", () => ouvrirFicheEtablissement(s, true));
     });
 }
 
+btnVueEmpire.addEventListener("click", () => {
+    const sieges = getData().entreprise.commercesGPS || [];
+    const points = sieges.filter(s => s.lat && s.lng).map(s => [s.lat, s.lng]);
+    if (positionActuelle) points.push([positionActuelle.lat, positionActuelle.lng]);
+
+    if (points.length === 0) {
+        alert("Aucune entreprise acquise pour le moment.");
+        return;
+    }
+    const bounds = L.latLngBounds(points);
+    map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
+});
+
 async function scannerCommercesReels(lat, lng, rayonKm) {
-    statutEl.textContent = `Recherche des entreprises par secteur dans un rayon de ${rayonKm} km...`;
-    listeEl.innerHTML = "<p>Scan satellite en cours...</p>";
-    layerCommerces.clearLayers();
+    statutEl.textContent = `Recherche des opportunités dans un rayon de ${rayonKm} km...`;
+    listeEl.innerHTML = "<p style='font-size:13px;'>Scan satellite en cours...</p>";
+    layerDisponibles.clearLayers();
 
     if (cercleRayon) map.removeLayer(cercleRayon);
     cercleRayon = L.circle([lat, lng], {
         color: "#00f2fe",
         fillColor: "#00f2fe",
-        fillOpacity: 0.06,
+        fillOpacity: 0.05,
         radius: rayonKm * 1000
     }).addTo(map);
 
@@ -172,7 +304,7 @@ async function scannerCommercesReels(lat, lng, rayonKm) {
           node["name"]["tourism"~"hotel|motel|guest_house"](around:${rayonMetres},${lat},${lng});
           node["name"]["office"~"estate_agent|architect|construction"](around:${rayonMetres},${lat},${lng});
         );
-        out body 50;
+        out body 60;
     `;
 
     try {
@@ -183,14 +315,13 @@ async function scannerCommercesReels(lat, lng, rayonKm) {
         const result = await response.json();
         const elements = result.elements || [];
 
-        const entreprisesDetectees = [];
-
+        const detectees = [];
         elements.forEach(el => {
             const infos = classifierSecteur(el.tags || {});
             if (!infos) return;
 
             const dist = calcDistance(lat, lng, el.lat, el.lon);
-            entreprisesDetectees.push({
+            detectees.push({
                 id: String(el.id),
                 nom: el.tags.name,
                 lat: el.lat,
@@ -200,16 +331,11 @@ async function scannerCommercesReels(lat, lng, rayonKm) {
             });
         });
 
-        entreprisesDetectees.sort((a, b) => a.distance - b.distance);
+        detectees.sort((a, b) => a.distance - b.distance);
+        dernieresOpportunites = detectees;
 
-        if (entreprisesDetectees.length === 0) {
-            statutEl.textContent = `Aucune entreprise détectée dans ce rayon. Passe à 20 km.`;
-            listeEl.innerHTML = "<p>Aucun établissement trouvé ici. Essaie un rayon de 20 km.</p>";
-            return;
-        }
-
-        statutEl.textContent = `${entreprisesDetectees.length} établissements détectés sur la carte (${rayonKm} km).`;
-        afficherListeEtMarqueurs(entreprisesDetectees);
+        afficherEmpireSurCarte();
+        afficherOpportunitesDisponibles(detectees);
 
     } catch (err) {
         console.error("Erreur Overpass API :", err);
@@ -217,53 +343,64 @@ async function scannerCommercesReels(lat, lng, rayonKm) {
     }
 }
 
-function afficherListeEtMarqueurs(liste) {
+function afficherOpportunitesDisponibles(liste) {
     listeEl.innerHTML = "";
+    layerDisponibles.clearLayers();
+
     const e = getData().entreprise;
-    const possedesIds = new Set((e.commercesGPS || []).map(c => c.id));
+    const possedesIds = new Set((e.commercesGPS || []).map(c => String(c.id)));
+    const filtre = filtreSecteurSelect.value;
 
-    liste.forEach(c => {
-        const estPossede = possedesIds.has(c.id);
-        const couleurPin = estPossede ? "#ffffff" : c.couleur;
+    const disponibles = liste.filter(c => {
+        if (possedesIds.has(c.id)) return false;
+        if (filtre !== "tous" && c.secteur !== filtre) return false;
+        return true;
+    });
 
-        // Marqueur visible sur la carte
-        const marker = L.marker([c.lat, c.lng], { icon: creerIcone(couleurPin) }).addTo(layerCommerces);
-        marker.bindPopup(`
-            <b>${c.nom}</b><br>
-            Secteur : <span style="color:${c.couleur};font-weight:bold;">${c.secteur}</span><br>
-            Distance : ${c.distance.toFixed(2)} km<br>
-            Coût d'implantation : <b>${c.prix.toLocaleString("fr-FR")} Ø</b><br>
-            Débloque : <i>${c.categoriesDebloquees}</i>
-        `);
+    const rayonActuel = Number(rayonSelect.value) || 5;
+    statutEl.textContent = `${disponibles.length} opportunité(s) disponible(s) dans un rayon de ${rayonActuel} km.`;
 
-        // Carte dans la liste en dessous
-        const card = document.createElement("div");
-        card.className = "commerce-card" + (estPossede ? " possede" : "");
-        card.style.borderLeft = `5px solid ${c.couleur}`;
-        card.innerHTML = `
-            <div>
-                <div style="font-size: 18px; font-weight: bold; color: #fff;">${c.nom}</div>
-                <div style="font-size: 13px; color: ${c.couleur}; font-weight: bold;">${c.secteur} • à ${c.distance.toFixed(2)} km</div>
-                <div style="margin-top: 8px; font-size: 14px; color: #cbd5e1;">
-                    Coût du siège : <strong style="color: #fbbf24;">${c.prix.toLocaleString("fr-FR")} Ø</strong><br>
-                    Permet d'investir dans : <strong>${c.categoriesDebloquees}</strong>
-                </div>
+    const spanCompteur = document.getElementById("compteur-dispo");
+    if (spanCompteur) spanCompteur.textContent = disponibles.length;
+
+    if (disponibles.length === 0) {
+        listeEl.innerHTML = `<p style="font-size:13px; color:#94a3b8;">Aucune opportunité disponible avec ce filtre.</p>`;
+        return;
+    }
+
+    disponibles.forEach(c => {
+        // Clic sur un point de la carte -> ouvre la fiche visuelle de l'établissement
+        const marker = L.marker([c.lat, c.lng], { icon: creerIcone(c.couleur, "dispo") }).addTo(layerDisponibles);
+        marker.on("click", () => ouvrirFicheEtablissement(c, false));
+
+        // Entrée compacte dans le volet latéral
+        const item = document.createElement("div");
+        item.className = "volet-item";
+        item.style.borderLeft = `4px solid ${c.couleur}`;
+        item.innerHTML = `
+            <div style="font-weight:bold; color:#fff; font-size:14px;">${c.nom}</div>
+            <div style="font-size:12px; color:${c.couleur}; margin-top:2px;">${c.secteur} • ${c.distance.toFixed(2)} km</div>
+            <div style="font-size:13px; color:#fbbf24; font-weight:bold; margin-top:4px;">${c.prix.toLocaleString("fr-FR")} Ø</div>
+            <div class="volet-item-actions">
+                <button class="btn-mini-fiche">Voir fiche</button>
+                <button class="btn-mini-acheter">Acheter</button>
             </div>
-            <button class="btn-acheter-commerce" ${estPossede ? "disabled" : ""}>
-                ${estPossede ? "Siège acquis" : "Implanter / Acheter ce siège"}
-            </button>
         `;
 
-        const btn = card.querySelector("button");
-        if (!estPossede) {
-            btn.addEventListener("click", () => acheterSiege(c, liste));
-        }
+        // Cliquer sur la carte dans le volet centre la map sur l'établissement
+        item.addEventListener("click", ev => {
+            if (ev.target.tagName === "BUTTON") return;
+            map.flyTo([c.lat, c.lng], 16, { duration: 0.7 });
+        });
 
-        listeEl.appendChild(card);
+        item.querySelector(".btn-mini-fiche").addEventListener("click", () => ouvrirFicheEtablissement(c, false));
+        item.querySelector(".btn-mini-acheter").addEventListener("click", () => acheterSiege(c));
+
+        listeEl.appendChild(item);
     });
 }
 
-function acheterSiege(siege, listeComplete) {
+function acheterSiege(siege) {
     const e = getData().entreprise;
 
     if (e.argent < siege.prix) {
@@ -282,14 +419,16 @@ function acheterSiege(siege, listeComplete) {
         lat: siege.lat,
         lng: siege.lng,
         prixAchat: siege.prix,
+        directeur: e.pdg || "Fondateur",
+        associes: [],
         dateAchat: new Date().toLocaleDateString("fr-FR")
     });
 
     saveData();
     ajouterHistorique(`Siège implanté (${siege.secteur}) : ${siege.nom}`, "achat");
     majTopbar();
-    afficherListeEtMarqueurs(listeComplete);
-    alert(`Siège "${siege.nom}" acquis dans le secteur ${siege.secteur} ! Rendez-vous dans Immobilier / Achats pour investir dans vos biens.`);
+    afficherEmpireSurCarte();
+    afficherOpportunitesDisponibles(dernieresOpportunites);
 }
 
 export function majPosition(lat, lng, lancerScan = false) {
@@ -298,26 +437,26 @@ export function majPosition(lat, lng, lancerScan = false) {
     lngEl.textContent = lng.toFixed(5);
 
     if (!markerJoueur) {
-        markerJoueur = L.marker([lat, lng], { icon: creerIcone("#00f2fe", true) })
+        markerJoueur = L.marker([lat, lng], { icon: creerIcone("#00f2fe", "joueur") })
             .addTo(map)
             .bindPopup("<b>Votre position</b>");
-        map.setView([lat, lng], 12);
+        map.setView([lat, lng], 13);
         lancerScan = true;
     } else {
         markerJoueur.setLatLng([lat, lng]);
     }
 
-    afficherBiensPossedesSurCarte(lat, lng);
+    afficherEmpireSurCarte();
 
     if (lancerScan) {
-        const rayon = Number(rayonSelect.value) || 10;
+        const rayon = Number(rayonSelect.value) || 5;
         scannerCommercesReels(lat, lng, rayon);
     }
 }
 
 btnScanner.addEventListener("click", () => {
     if (positionActuelle) {
-        const rayon = Number(rayonSelect.value) || 10;
+        const rayon = Number(rayonSelect.value) || 5;
         scannerCommercesReels(positionActuelle.lat, positionActuelle.lng, rayon);
     }
 });
