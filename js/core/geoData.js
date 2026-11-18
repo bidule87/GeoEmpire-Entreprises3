@@ -1,11 +1,33 @@
 // ============================================
-// GEO DATA — STOCKAGE GLOBAL & HORLOGE MONDIALE
-// Rythme : 24h réelles = 1 mois jeu | 12 jours = 1 an
+// GEO DATA — STOCKAGE GLOBAL & DOUBLE RYTHME (BÊTA 1H / NORMAL MINUIT)
+// Mode Normal : clôture à 00h00 locale (1 jour = 1 mois | 12 jours = 1 an)
+// Mode Bêta   : clôture toutes les 1h réelles (pour tester rapidement)
 // ============================================
 
 const SAVE_KEY = "geoEmpireData";
-const MS_PAR_MOIS_JEU = 24 * 60 * 60 * 1000; // 1 jour réel = 1 mois en jeu
-const MOIS_PAR_AN_JEU = 12;                   // 12 jours réels = 1 an en jeu
+const MS_PAR_HEURE = 60 * 60 * 1000;
+
+function getCleJourLocal(dateObj = new Date()) {
+    const annee = dateObj.getFullYear();
+    const mois = String(dateObj.getMonth() + 1).padStart(2, "0");
+    const jour = String(dateObj.getDate()).padStart(2, "0");
+    return `${annee}-${mois}-${jour}`;
+}
+
+function calculerJoursEntreDatesLocales(cleDebut, cleFin) {
+    const [y1, m1, d1] = cleDebut.split("-").map(Number);
+    const [y2, m2, d2] = cleFin.split("-").map(Number);
+    const utc1 = Date.UTC(y1, m1 - 1, d1);
+    const utc2 = Date.UTC(y2, m2 - 1, d2);
+    return Math.max(0, Math.floor((utc2 - utc1) / (24 * MS_PAR_HEURE)));
+}
+
+export function estModeBetaActif() {
+    return (
+        data?.entreprise?.betaTesteur === true ||
+        localStorage.getItem("geoEmpireBeta") === "1"
+    );
+}
 
 const defaultData = {
     entreprise: {
@@ -25,21 +47,21 @@ const defaultData = {
         prestigePack: false,
         betaTesteur: false,
 
-        // Horloge mondiale persistante (UTC universel + fuseau local)
+        // Caisse municipale alimentée par les impôts et taxes de vente
+        caisseMairie: 0,
+
+        // Horloge mondiale locale + horodatage Bêta (1h)
         tempsJeu: {
-            debutTimestamp: Date.now(),
-            dernierCalculTimestamp: Date.now(),
+            dateDebutLocale: getCleJourLocal(),
+            derniereClotureLocale: getCleJourLocal(),
+            derniereClotureTimestamp: Date.now(),
             moisEcoules: 0,
             fuseauJoueur: Intl.DateTimeFormat().resolvedOptions().timeZone || "Europe/Paris"
         },
 
-        // Biens immobiliers / stocks : { categorie: { style: { quantite, prixAchatMoyen, assurance } } }
         biens: {},
-
-        // Entreprises achetées via le GPS
         commercesGPS: [],
 
-        // Holding (débloquée à 10 entreprises)
         holding: {
             active: false,
             nom: "Ma Holding",
@@ -75,6 +97,7 @@ const defaultData = {
             revenusVentes: 0,
             revenusLocations: 0,
             revenusCommerces: 0,
+            impotsVersesMairie: 0,
             primes: 0,
             pertesSinistres: 0
         },
@@ -112,97 +135,209 @@ export function ajouterHistorique(message, type = "info") {
     saveData();
 }
 
+export function recalculerTotauxBiensGlobaux() {
+    const e = data.entreprise;
+    e.biens = {};
+    (e.commercesGPS || []).forEach(siege => {
+        if (!siege.biens) return;
+        for (const [cat, styles] of Object.entries(siege.biens)) {
+            for (const [style, info] of Object.entries(styles)) {
+                if ((info.quantite || 0) <= 0) continue;
+                if (!e.biens[cat]) e.biens[cat] = {};
+                if (!e.biens[cat][style]) {
+                    e.biens[cat][style] = { quantite: 0, prixAchatMoyen: info.prixAchatMoyen };
+                }
+                e.biens[cat][style].quantite += info.quantite;
+            }
+        }
+    });
+}
+
 // ============================================
-// HORLOGE MONDIALE & CALENDRIER DU JEU
+// HORLOGE MONDIALE & COMPTE À REBOURS (1H BÊTA / 00H00 NORMAL)
 // ============================================
 export function getInfosTempsJeu() {
     const e = data.entreprise;
+    const aujourdHui = getCleJourLocal();
     if (!e.tempsJeu) {
         e.tempsJeu = {
-            debutTimestamp: Date.now(),
-            dernierCalculTimestamp: Date.now(),
+            dateDebutLocale: aujourdHui,
+            derniereClotureLocale: aujourdHui,
+            derniereClotureTimestamp: Date.now(),
             moisEcoules: 0,
             fuseauJoueur: Intl.DateTimeFormat().resolvedOptions().timeZone || "Europe/Paris"
         };
     }
 
-    const maintenant = Date.now();
-    const totalMois = Math.floor((maintenant - e.tempsJeu.debutTimestamp) / MS_PAR_MOIS_JEU);
-    const anneeJeu = Math.floor(totalMois / MOIS_PAR_AN_JEU) + 1;
-    const moisDansAnnee = (totalMois % MOIS_PAR_AN_JEU) + 1;
+    const totalMois = e.tempsJeu.moisEcoules || 0;
+    const anneeJeu = Math.floor(totalMois / 12) + 1;
+    const moisDansAnnee = (totalMois % 12) + 1;
 
-    const fuseauLocal = Intl.DateTimeFormat().resolvedOptions().timeZone || "Local";
-    const heureLocale = new Date().toLocaleTimeString("fr-FR", {
-        hour: "2-digit",
-        minute: "2-digit"
-    });
+    const maintenant = new Date();
+    const modeBeta = estModeBetaActif();
+
+    let diffMs = 0;
+    let libelleCloture = "";
+
+    if (modeBeta) {
+        const dernierTs = e.tempsJeu.derniereClotureTimestamp || Date.now();
+        const prochaineClotureTs = dernierTs + MS_PAR_HEURE;
+        diffMs = Math.max(0, prochaineClotureTs - maintenant.getTime());
+        const heureCible = new Date(prochaineClotureTs).toLocaleTimeString("fr-FR", {
+            hour: "2-digit",
+            minute: "2-digit"
+        });
+        libelleCloture = `Cycle Bêta 1h (${heureCible})`;
+    } else {
+        const minuitProchain = new Date(maintenant.getFullYear(), maintenant.getMonth(), maintenant.getDate() + 1, 0, 0, 0);
+        diffMs = Math.max(0, minuitProchain.getTime() - maintenant.getTime());
+        libelleCloture = "Minuit (00h00)";
+    }
+
+    const heuresRestantes = Math.floor(diffMs / MS_PAR_HEURE);
+    const minutesRestantes = Math.floor((diffMs % MS_PAR_HEURE) / (60 * 1000));
+    const secondesRestantes = Math.floor((diffMs % (60 * 1000)) / 1000);
 
     return {
+        modeBeta,
         anneeJeu,
         moisDansAnnee,
         totalMois,
-        heureLocale,
-        fuseauLocal
+        libelleCloture,
+        heureLocale: maintenant.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }),
+        fuseauLocal: Intl.DateTimeFormat().resolvedOptions().timeZone || "Local",
+        tempsAvantCloture: modeBeta
+            ? `${minutesRestantes}min ${String(secondesRestantes).padStart(2, "0")}s`
+            : `${heuresRestantes}h ${String(minutesRestantes).padStart(2, "0")}min`
     };
 }
 
-export function traiterTempsEcoule() {
+// ============================================
+// CLÔTURE AUTOMATIQUE (TOUTES LES 1H EN BÊTA / À 00H00 EN NORMAL)
+// ============================================
+export function traiterCloture() {
     const e = data.entreprise;
-    if (!e.tempsJeu) return 0;
-
+    const aujourdHui = getCleJourLocal();
     const maintenant = Date.now();
-    const diffMs = maintenant - e.tempsJeu.dernierCalculTimestamp;
-    const nouveauxMois = Math.floor(diffMs / MS_PAR_MOIS_JEU);
 
-    if (nouveauxMois <= 0) return 0;
+    if (!e.tempsJeu) {
+        e.tempsJeu = {
+            dateDebutLocale: aujourdHui,
+            derniereClotureLocale: aujourdHui,
+            derniereClotureTimestamp: maintenant,
+            moisEcoules: 0,
+            fuseauJoueur: Intl.DateTimeFormat().resolvedOptions().timeZone || "Europe/Paris"
+        };
+        return 0;
+    }
 
-    let revenuMensuelBase = 0;
+    const modeBeta = estModeBetaActif();
+    let cyclesPasses = 0;
 
-    // 1. Revenus passifs des entreprises GPS détenues (1 500 Ø / mois par siège)
-    const nbSieges = (e.commercesGPS || []).length;
-    revenuMensuelBase += nbSieges * 1500;
+    if (modeBeta) {
+        const dernierTs = e.tempsJeu.derniereClotureTimestamp || maintenant;
+        cyclesPasses = Math.floor((maintenant - dernierTs) / MS_PAR_HEURE);
+    } else {
+        cyclesPasses = calculerJoursEntreDatesLocales(e.tempsJeu.derniereClotureLocale, aujourdHui);
+    }
 
-    // 2. Revenus des biens en stock (1,5 % de leur valeur par mois)
-    if (e.biens) {
-        Object.values(e.biens).forEach(styles => {
+    if (cyclesPasses <= 0) return 0;
+
+    const multiplicateurHolding = e.holding?.active ? 1.20 : 1.0;
+    const tagCloture = modeBeta ? "Clôture Bêta (1h)" : "Clôture 00h00";
+    let totalImpotsMairie = 0;
+
+    // 1. Activation des locations mises en attente
+    if (Array.isArray(e.locationsEnAttente) && e.locationsEnAttente.length > 0) {
+        e.locationsEnAttente.forEach(ordre => {
+            const siege = (e.commercesGPS || []).find(s => String(s.id) === String(ordre.siegeId));
+            const bien = siege?.biens?.[ordre.categorie]?.[ordre.style];
+            if (bien && bien.quantite > 0) {
+                bien.enLocation = Math.min(bien.quantite, ordre.quantite);
+                bien.ajustementLoyer = ordre.ajustement || 0;
+            }
+        });
+        e.locationsEnAttente = [];
+    }
+
+    // 2. Exécution des ventes mises en attente
+    if (Array.isArray(e.ventesEnAttente) && e.ventesEnAttente.length > 0) {
+        let totalVentesNet = 0;
+        e.ventesEnAttente.forEach(ordre => {
+            const siege = (e.commercesGPS || []).find(s => String(s.id) === String(ordre.siegeId));
+            const bien = siege?.biens?.[ordre.categorie]?.[ordre.style];
+            if (bien && bien.quantite > 0) {
+                const qteVendue = Math.min(bien.quantite, ordre.quantite);
+                const brut = Math.floor(bien.prixAchatMoyen * 1.25 * (1 + (ordre.ajustement || 0) / 100) * qteVendue);
+                const taxeMairie = Math.floor(brut * 0.10);
+                const net = brut - taxeMairie;
+
+                bien.quantite -= qteVendue;
+                if ((bien.enLocation || 0) > bien.quantite) bien.enLocation = bien.quantite;
+
+                totalVentesNet += net;
+                totalImpotsMairie += taxeMairie;
+            }
+        });
+        e.ventesEnAttente = [];
+        recalculerTotauxBiensGlobaux();
+
+        if (totalVentesNet > 0) {
+            e.argent = (e.argent || 0) + totalVentesNet;
+            e.finances.revenusVentes = (e.finances.revenusVentes || 0) + totalVentesNet;
+            ajouterHistorique(`${tagCloture} — Ventes réalisées : +${totalVentesNet.toLocaleString("fr-FR")} Ø`, "gain");
+        }
+    }
+
+    // 3. Encaissement des loyers pour chaque cycle écoulé (1 cycle = 1 mois en jeu)
+    let loyersBrutsCycle = 0;
+    (e.commercesGPS || []).forEach(siege => {
+        loyersBrutsCycle += 1500;
+        if (!siege.biens) return;
+        Object.values(siege.biens).forEach(styles => {
             Object.values(styles).forEach(bien => {
-                if ((bien.quantite || 0) > 0) {
-                    revenuMensuelBase += Math.floor((bien.prixAchatMoyen || 0) * 0.015 * bien.quantite);
+                const qteLoc = bien.enLocation || 0;
+                if (qteLoc > 0) {
+                    const coef = 1 + ((bien.ajustementLoyer || 0) / 100);
+                    loyersBrutsCycle += Math.floor(bien.prixAchatMoyen * 0.02 * coef * qteLoc);
                 }
             });
         });
-    }
+    });
 
-    // 3. Revenus des locations mises en attente avec ajustement de prix
-    if (Array.isArray(e.locationsEnAttente)) {
-        e.locationsEnAttente.forEach(loc => {
-            const coef = 1 + ((loc.ajustement || 0) / 100);
-            revenuMensuelBase += Math.floor((loc.prixAchatMoyen || 0) * 0.02 * (loc.quantite || 1) * coef);
-        });
-    }
+    if (loyersBrutsCycle > 0) {
+        const brutTotal = Math.floor(loyersBrutsCycle * multiplicateurHolding * cyclesPasses);
+        const charges = Math.floor(brutTotal * 0.10);
+        const impots = Math.floor(brutTotal * 0.15);
+        const netLoyers = brutTotal - charges - impots;
 
-    // Bonus Holding +20 % si active
-    const multiplicateurHolding = e.holding?.active ? 1.20 : 1.0;
-    const gainTotal = Math.floor(revenuMensuelBase * multiplicateurHolding * nouveauxMois);
+        totalImpotsMairie += impots;
+        e.argent = (e.argent || 0) + netLoyers;
+        e.finances.revenusLocations = (e.finances.revenusLocations || 0) + netLoyers;
 
-    if (gainTotal > 0) {
-        e.argent = (e.argent || 0) + gainTotal;
-        e.finances.revenusLocations = (e.finances.revenusLocations || 0) + gainTotal;
         ajouterHistorique(
-            `Bilan mensuel (${nouveauxMois} mois écoulé(s)) : +${gainTotal.toLocaleString("fr-FR")} Ø`,
+            `${tagCloture} (${cyclesPasses} mois) — Loyers nets : +${netLoyers.toLocaleString("fr-FR")} Ø (Impôts Mairie : ${impots.toLocaleString("fr-FR")} Ø)`,
             "gain"
         );
     }
 
-    e.tempsJeu.dernierCalculTimestamp += nouveauxMois * MS_PAR_MOIS_JEU;
-    e.tempsJeu.moisEcoules = (e.tempsJeu.moisEcoules || 0) + nouveauxMois;
+    if (totalImpotsMairie > 0) {
+        e.caisseMairie = (e.caisseMairie || 0) + totalImpotsMairie;
+        e.finances.impotsVersesMairie = (e.finances.impotsVersesMairie || 0) + totalImpotsMairie;
+    }
+
+    if (modeBeta) {
+        e.tempsJeu.derniereClotureTimestamp = (e.tempsJeu.derniereClotureTimestamp || maintenant) + cyclesPasses * MS_PAR_HEURE;
+    }
+    e.tempsJeu.derniereClotureLocale = aujourdHui;
+    e.tempsJeu.moisEcoules = (e.tempsJeu.moisEcoules || 0) + cyclesPasses;
     saveData();
 
-    return nouveauxMois;
+    return cyclesPasses;
 }
 
 // ============================================
-// CHARGEMENT (AVEC FUSION SÉCURISÉE)
+// CHARGEMENT
 // ============================================
 export function loadData() {
     try {
@@ -222,7 +357,7 @@ export function loadData() {
                 };
             }
         }
-        traiterTempsEcoule();
+        traiterCloture();
     } catch (e) {
         console.error("Erreur lors du chargement :", e);
     }
@@ -241,9 +376,7 @@ export function addArgent(montant, raison = "") {
 }
 
 export function removeArgent(montant, raison = "") {
-    if (data.entreprise.argent < montant) {
-        return false;
-    }
+    if (data.entreprise.argent < montant) return false;
     data.entreprise.argent -= montant;
     if (raison) ajouterHistorique(`-${montant.toLocaleString("fr-FR")} Ø : ${raison}`, "depense");
     else saveData();
@@ -282,31 +415,6 @@ export function setNom(nouveauNom) {
 export function setLogo(url) {
     data.entreprise.logo = url;
     saveData();
-}
-
-export function addBien(categorie, style, prixAchat) {
-    const e = data.entreprise;
-
-    if (!e.biens[categorie]) {
-        e.biens[categorie] = {};
-    }
-
-    if (!e.biens[categorie][style]) {
-        e.biens[categorie][style] = {
-            quantite: 0,
-            prixAchatMoyen: 0
-        };
-    }
-
-    const bien = e.biens[categorie][style];
-
-    const totalAncien = bien.prixAchatMoyen * bien.quantite;
-    const totalNouveau = totalAncien + prixAchat;
-
-    bien.quantite += 1;
-    bien.prixAchatMoyen = totalNouveau / bien.quantite;
-
-    ajouterHistorique(`Achat d'un bien (${categorie} - ${style}) pour ${prixAchat.toLocaleString("fr-FR")} Ø`, "achat");
 }
 
 loadData();
