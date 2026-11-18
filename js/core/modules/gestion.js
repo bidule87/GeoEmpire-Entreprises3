@@ -4,6 +4,7 @@
 
 import { saveData, getInfosTempsJeu, traiterCloture } from "../geoData.js";
 import { getEntreprise, estPdgGeneral } from "../entrepriseCore.js";
+import { migrerAnciensBiensVersSiege } from "./entreprises.js";
 
 let timerClotureId = null;
 
@@ -27,14 +28,14 @@ export function initGestion() {
     const zone = document.getElementById("gestion");
     if (!zone) return;
 
-    // Vérifier immédiatement si un cycle de 1h (Bêta) ou minuit (Normal) vient de passer
+    const e = getEntreprise();
+    migrerAnciensBiensVersSiege(e);
+
     if (traiterCloture() > 0) {
-        const eMaj = getEntreprise();
         const soldeEl = document.getElementById("solde");
-        if (soldeEl) soldeEl.textContent = (eMaj.argent || 0).toLocaleString("fr-FR");
+        if (soldeEl) soldeEl.textContent = (e.argent || 0).toLocaleString("fr-FR");
     }
 
-    const e = getEntreprise();
     const sieges = e.commercesGPS || [];
     const droits = getDroitsUtilisateurActif();
     const temps = getInfosTempsJeu();
@@ -48,28 +49,28 @@ export function initGestion() {
 
     const locAttente = e.locationsEnAttente || [];
     const venAttente = e.ventesEnAttente || [];
-    const labelEcheance = temps.modeBeta ? "dans 1h" : "00h00";
+    const labelEcheance = temps.modeBeta ? "cycle 1h" : "00h00";
 
     let ordresAttenteHTML = "";
     if (locAttente.length > 0 || venAttente.length > 0) {
         const lignesLoc = locAttente.map((o, idx) => `
-            <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; padding:6px 10px; background:rgba(2,132,199,0.2); border-radius:6px; margin-bottom:5px; font-size:13px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; padding:6px 10px; background:rgba(2,132,199,0.25); border-radius:6px; margin-bottom:5px; font-size:13px;">
                 <span>🔑 <strong>Location (${labelEcheance}) :</strong> [${o.siegeNom}] ${o.quantite}× ${o.style} (${o.ajustement >= 0 ? "+" : ""}${o.ajustement}%)</span>
-                <button class="btn-annuler-loc" data-idx="${idx}" style="background:#b91c1c; color:#fff; border:none; border-radius:5px; padding:3px 8px; cursor:pointer; font-size:12px;">Annuler</button>
+                <button class="btn-annuler-loc" data-idx="${idx}" style="background:#b91c1c; color:#fff; border:none; border-radius:5px; padding:4px 9px; cursor:pointer; font-size:12px;">Annuler</button>
             </div>
         `).join("");
 
         const lignesVen = venAttente.map((o, idx) => `
-            <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; padding:6px 10px; background:rgba(5,150,105,0.2); border-radius:6px; margin-bottom:5px; font-size:13px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; padding:6px 10px; background:rgba(5,150,105,0.25); border-radius:6px; margin-bottom:5px; font-size:13px;">
                 <span>💰 <strong>Vente (${labelEcheance}) :</strong> [${o.siegeNom}] ${o.quantite}× ${o.style} (${o.ajustement >= 0 ? "+" : ""}${o.ajustement}%) → Net estimé : <strong>+${o.gainNetEstime.toLocaleString("fr-FR")} Ø</strong></span>
-                <button class="btn-annuler-ven" data-idx="${idx}" style="background:#b91c1c; color:#fff; border:none; border-radius:5px; padding:3px 8px; cursor:pointer; font-size:12px;">Annuler</button>
+                <button class="btn-annuler-ven" data-idx="${idx}" style="background:#b91c1c; color:#fff; border:none; border-radius:5px; padding:4px 9px; cursor:pointer; font-size:12px;">Annuler</button>
             </div>
         `).join("");
 
         ordresAttenteHTML = `
-            <div style="background:rgba(15,23,42,0.85); border:1px solid #fbbf24; border-radius:10px; padding:12px; margin-bottom:16px;">
+            <div style="background:rgba(15,23,42,0.9); border:1px solid #fbbf24; border-radius:10px; padding:12px; margin-bottom:16px;">
                 <div style="font-weight:bold; color:#fbbf24; margin-bottom:8px;">
-                    ⏳ Ordres en attente de validation (clôture dans <span id="chrono-cloture-ordres">${temps.tempsAvantCloture}</span>) :
+                    ⏳ Ordres programmés (exécution dans <span id="chrono-cloture-ordres">${temps.tempsAvantCloture}</span>) :
                 </div>
                 ${lignesLoc}
                 ${lignesVen}
@@ -86,14 +87,6 @@ export function initGestion() {
                 </span>
             </div>
 
-            <div style="background:rgba(0,35,70,0.75); border:1px solid rgba(56,189,248,0.35); border-radius:10px; padding:12px; margin-bottom:16px; font-size:13px; color:#e2f1ff;">
-                <strong>Règlement différé :</strong>
-                ${temps.modeBeta
-                    ? "En <strong>version Bêta</strong>, vos ventes et locations sont validées toutes les <strong>1 heure</strong> pour tester le cycle complet."
-                    : "En <strong>jeu normal</strong>, toutes les ventes et locations sont validées chaque nuit à <strong>minuit pile (00h00)</strong>."}
-                <br>• <strong>Impôts & Taxes Mairie :</strong> 15 % sur les loyers et 10 % sur les ventes partent directement dans la <strong>caisse de la Mairie</strong> (actuellement : <strong>${(e.caisseMairie || 0).toLocaleString("fr-FR")} Ø</strong>).
-            </div>
-
             ${ordresAttenteHTML}
 
             <div class="premium-box">
@@ -101,15 +94,15 @@ export function initGestion() {
                     <p>Aucun bien rattaché à vos entreprises pour le moment. Allez dans <strong>Acheter des biens</strong>.</p>
                 ` : `
                     ${siegesAvecBiens.map(siege => `
-                        <div class="gestion-categorie" style="margin-bottom:22px; padding:14px; background:rgba(0,20,40,0.55); border-radius:12px; border:1px solid rgba(56,189,248,0.3);">
+                        <div style="margin-bottom:22px; padding:14px; background:rgba(0,20,40,0.65); border-radius:12px; border:1px solid rgba(56,189,248,0.35);">
                             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; border-bottom:1px solid rgba(56,189,248,0.3); padding-bottom:10px; margin-bottom:12px;">
                                 <h3 style="color:#7ec8ff; margin:0;">🏢 ${siege.nom} <span style="font-size:13px; color:#94a3b8;">(${siege.secteur})</span></h3>
                                 <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                                    <button class="btn-tout-louer-siege premium-btn" data-siege="${siege.id}" style="margin:0; padding:6px 12px; font-size:12px; background:#0284c7;" ${peutLouer ? "" : "disabled"}>
-                                        Tout mettre en location (${labelEcheance})
+                                    <button class="btn-tout-louer-siege premium-btn" data-siege="${siege.id}" style="margin:0; padding:7px 13px; font-size:12px; background:#0284c7;" ${peutLouer ? "" : "disabled"}>
+                                        Tout louer (${labelEcheance})
                                     </button>
-                                    <button class="btn-tout-vendre-siege premium-btn" data-siege="${siege.id}" style="margin:0; padding:6px 12px; font-size:12px; background:#059669;" ${peutVendre ? "" : "disabled"}>
-                                        Tout mettre en vente (${labelEcheance})
+                                    <button class="btn-tout-vendre-siege premium-btn" data-siege="${siege.id}" style="margin:0; padding:7px 13px; font-size:12px; background:#059669;" ${peutVendre ? "" : "disabled"}>
+                                        Tout vendre (${labelEcheance})
                                     </button>
                                 </div>
                             </div>
@@ -123,53 +116,54 @@ export function initGestion() {
                                         const prixReventeUnitaireNet = Math.floor(bien.prixAchatMoyen * 1.25 * 0.90);
 
                                         return `
-                                        <div class="gestion-item" style="margin-top:10px;">
-                                            <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;">
-                                                <div class="gestion-nom" style="font-size:16px; font-weight:bold;">${style} <span style="font-size:12px; color:#7ec8ff;">(${categorie})</span></div>
-                                                <div>
-                                                    <span style="background:rgba(52,211,153,0.2); color:#34d399; padding:3px 8px; border-radius:6px; font-size:12px; font-weight:bold;">
-                                                        Actuellement loués : ${enLoc} / ${bien.quantite}
-                                                    </span>
-                                                </div>
+                                        <div style="margin-top:12px; padding:12px; background:rgba(0,35,70,0.75); border-radius:10px; border:1px solid rgba(56,189,248,0.25);">
+                                            <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-bottom:6px;">
+                                                <div style="font-size:16px; font-weight:bold; color:#fff;">${style} <span style="font-size:12px; color:#7ec8ff;">(${categorie})</span></div>
+                                                <span style="background:rgba(52,211,153,0.2); color:#34d399; padding:3px 8px; border-radius:6px; font-size:12px; font-weight:bold;">
+                                                    En location active : ${enLoc} / ${bien.quantite}
+                                                </span>
                                             </div>
 
-                                            <div class="gestion-infos" style="margin:6px 0; font-size:13px; color:#cbd5e1;">
-                                                <div>Loyer net estimé : <strong style="color:#38bdf8;">+${loyerUnitaireNet.toLocaleString("fr-FR")} Ø/cycle</strong></div>
-                                                <div>Revente nette estimée : <strong style="color:#34d399;">+${prixReventeUnitaireNet.toLocaleString("fr-FR")} Ø/unité</strong></div>
+                                            <div style="display:flex; gap:16px; flex-wrap:wrap; font-size:13px; color:#cbd5e1; margin-bottom:10px;">
+                                                <span>Loyer net : <strong style="color:#38bdf8;">+${loyerUnitaireNet.toLocaleString("fr-FR")} Ø/cycle</strong></span>
+                                                <span>Revente nette (+25%) : <strong style="color:#34d399;">+${prixReventeUnitaireNet.toLocaleString("fr-FR")} Ø/unité</strong></span>
                                             </div>
 
-                                            <div class="gestion-actions">
-                                                <label>Qté :</label>
+                                            <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
+                                                <label style="font-size:13px;">Qté :</label>
                                                 <input type="number" class="input-quantite"
                                                     data-siege="${siege.id}" data-cat="${categorie}" data-style="${style}"
-                                                    min="1" max="${bien.quantite}" value="${bien.quantite}">
+                                                    min="1" max="${bien.quantite}" value="${bien.quantite}"
+                                                    style="width:70px; padding:6px 8px; border-radius:6px; border:1px solid #38bdf8; background:#0f294a; color:#fff;">
 
-                                                <button class="btn-tous"
-                                                    data-siege="${siege.id}" data-cat="${categorie}" data-style="${style}" data-max="${bien.quantite}">
+                                                <button class="btn-tous premium-btn"
+                                                    data-siege="${siege.id}" data-cat="${categorie}" data-style="${style}" data-max="${bien.quantite}"
+                                                    style="margin:0; padding:6px 10px; font-size:12px; background:#1e40af;">
                                                     Tous (${bien.quantite})
                                                 </button>
 
-                                                <label>Ajustement :</label>
+                                                <label style="font-size:13px;">Ajustement :</label>
                                                 <input type="range" class="slider-prix"
                                                     data-siege="${siege.id}" data-cat="${categorie}" data-style="${style}"
                                                     min="-30" max="40" step="5" value="${bien.ajustementLoyer || 0}">
 
-                                                <span class="prix-affiche"
-                                                    id="prix-${siege.id}-${categorie}-${style}"
-                                                    style="font-weight:bold; color:#fbbf24; min-width:48px; display:inline-block;">
+                                                <span id="prix-${siege.id}-${categorie}-${style}"
+                                                    style="font-weight:bold; color:#fbbf24; min-width:45px;">
                                                     ${(bien.ajustementLoyer || 0) > 0 ? "+" : ""}${bien.ajustementLoyer || 0}%
                                                 </span>
 
-                                                <div class="gestion-boutons-double">
-                                                    <button class="btn-louer"
+                                                <div style="display:flex; gap:8px; margin-left:auto;">
+                                                    <button class="btn-louer premium-btn"
                                                         data-siege="${siege.id}" data-cat="${categorie}" data-style="${style}"
+                                                        style="margin:0; padding:8px 14px; font-size:13px; background:#0284c7;"
                                                         ${peutLouer ? "" : 'disabled style="opacity:0.4;"'}>
-                                                        Louer (${labelEcheance})
+                                                        🔑 Louer (${labelEcheance})
                                                     </button>
-                                                    <button class="btn-vendre"
+                                                    <button class="btn-vendre premium-btn"
                                                         data-siege="${siege.id}" data-cat="${categorie}" data-style="${style}"
+                                                        style="margin:0; padding:8px 14px; font-size:13px; background:#059669;"
                                                         ${peutVendre ? "" : 'disabled style="opacity:0.4;"'}>
-                                                        Vendre (${labelEcheance})
+                                                        💰 Vendre (${labelEcheance})
                                                     </button>
                                                 </div>
                                             </div>
