@@ -1,40 +1,63 @@
 // ============================================
-// GEO DATA — STOCKAGE GLOBAL DU JEU (UNIFIÉ)
+// GEO DATA — STOCKAGE GLOBAL & HORLOGE MONDIALE
+// Rythme : 24h réelles = 1 mois jeu | 12 jours = 1 an
 // ============================================
 
 const SAVE_KEY = "geoEmpireData";
+const MS_PAR_MOIS_JEU = 24 * 60 * 60 * 1000; // 1 jour réel = 1 mois en jeu
+const MOIS_PAR_AN_JEU = 12;                   // 12 jours réels = 1 an en jeu
 
 const defaultData = {
     entreprise: {
         capital: 50000,
-        argent: 50000, // Argent disponible (Ø)
+        argent: 50000, // Géo (Ø)
         tokens: 10,    // GeoTokens (GT)
         crowns: 0,     // Crowns (CRW)
         beneficeJournalier: 0,
 
         nom: "Mon Empire",
+        pdg: "Fondateur",
+        utilisateurActif: "Fondateur",
         logo: "",
         discord: "",
         description: "",
 
-        // Biens immobiliers / stocks : { categorie: { style: { quantite, prixAchatMoyen } } }
+        prestigePack: false,
+        betaTesteur: false,
+
+        // Horloge mondiale persistante (UTC universel + fuseau local)
+        tempsJeu: {
+            debutTimestamp: Date.now(),
+            dernierCalculTimestamp: Date.now(),
+            moisEcoules: 0,
+            fuseauJoueur: Intl.DateTimeFormat().resolvedOptions().timeZone || "Europe/Paris"
+        },
+
+        // Biens immobiliers / stocks : { categorie: { style: { quantite, prixAchatMoyen, assurance } } }
         biens: {},
 
-        // Commerces achetés via le GPS : [{ id, nom, type, lat, lng, prixAchat, revenuJour, directeur }]
+        // Entreprises achetées via le GPS
         commercesGPS: [],
 
-        // Équipe et joueurs gérants
+        // Holding (débloquée à 10 entreprises)
+        holding: {
+            active: false,
+            nom: "Ma Holding",
+            dateCreation: null,
+            bonusRevenus: 0.20,
+            filialesIds: [],
+            associes: []
+        },
+
         employes: [],
         actionnaires: [],
 
-        // Protections contre les catastrophes / cambriolages
         assurances: {
             incendie: false,
             cambriolage: false,
             catastrophe: false
         },
 
-        // Inventaire boutique (ex: cartes de téléportation)
         inventaire: {
             cartesTeleportation: 0
         },
@@ -56,24 +79,16 @@ const defaultData = {
             pertesSinistres: 0
         },
 
-        // Journal des actions et événements IA (cambriolages, incendies, achats...)
         historique: []
     }
 };
 
-// Clone profond pour éviter de modifier defaultData par référence
 let data = JSON.parse(JSON.stringify(defaultData));
 
-// ============================================
-// GETTER
-// ============================================
 export function getData() {
     return data;
 }
 
-// ============================================
-// SAUVEGARDE & HISTORIQUE
-// ============================================
 export function saveData() {
     try {
         localStorage.setItem(SAVE_KEY, JSON.stringify(data));
@@ -83,16 +98,107 @@ export function saveData() {
 }
 
 export function ajouterHistorique(message, type = "info") {
+    if (!Array.isArray(data.entreprise.historique)) {
+        data.entreprise.historique = [];
+    }
     data.entreprise.historique.unshift({
         date: new Date().toLocaleString("fr-FR"),
         message,
         type
     });
-    // On garde les 100 derniers événements maximum
     if (data.entreprise.historique.length > 100) {
         data.entreprise.historique.pop();
     }
     saveData();
+}
+
+// ============================================
+// HORLOGE MONDIALE & CALENDRIER DU JEU
+// ============================================
+export function getInfosTempsJeu() {
+    const e = data.entreprise;
+    if (!e.tempsJeu) {
+        e.tempsJeu = {
+            debutTimestamp: Date.now(),
+            dernierCalculTimestamp: Date.now(),
+            moisEcoules: 0,
+            fuseauJoueur: Intl.DateTimeFormat().resolvedOptions().timeZone || "Europe/Paris"
+        };
+    }
+
+    const maintenant = Date.now();
+    const totalMois = Math.floor((maintenant - e.tempsJeu.debutTimestamp) / MS_PAR_MOIS_JEU);
+    const anneeJeu = Math.floor(totalMois / MOIS_PAR_AN_JEU) + 1;
+    const moisDansAnnee = (totalMois % MOIS_PAR_AN_JEU) + 1;
+
+    const fuseauLocal = Intl.DateTimeFormat().resolvedOptions().timeZone || "Local";
+    const heureLocale = new Date().toLocaleTimeString("fr-FR", {
+        hour: "2-digit",
+        minute: "2-digit"
+    });
+
+    return {
+        anneeJeu,
+        moisDansAnnee,
+        totalMois,
+        heureLocale,
+        fuseauLocal
+    };
+}
+
+export function traiterTempsEcoule() {
+    const e = data.entreprise;
+    if (!e.tempsJeu) return 0;
+
+    const maintenant = Date.now();
+    const diffMs = maintenant - e.tempsJeu.dernierCalculTimestamp;
+    const nouveauxMois = Math.floor(diffMs / MS_PAR_MOIS_JEU);
+
+    if (nouveauxMois <= 0) return 0;
+
+    let revenuMensuelBase = 0;
+
+    // 1. Revenus passifs des entreprises GPS détenues (1 500 Ø / mois par siège)
+    const nbSieges = (e.commercesGPS || []).length;
+    revenuMensuelBase += nbSieges * 1500;
+
+    // 2. Revenus des biens en stock (1,5 % de leur valeur par mois)
+    if (e.biens) {
+        Object.values(e.biens).forEach(styles => {
+            Object.values(styles).forEach(bien => {
+                if ((bien.quantite || 0) > 0) {
+                    revenuMensuelBase += Math.floor((bien.prixAchatMoyen || 0) * 0.015 * bien.quantite);
+                }
+            });
+        });
+    }
+
+    // 3. Revenus des locations mises en attente avec ajustement de prix
+    if (Array.isArray(e.locationsEnAttente)) {
+        e.locationsEnAttente.forEach(loc => {
+            const coef = 1 + ((loc.ajustement || 0) / 100);
+            revenuMensuelBase += Math.floor((loc.prixAchatMoyen || 0) * 0.02 * (loc.quantite || 1) * coef);
+        });
+    }
+
+    // Bonus Holding +20 % si active
+    const multiplicateurHolding = e.holding?.active ? 1.20 : 1.0;
+    const gainTotal = Math.floor(revenuMensuelBase * multiplicateurHolding * nouveauxMois);
+
+    if (gainTotal > 0) {
+        e.argent = (e.argent || 0) + gainTotal;
+        e.finances.revenusLocations = (e.finances.revenusLocations || 0) + gainTotal;
+        ajouterHistorique(
+            `Bilan mensuel (${nouveauxMois} mois écoulé(s)) : +${gainTotal.toLocaleString("fr-FR")} Ø`,
+            "gain"
+        );
+    }
+
+    e.tempsJeu.dernierCalculTimestamp += nouveauxMois * MS_PAR_MOIS_JEU;
+    e.tempsJeu.moisEcoules = (e.tempsJeu.moisEcoules || 0) + nouveauxMois;
+    saveData();
+
+    return nouveauxMois;
 }
 
 // ============================================
@@ -107,6 +213,8 @@ export function loadData() {
                 data.entreprise = {
                     ...defaultData.entreprise,
                     ...parsed.entreprise,
+                    tempsJeu: { ...defaultData.entreprise.tempsJeu, ...(parsed.entreprise.tempsJeu || {}) },
+                    holding: { ...defaultData.entreprise.holding, ...(parsed.entreprise.holding || {}) },
                     assurances: { ...defaultData.entreprise.assurances, ...(parsed.entreprise.assurances || {}) },
                     inventaire: { ...defaultData.entreprise.inventaire, ...(parsed.entreprise.inventaire || {}) },
                     marketing: { ...defaultData.entreprise.marketing, ...(parsed.entreprise.marketing || {}) },
@@ -114,6 +222,7 @@ export function loadData() {
                 };
             }
         }
+        traiterTempsEcoule();
     } catch (e) {
         console.error("Erreur lors du chargement :", e);
     }
@@ -125,9 +234,6 @@ export function resetData() {
     saveData();
 }
 
-// ============================================
-// ARGENT, TOKENS & CROWNS
-// ============================================
 export function addArgent(montant, raison = "") {
     data.entreprise.argent += montant;
     if (raison) ajouterHistorique(`+${montant.toLocaleString("fr-FR")} Ø : ${raison}`, "gain");
@@ -136,7 +242,7 @@ export function addArgent(montant, raison = "") {
 
 export function removeArgent(montant, raison = "") {
     if (data.entreprise.argent < montant) {
-        return false; // Fonds insuffisants
+        return false;
     }
     data.entreprise.argent -= montant;
     if (raison) ajouterHistorique(`-${montant.toLocaleString("fr-FR")} Ø : ${raison}`, "depense");
@@ -168,9 +274,6 @@ export function removeCrowns(n) {
     return true;
 }
 
-// ============================================
-// NOM + LOGO
-// ============================================
 export function setNom(nouveauNom) {
     data.entreprise.nom = nouveauNom;
     saveData();
@@ -181,9 +284,6 @@ export function setLogo(url) {
     saveData();
 }
 
-// ============================================
-// AJOUTER UN BIEN (COMPATIBLE ACHETER + GESTION)
-// ============================================
 export function addBien(categorie, style, prixAchat) {
     const e = data.entreprise;
 
@@ -209,7 +309,4 @@ export function addBien(categorie, style, prixAchat) {
     ajouterHistorique(`Achat d'un bien (${categorie} - ${style}) pour ${prixAchat.toLocaleString("fr-FR")} Ø`, "achat");
 }
 
-// ============================================
-// INITIALISATION
-// ============================================
 loadData();
