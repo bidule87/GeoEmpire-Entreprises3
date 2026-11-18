@@ -419,3 +419,8 @@ export function setLogo(url) {
 }
 
 loadData();
+if (typeof window !== "undefined") {
+    window.addEventListener("storage", ev => {
+        if (ev.key === SAVE_KEY) loadData();
+    });
+}
