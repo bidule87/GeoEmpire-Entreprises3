@@ -6,18 +6,15 @@ const statutEl = document.getElementById("statut-gps");
 const listeEl = document.getElementById("liste-entreprises");
 const compteurDispoEl = document.getElementById("compteur-dispo");
 const rayonSelect = document.getElementById("rayon-select");
-const toggleBeta = document.getElementById("toggle-beta-rayon");
 const filtreSecteurSelect = document.getElementById("filtre-secteur-map");
 const btnScanner = document.getElementById("btn-scanner");
 const btnVueEmpire = document.getElementById("btn-vue-empire");
 const nbEmpireEl = document.getElementById("nb-empire");
 const btnReset = document.getElementById("btn-reset");
 
-// Volet latéral rétractable
 const voletLateral = document.getElementById("volet-lateral");
 const btnToggleVolet = document.getElementById("btn-toggle-volet");
 
-// Modale Fiche Entreprise
 const modalFiche = document.getElementById("modal-fiche");
 const btnFermerFiche = document.getElementById("btn-fermer-fiche");
 const ficheBanniere = document.getElementById("fiche-banniere");
@@ -27,7 +24,6 @@ const ficheBody = document.getElementById("fiche-body");
 
 let dernieresOpportunites = [];
 
-// Visuels futuristes par secteur pour la fiche détaillée
 const VISUELS_SECTEUR = {
     "Alimentaire & Restauration": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80",
     "Bâtiment & Immobilier": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80",
@@ -36,7 +32,8 @@ const VISUELS_SECTEUR = {
 };
 
 function majTexteBoutonVolet() {
-    const nb = compteurDispoEl ? compteurDispoEl.textContent : "0";
+    const span = document.getElementById("compteur-dispo");
+    const nb = span ? span.textContent : "0";
     const ouvert = !voletLateral.classList.contains("ferme");
     btnToggleVolet.innerHTML = ouvert
         ? `▶ Masquer (<span id="compteur-dispo">${nb}</span>)`
@@ -67,7 +64,7 @@ function majTopbar() {
 
 function majOptionsRayon() {
     const e = getData().entreprise;
-    const estPremium = e.prestigePack === true || toggleBeta.checked;
+    const estPremium = e.prestigePack === true;
 
     const opt10 = rayonSelect.querySelector('option[value="10"]');
     const opt20 = rayonSelect.querySelector('option[value="20"]');
@@ -89,13 +86,6 @@ function majOptionsRayon() {
 majTopbar();
 majOptionsRayon();
 
-toggleBeta.addEventListener("change", () => {
-    majOptionsRayon();
-    if (positionActuelle) {
-        scannerCommercesReels(positionActuelle.lat, positionActuelle.lng, Number(rayonSelect.value));
-    }
-});
-
 filtreSecteurSelect.addEventListener("change", () => {
     afficherOpportunitesDisponibles(dernieresOpportunites);
 });
@@ -108,7 +98,6 @@ btnReset.addEventListener("click", () => {
     }
 });
 
-// Initialisation carte Leaflet
 const map = L.map("map").setView([46.8, 2.4], 6);
 
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -212,7 +201,6 @@ function classifierSecteur(tags) {
     return null;
 }
 
-// Ouvre la fiche détaillée (modale visuelle) au clic sur un point ou sur le volet
 function ouvrirFicheEtablissement(item, estDejaAcquis = false) {
     const e = getData().entreprise;
     const visuel = item.photo || VISUELS_SECTEUR[item.secteur] || VISUELS_SECTEUR["Commerce & Distribution"];
@@ -369,11 +357,9 @@ function afficherOpportunitesDisponibles(liste) {
     }
 
     disponibles.forEach(c => {
-        // Clic sur un point de la carte -> ouvre la fiche visuelle de l'établissement
         const marker = L.marker([c.lat, c.lng], { icon: creerIcone(c.couleur, "dispo") }).addTo(layerDisponibles);
         marker.on("click", () => ouvrirFicheEtablissement(c, false));
 
-        // Entrée compacte dans le volet latéral
         const item = document.createElement("div");
         item.className = "volet-item";
         item.style.borderLeft = `4px solid ${c.couleur}`;
@@ -387,7 +373,6 @@ function afficherOpportunitesDisponibles(liste) {
             </div>
         `;
 
-        // Cliquer sur la carte dans le volet centre la map sur l'établissement
         item.addEventListener("click", ev => {
             if (ev.target.tagName === "BUTTON") return;
             map.flyTo([c.lat, c.lng], 16, { duration: 0.7 });
@@ -468,12 +453,12 @@ if ("geolocation" in navigator) {
         },
         err => {
             console.error("Erreur GPS :", err);
-            statutEl.textContent = "GPS indisponible. Position par défaut : Bénesse-Maremne.";
-            majPosition(43.6344, -1.3611, true);
+            statutEl.textContent = "GPS indisponible. Position par défaut : Limoges.";
+            majPosition(45.8336, 1.2611, true);
         },
         { enableHighAccuracy: true, maximumAge: 15000 }
     );
 } else {
     statutEl.textContent = "Géolocalisation non supportée.";
-    majPosition(43.6344, -1.3611, true);
+    majPosition(45.8336, 1.2611, true);
 }
