@@ -114,14 +114,11 @@ function afficherBiensDisponibles() {
         <h2 class="premium-title">Catalogue d'Acquisition des Biens</h2>
         <div class="premium-box" style="margin-bottom:16px; border:1px solid #38bdf8;">
             <label style="font-weight:bold; color:#7ec8ff; display:block; margin-bottom:6px;">
-                📍 Entreprise destinataire de l'achat (le bien sera rattaché uniquement à cette structure) :
+                📍 Entreprise destinataire de l'achat :
             </label>
             <select id="select-siege-achat" style="width:100%; max-width:460px; padding:9px 12px; border-radius:8px; background:#0f294a; color:#fff; border:1px solid #38bdf8; font-weight:bold;">
                 ${optionsSiegesHTML}
             </select>
-            <div style="font-size:12px; color:#cbd5e1; margin-top:8px;">
-                Trame fiscale : <strong>Loyer brut = 2 %/cycle</strong> • <strong>Charges = 10 % du loyer</strong> • <strong>Impôts Mairie = 15 %</strong> • <strong>Plus-value revente = +25 %</strong>.
-            </div>
         </div>
     `;
 
@@ -129,12 +126,12 @@ function afficherBiensDisponibles() {
         if (filtreCategorie !== "tous" && filtreCategorie !== categorie) continue;
 
         const estDebloquee = siegeAutoriseCategorie(siegeActif, config);
-        const secteurRequis = config.secteurAlt ? `${config.secteur} ou${config.secteurAlt}` : config.secteur;
+        const secteurRequis = config.secteurAlt ? `${config.secteur} ou ${config.secteurAlt}` : config.secteur;
 
         const bloc = document.createElement("div");
         bloc.className = "categorie-bloc premium-box";
         bloc.style.marginBottom = "18px";
-        bloc.innerHTML = `<h3 style="color:#7ec8ff; margin-top:0;">${categorie}${estDebloquee ? "✅" : "🔒"}</h3>`;
+        bloc.innerHTML = `<h3 style="color:#7ec8ff; margin-top:0;">${categorie} ${estDebloquee ? "✅" : "🔒"}</h3>`;
 
         if (!estDebloquee) {
             bloc.innerHTML += `
@@ -168,9 +165,9 @@ function afficherBiensDisponibles() {
 
                 <div style="display:flex; flex-wrap:wrap; gap:14px; font-size:13px; color:#cbd5e1; margin:6px 0 10px 0;">
                     <span>Loyer brut : <strong style="color:#34d399;">+${loyerBrut.toLocaleString("fr-FR")} Ø/cycle</strong></span>
-                    <span>Charges (10%) : -${charges.toLocaleString("fr-FR")} Ø</span>
-                    <span>Impôts Mairie (15%) : -${impotsMois.toLocaleString("fr-FR")} Ø</span>
-                    <span>Net : <strong style="color:#38bdf8;">+${rentabiliteNette.toLocaleString("fr-FR")} Ø/cycle</strong></span>
+                    <span>Charges d'exploitation : -${charges.toLocaleString("fr-FR")} Ø</span>
+                    <span>Impôts locaux : -${impotsMois.toLocaleString("fr-FR")} Ø</span>
+                    <span>Revenu net estimé : <strong style="color:#38bdf8;">+${rentabiliteNette.toLocaleString("fr-FR")} Ø/cycle</strong></span>
                 </div>
 
                 <div class="achat-zone" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
@@ -221,7 +218,6 @@ function gererAchatCible(siege, categorie, style, prix, quantiteAchetee) {
 
     entreprise.argent -= coutTotal;
 
-    // 1. Rattachement exclusif à CETTE entreprise (siege)
     if (!siege.biens) siege.biens = {};
     if (!siege.biens[categorie]) siege.biens[categorie] = {};
     if (!siege.biens[categorie][style]) {
@@ -233,7 +229,6 @@ function gererAchatCible(siege, categorie, style, prix, quantiteAchetee) {
     bienSiege.quantite += quantiteAchetee;
     bienSiege.prixAchatMoyen = (totalAncienS + coutTotal) / bienSiege.quantite;
 
-    // 2. Mise à jour du total consolidé de l'empire
     if (!entreprise.biens[categorie]) entreprise.biens[categorie] = {};
     if (!entreprise.biens[categorie][style]) {
         entreprise.biens[categorie][style] = { quantite: 0, prixAchatMoyen: 0 };
@@ -246,7 +241,7 @@ function gererAchatCible(siege, categorie, style, prix, quantiteAchetee) {
     if (!Array.isArray(entreprise.historique)) entreprise.historique = [];
     entreprise.historique.unshift({
         date: new Date().toLocaleString("fr-FR"),
-        message: `[${siege.nom}] Achat de ${quantiteAchetee}×${style} (${categorie}) pour${coutTotal.toLocaleString("fr-FR")} Ø`,
+        message: `[${siege.nom}] Achat de ${quantiteAchetee}× ${style} (${categorie}) pour ${coutTotal.toLocaleString("fr-FR")} Ø`,
         type: "achat"
     });
 
