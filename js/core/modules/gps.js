@@ -64,16 +64,16 @@ function majTopbar() {
 
 function majOptionsRayon() {
     const e = getData().entreprise;
-    const estPremium = e.prestigePack === true;
+    const estAutorise = e.prestigePack === true || e.betaTesteur === true;
 
     const opt10 = rayonSelect.querySelector('option[value="10"]');
     const opt20 = rayonSelect.querySelector('option[value="20"]');
 
-    if (estPremium) {
+    if (estAutorise) {
         opt10.disabled = false;
-        opt10.textContent = "10 km (Premium)";
+        opt10.textContent = e.betaTesteur && !e.prestigePack ? "10 km (Accès Bêta)" : "10 km (Premium)";
         opt20.disabled = false;
-        opt20.textContent = "20 km (Premium)";
+        opt20.textContent = e.betaTesteur && !e.prestigePack ? "20 km (Accès Bêta)" : "20 km (Premium)";
     } else {
         opt10.disabled = true;
         opt10.textContent = "10 km 🔒 (Pack Premium)";
