@@ -1,10 +1,11 @@
 // ============================================
-//  GESTION — LOYERS & VENTES (STOCK STRICT + VERROUS ÉQUIPE)
+//  GESTION — LOYERS & VENTES (IA MARKETING + BAUX TEMPORAIRES)
 // ============================================
 
 import { saveData, getInfosTempsJeu, traiterCloture, ajouterHistorique } from "../geoData.js";
 import { getEntreprise, estPdgGeneral } from "../entrepriseCore.js";
 import { migrerAnciensBiensVersSiege } from "./entreprises.js";
+import { getVisibilitePourCategorie } from "./marketing.js";
 
 let timerClotureId = null;
 
@@ -26,6 +27,7 @@ function getDroitsUtilisateurActif(siege = null) {
 
 function getStockDisponiblePourOrdre(e, siege, cat, style, bien) {
     const total = bien.quantite || 0;
+    const enLoc = Math.min(total, bien.enLocation || 0);
     const progLoc = (e.locationsEnAttente || [])
         .filter(o => String(o.siegeId) === String(siege.id) && o.categorie === cat && o.style === style)
         .reduce((acc, o) => acc + (o.quantite || 0), 0);
@@ -35,9 +37,10 @@ function getStockDisponiblePourOrdre(e, siege, cat, style, bien) {
 
     return {
         total,
+        enLoc,
         progLoc,
         progVen,
-        libre: Math.max(0, total - progLoc - progVen)
+        libre: Math.max(0, total - enLoc - progLoc - progVen)
     };
 }
 
@@ -70,7 +73,7 @@ export function initGestion() {
         const lignesLoc = locAttente.map((o, idx) => `
             <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; padding:6px 10px; background:rgba(2,132,199,0.25); border-radius:6px; margin-bottom:5px; font-size:13px;">
                 <span>🔑 <strong>Location (${labelEcheance}) :</strong> [${o.siegeNom || "Entreprise"}] ${o.quantite || 1}× ${o.style} (${(o.ajustement || 0) >= 0 ? "+" : ""}${o.ajustement || 0}%) • <em style="color:#fde68a;">Par ${o.auteur || auteurActuel}</em></span>
-                <button class="btn-annuler-loc" data-idx="${idx}" style="background:#b91c1c; color:#fff; border:none; border-radius:5px; padding:4px 9px; cursor:pointer; font-size:12px;">Annuler</button>
+                <button type="button" class="btn-annuler-loc" data-idx="${idx}" style="background:#b91c1c; color:#fff; border:none; border-radius:5px; padding:4px 9px; cursor:pointer; font-size:12px;">Annuler</button>
             </div>
         `).join("");
 
@@ -79,7 +82,7 @@ export function initGestion() {
             return `
             <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; padding:6px 10px; background:rgba(5,150,105,0.25); border-radius:6px; margin-bottom:5px; font-size:13px;">
                 <span>💰 <strong>Vente (${labelEcheance}) :</strong> [${o.siegeNom || "Entreprise"}] ${o.quantite || 1}× ${o.style} (${(o.ajustement || 0) >= 0 ? "+" : ""}${o.ajustement || 0}%) → +${gainSecurise} Ø • <em style="color:#fde68a;">Par ${o.auteur || auteurActuel}</em></span>
-                <button class="btn-annuler-ven" data-idx="${idx}" style="background:#b91c1c; color:#fff; border:none; border-radius:5px; padding:4px 9px; cursor:pointer; font-size:12px;">Annuler</button>
+                <button type="button" class="btn-annuler-ven" data-idx="${idx}" style="background:#b91c1c; color:#fff; border:none; border-radius:5px; padding:4px 9px; cursor:pointer; font-size:12px;">Annuler</button>
             </div>
             `;
         }).join("");
@@ -125,10 +128,10 @@ export function initGestion() {
                             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; border-bottom:1px solid rgba(56,189,248,0.3); padding-bottom:10px; margin-bottom:12px;">
                                 <h3 style="color:#7ec8ff; margin:0;">🏢 ${siege.nom} <span style="font-size:13px; color:#94a3b8;">(${siege.secteur})</span></h3>
                                 <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                                    <button class="btn-tout-louer-siege premium-btn" data-siege="${siege.id}" style="margin:0; padding:7px 13px; font-size:12px; background:#0284c7; ${peutLouer ? "" : "opacity:0.4; cursor:not-allowed;"}" ${peutLouer ? "" : "disabled"}>
+                                    <button type="button" class="btn-tout-louer-siege premium-btn" data-siege="${siege.id}" style="margin:0; padding:7px 13px; font-size:12px; background:#0284c7; ${peutLouer ? "" : "opacity:0.4; cursor:not-allowed;"}" ${peutLouer ? "" : "disabled"}>
                                         Tout louer (disponibles)
                                     </button>
-                                    <button class="btn-tout-vendre-siege premium-btn" data-siege="${siege.id}" style="margin:0; padding:7px 13px; font-size:12px; background:#059669; ${peutVendre ? "" : "opacity:0.4; cursor:not-allowed;"}" ${peutVendre ? "" : "disabled"}>
+                                    <button type="button" class="btn-tout-vendre-siege premium-btn" data-siege="${siege.id}" style="margin:0; padding:7px 13px; font-size:12px; background:#059669; ${peutVendre ? "" : "opacity:0.4; cursor:not-allowed;"}" ${peutVendre ? "" : "disabled"}>
                                         Tout vendre (disponibles)
                                     </button>
                                 </div>
@@ -138,29 +141,32 @@ export function initGestion() {
                                 Object.entries(styles)
                                     .filter(([, bien]) => (bien.quantite || 0) > 0)
                                     .map(([style, bien]) => {
-                                        const enLoc = Math.min(bien.quantite, bien.enLocation || 0);
                                         const stock = getStockDisponiblePourOrdre(e, siege, categorie, style, bien);
                                         const prixMoyen = bien.prixAchatMoyen || 15000;
                                         const loyerUnitaireNet = Math.floor(prixMoyen * 0.02 * 0.75);
                                         const prixReventeUnitaireNet = Math.floor(prixMoyen * 1.25 * 0.90);
 
+                                        const visibilite = getVisibilitePourCategorie(e, categorie);
+                                        const couleurPub = visibilite >= 75 ? "#34d399" : (visibilite >= 35 ? "#fbbf24" : "#f87171");
+                                        const cyclesRestants = bien.cyclesRestantsBail || 0;
+
                                         return `
                                         <div style="margin-top:12px; padding:12px; background:rgba(0,35,70,0.75); border-radius:10px; border:1px solid rgba(56,189,248,0.25);">
                                             <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-bottom:6px;">
-                                                <div style="font-size:16px; font-weight:bold; color:#fff;">${style} <span style="font-size:12px; color:#7ec8ff;">(${categorie})</span></div>
+                                                <div style="font-size:16px; font-weight:bold; color:#fff;">
+                                                    ${style} <span style="font-size:12px; color:#7ec8ff;">(${categorie})</span>
+                                                    <span style="background:rgba(0,0,0,0.4); color:${couleurPub}; border:1px solid ${couleurPub}; padding:2px 7px; border-radius:5px; font-size:11px; margin-left:6px;">
+                                                        📢 Pub : ${visibilite} %
+                                                    </span>
+                                                </div>
                                                 <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
                                                     <span style="background:rgba(56,189,248,0.2); color:#bae6fd; padding:3px 8px; border-radius:6px; font-size:12px; font-weight:bold;">
-                                                        Stock total : ${stock.total} | Disponibles pour nouvel ordre : ${stock.libre}
+                                                        Stock total : ${stock.total} | Libres : ${stock.libre}
                                                     </span>
-                                                    ${enLoc > 0 ? `
+                                                    ${stock.enLoc > 0 ? `
                                                         <span style="background:rgba(52,211,153,0.2); color:#34d399; padding:3px 8px; border-radius:6px; font-size:12px; font-weight:bold;">
-                                                            🔄 Loués : ${enLoc}
+                                                            🔑 En bail (${bien.typeBail || "En cours"}) : ${stock.enLoc} • Fin dans ${cyclesRestants} cycle(s)
                                                         </span>
-                                                    ` : ""}
-                                                    ${enLoc > 0 && peutLouer ? `
-                                                        <button class="btn-stopper-loc" data-siege="${siege.id}" data-cat="${categorie}" data-style="${style}" style="background:#475569; color:#fff; border:none; border-radius:5px; padding:3px 8px; cursor:pointer; font-size:11px;">
-                                                            Retirer du bail
-                                                        </button>
                                                     ` : ""}
                                                 </div>
                                             </div>
@@ -178,7 +184,7 @@ export function initGestion() {
                                                     ${stock.libre === 0 ? "disabled" : ""}
                                                     style="width:70px; padding:6px 8px; border-radius:6px; border:1px solid #38bdf8; background:#0f294a; color:#fff;">
 
-                                                <button class="btn-tous premium-btn"
+                                                <button type="button" class="btn-tous premium-btn"
                                                     data-siege="${siege.id}" data-cat="${categorie}" data-style="${style}" data-max="${stock.libre}"
                                                     ${stock.libre === 0 ? "disabled" : ""}
                                                     style="margin:0; padding:6px 10px; font-size:12px; background:#1e40af;">
@@ -196,13 +202,13 @@ export function initGestion() {
                                                 </span>
 
                                                 <div style="display:flex; gap:8px; margin-left:auto;">
-                                                    <button class="btn-louer premium-btn"
+                                                    <button type="button" class="btn-louer premium-btn"
                                                         data-siege="${siege.id}" data-cat="${categorie}" data-style="${style}"
                                                         style="margin:0; padding:8px 14px; font-size:13px; background:#0284c7; ${peutLouer && stock.libre > 0 ? "" : "opacity:0.4; cursor:not-allowed;"}"
                                                         ${peutLouer && stock.libre > 0 ? "" : "disabled"}>
                                                         🔑 Louer
                                                     </button>
-                                                    <button class="btn-vendre premium-btn"
+                                                    <button type="button" class="btn-vendre premium-btn"
                                                         data-siege="${siege.id}" data-cat="${categorie}" data-style="${style}"
                                                         style="margin:0; padding:8px 14px; font-size:13px; background:#059669; ${peutVendre && stock.libre > 0 ? "" : "opacity:0.4; cursor:not-allowed;"}"
                                                         ${peutVendre && stock.libre > 0 ? "" : "disabled"}>
@@ -262,20 +268,6 @@ function bindGestionEvents() {
         };
     });
 
-    document.querySelectorAll(".btn-stopper-loc").forEach(btn => {
-        btn.onclick = () => {
-            const { siege: siegeId, cat, style } = btn.dataset;
-            const e = getEntreprise();
-            const siege = (e.commercesGPS || []).find(s => String(s.id) === String(siegeId));
-            const bien = siege?.biens?.[cat]?.[style];
-            if (!bien) return;
-
-            bien.enLocation = 0;
-            ajouterHistorique(`[${siege.nom}] Arrêt du bail locatif sur ${style}`, "gestion");
-            initGestion();
-        };
-    });
-
     document.querySelectorAll(".btn-annuler-loc").forEach(btn => {
         btn.onclick = () => {
             const e = getEntreprise();
@@ -294,7 +286,6 @@ function bindGestionEvents() {
         };
     });
 
-    // PROGRAMMER LOCATION (AVEC VÉRIFICATION DU STOCK DISPONIBLE)
     document.querySelectorAll(".btn-louer").forEach(btn => {
         btn.onclick = () => {
             const { siege: siegeId, cat, style } = btn.dataset;
@@ -309,7 +300,7 @@ function bindGestionEvents() {
             const ajust = Number(document.querySelector(`.slider-prix[data-siege="${siegeId}"][data-cat="${cat}"][data-style="${style}"]`)?.value || 0);
 
             if (qte <= 0 || qte > stock.libre) {
-                return alert(`Quantité impossible : il ne reste que ${stock.libre} bien(s) disponible(s) sur cette structure.`);
+                return alert(`Quantité impossible : il ne reste que ${stock.libre} bien(s) libre(s).`);
             }
 
             if (!Array.isArray(e.locationsEnAttente)) e.locationsEnAttente = [];
@@ -328,7 +319,6 @@ function bindGestionEvents() {
         };
     });
 
-    // PROGRAMMER VENTE (AVEC VÉRIFICATION DU STOCK DISPONIBLE)
     document.querySelectorAll(".btn-vendre").forEach(btn => {
         btn.onclick = () => {
             const { siege: siegeId, cat, style } = btn.dataset;
@@ -343,7 +333,7 @@ function bindGestionEvents() {
             const ajust = Number(document.querySelector(`.slider-prix[data-siege="${siegeId}"][data-cat="${cat}"][data-style="${style}"]`)?.value || 0);
 
             if (qte <= 0 || qte > stock.libre) {
-                return alert(`Quantité impossible : il ne reste que ${stock.libre} bien(s) disponible(s) (les autres sont déjà programmés en location ou vente).`);
+                return alert(`Quantité impossible : il ne reste que ${stock.libre} bien(s) libre(s).`);
             }
 
             const prixMoyen = bien.prixAchatMoyen || 15000;
@@ -390,7 +380,7 @@ function bindGestionEvents() {
                     }
                 }
             }
-            ajouterHistorique(`[${siege.nom}] Programmation location groupée des biens disponibles`, "gestion", auteur);
+            ajouterHistorique(`[${siege.nom}] Programmation location groupée des biens libres`, "gestion", auteur);
             initGestion();
         };
     });
@@ -421,7 +411,7 @@ function bindGestionEvents() {
                     }
                 }
             }
-            ajouterHistorique(`[${siege.nom}] Programmation vente groupée des biens disponibles`, "gestion", auteur);
+            ajouterHistorique(`[${siege.nom}] Programmation vente groupée des biens libres`, "gestion", auteur);
             initGestion();
         };
     });
