@@ -47,30 +47,33 @@ export function initGestion() {
         s.biens && Object.values(s.biens).some(styles => Object.values(styles).some(b => (b.quantite || 0) > 0))
     );
 
-    const locAttente = e.locationsEnAttente || [];
-    const venAttente = e.ventesEnAttente || [];
+    const locAttente = Array.isArray(e.locationsEnAttente) ? e.locationsEnAttente : [];
+    const venAttente = Array.isArray(e.ventesEnAttente) ? e.ventesEnAttente : [];
     const labelEcheance = temps.modeBeta ? "cycle 1h" : "00h00";
 
     let ordresAttenteHTML = "";
     if (locAttente.length > 0 || venAttente.length > 0) {
         const lignesLoc = locAttente.map((o, idx) => `
             <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; padding:6px 10px; background:rgba(2,132,199,0.25); border-radius:6px; margin-bottom:5px; font-size:13px;">
-                <span>🔑 <strong>Location (${labelEcheance}) :</strong> [${o.siegeNom}] ${o.quantite}× ${o.style} (${o.ajustement >= 0 ? "+" : ""}${o.ajustement}%)</span>
+                <span>🔑 <strong>Location (${labelEcheance}) :</strong> [${o.siegeNom || "Entreprise"}] ${o.quantite || 1}× ${o.style} (${(o.ajustement || 0) >= 0 ? "+" : ""}${o.ajustement || 0}%)</span>
                 <button class="btn-annuler-loc" data-idx="${idx}" style="background:#b91c1c; color:#fff; border:none; border-radius:5px; padding:4px 9px; cursor:pointer; font-size:12px;">Annuler</button>
             </div>
         `).join("");
 
-        const lignesVen = venAttente.map((o, idx) => `
+        const lignesVen = venAttente.map((o, idx) => {
+            const gainSecurise = Number(o.gainNetEstime || 0).toLocaleString("fr-FR");
+            return `
             <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; padding:6px 10px; background:rgba(5,150,105,0.25); border-radius:6px; margin-bottom:5px; font-size:13px;">
-                <span>💰 <strong>Vente (${labelEcheance}) :</strong> [${o.siegeNom}] ${o.quantite}× ${o.style} (${o.ajustement >= 0 ? "+" : ""}${o.ajustement}%) → Net estimé : <strong>+${o.gainNetEstime.toLocaleString("fr-FR")} Ø</strong></span>
+                <span>💰 <strong>Vente (${labelEcheance}) :</strong> [${o.siegeNom || "Entreprise"}] ${o.quantite || 1}× ${o.style} (${(o.ajustement || 0) >= 0 ? "+" : ""}${o.ajustement || 0}%) → Règlement estimé : <strong>+${gainSecurise} Ø</strong></span>
                 <button class="btn-annuler-ven" data-idx="${idx}" style="background:#b91c1c; color:#fff; border:none; border-radius:5px; padding:4px 9px; cursor:pointer; font-size:12px;">Annuler</button>
             </div>
-        `).join("");
+            `;
+        }).join("");
 
         ordresAttenteHTML = `
             <div style="background:rgba(15,23,42,0.9); border:1px solid #fbbf24; border-radius:10px; padding:12px; margin-bottom:16px;">
                 <div style="font-weight:bold; color:#fbbf24; margin-bottom:8px;">
-                    ⏳ Ordres programmés (exécution dans <span id="chrono-cloture-ordres">${temps.tempsAvantCloture}</span>) :
+                    ⏳ Ordres programmés (clôture dans <span id="chrono-cloture-ordres">${temps.tempsAvantCloture}</span>) :
                 </div>
                 ${lignesLoc}
                 ${lignesVen}
@@ -83,7 +86,7 @@ export function initGestion() {
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
                 <h2 class="premium-title" style="margin:0;">Loyers & Ventes par Entreprise</h2>
                 <span style="background:rgba(0,45,85,0.85); border:1px solid ${temps.modeBeta ? "#34d399" : "#38bdf8"}; padding:5px 12px; border-radius:8px; font-size:13px; color:#bae6fd;">
-                    ${temps.modeBeta ? "🧪 Mode Bêta (Cycle 1h)" : "🕛 Mode Normal (00h00)"} • Prochaine clôture dans <strong id="chrono-cloture-header">${temps.tempsAvantCloture}</strong>
+                    Prochaine clôture dans <strong id="chrono-cloture-header">${temps.tempsAvantCloture}</strong>
                 </span>
             </div>
 
@@ -99,10 +102,10 @@ export function initGestion() {
                                 <h3 style="color:#7ec8ff; margin:0;">🏢 ${siege.nom} <span style="font-size:13px; color:#94a3b8;">(${siege.secteur})</span></h3>
                                 <div style="display:flex; gap:8px; flex-wrap:wrap;">
                                     <button class="btn-tout-louer-siege premium-btn" data-siege="${siege.id}" style="margin:0; padding:7px 13px; font-size:12px; background:#0284c7;" ${peutLouer ? "" : "disabled"}>
-                                        Tout louer (${labelEcheance})
+                                        Tout louer
                                     </button>
                                     <button class="btn-tout-vendre-siege premium-btn" data-siege="${siege.id}" style="margin:0; padding:7px 13px; font-size:12px; background:#059669;" ${peutVendre ? "" : "disabled"}>
-                                        Tout vendre (${labelEcheance})
+                                        Tout vendre
                                     </button>
                                 </div>
                             </div>
@@ -112,8 +115,9 @@ export function initGestion() {
                                     .filter(([, bien]) => (bien.quantite || 0) > 0)
                                     .map(([style, bien]) => {
                                         const enLoc = bien.enLocation || 0;
-                                        const loyerUnitaireNet = Math.floor(bien.prixAchatMoyen * 0.02 * 0.75);
-                                        const prixReventeUnitaireNet = Math.floor(bien.prixAchatMoyen * 1.25 * 0.90);
+                                        const prixMoyen = bien.prixAchatMoyen || 15000;
+                                        const loyerUnitaireNet = Math.floor(prixMoyen * 0.02 * 0.75);
+                                        const prixReventeUnitaireNet = Math.floor(prixMoyen * 1.25 * 0.90);
 
                                         return `
                                         <div style="margin-top:12px; padding:12px; background:rgba(0,35,70,0.75); border-radius:10px; border:1px solid rgba(56,189,248,0.25);">
@@ -125,8 +129,8 @@ export function initGestion() {
                                             </div>
 
                                             <div style="display:flex; gap:16px; flex-wrap:wrap; font-size:13px; color:#cbd5e1; margin-bottom:10px;">
-                                                <span>Loyer net : <strong style="color:#38bdf8;">+${loyerUnitaireNet.toLocaleString("fr-FR")} Ø/cycle</strong></span>
-                                                <span>Revente nette (+25%) : <strong style="color:#34d399;">+${prixReventeUnitaireNet.toLocaleString("fr-FR")} Ø/unité</strong></span>
+                                                <span>Revenu locatif estimé : <strong style="color:#38bdf8;">+${loyerUnitaireNet.toLocaleString("fr-FR")} Ø/cycle</strong></span>
+                                                <span>Valeur de cession estimée : <strong style="color:#34d399;">+${prixReventeUnitaireNet.toLocaleString("fr-FR")} Ø/unité</strong></span>
                                             </div>
 
                                             <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
@@ -142,7 +146,7 @@ export function initGestion() {
                                                     Tous (${bien.quantite})
                                                 </button>
 
-                                                <label style="font-size:13px;">Ajustement :</label>
+                                                <label style="font-size:13px;">Positionnement tarifaire :</label>
                                                 <input type="range" class="slider-prix"
                                                     data-siege="${siege.id}" data-cat="${categorie}" data-style="${style}"
                                                     min="-30" max="40" step="5" value="${bien.ajustementLoyer || 0}">
@@ -157,13 +161,13 @@ export function initGestion() {
                                                         data-siege="${siege.id}" data-cat="${categorie}" data-style="${style}"
                                                         style="margin:0; padding:8px 14px; font-size:13px; background:#0284c7;"
                                                         ${peutLouer ? "" : 'disabled style="opacity:0.4;"'}>
-                                                        🔑 Louer (${labelEcheance})
+                                                        🔑 Louer
                                                     </button>
                                                     <button class="btn-vendre premium-btn"
                                                         data-siege="${siege.id}" data-cat="${categorie}" data-style="${style}"
                                                         style="margin:0; padding:8px 14px; font-size:13px; background:#059669;"
                                                         ${peutVendre ? "" : 'disabled style="opacity:0.4;"'}>
-                                                        💰 Vendre (${labelEcheance})
+                                                        💰 Vendre
                                                     </button>
                                                 </div>
                                             </div>
@@ -277,7 +281,8 @@ function bindGestionEvents() {
             const ajust = Number(document.querySelector(`.slider-prix[data-siege="${siegeId}"][data-cat="${cat}"][data-style="${style}"]`)?.value || 0);
             if (qte <= 0 || qte > bien.quantite) return alert("Quantité invalide.");
 
-            const gainNetEstime = Math.floor(bien.prixAchatMoyen * 1.25 * (1 + ajust / 100) * 0.90 * qte);
+            const prixMoyen = bien.prixAchatMoyen || 15000;
+            const gainNetEstime = Math.floor(prixMoyen * 1.25 * (1 + ajust / 100) * 0.90 * qte);
 
             if (!Array.isArray(e.ventesEnAttente)) e.ventesEnAttente = [];
             e.ventesEnAttente = e.ventesEnAttente.filter(o => !(String(o.siegeId) === String(siegeId) && o.categorie === cat && o.style === style));
@@ -337,6 +342,7 @@ function bindGestionEvents() {
             for (const [cat, styles] of Object.entries(siege.biens)) {
                 for (const [style, bien] of Object.entries(styles)) {
                     if ((bien.quantite || 0) > 0) {
+                        const prixMoyen = bien.prixAchatMoyen || 15000;
                         e.ventesEnAttente.push({
                             siegeId: siege.id,
                             siegeNom: siege.nom,
@@ -344,7 +350,7 @@ function bindGestionEvents() {
                             style,
                             quantite: bien.quantite,
                             ajustement: 0,
-                            gainNetEstime: Math.floor(bien.prixAchatMoyen * 1.25 * 0.90 * bien.quantite)
+                            gainNetEstime: Math.floor(prixMoyen * 1.25 * 0.90 * bien.quantite)
                         });
                     }
                 }
