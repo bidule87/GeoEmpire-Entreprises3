@@ -1,64 +1,135 @@
-import { 
-    getEntreprise, 
-    sauvegarderEntreprise 
-} from "../entrepriseCore.js";
+import { getEntreprise, sauvegarderEntreprise } from "../entrepriseCore.js";
 
 const ASSURANCES = {
-    "Basique": { couverture: 0, braquage: false, coutMultiplicateur: 0.01 },
-    "Standard": { couverture: 0, braquage: false, coutMultiplicateur: 0.02 },
+    "Basique": { couverture: 30, braquage: false, coutMultiplicateur: 0.01 },
+    "Standard": { couverture: 50, braquage: false, coutMultiplicateur: 0.02 },
     "Premium": { couverture: 70, braquage: false, coutMultiplicateur: 0.05 },
     "Totale": { couverture: 100, braquage: false, coutMultiplicateur: 0.08 },
     "Prestige Ultime": { couverture: 120, braquage: true, coutMultiplicateur: 0.03, prestigeOnly: true }
 };
 
-export function initAssurance() {
+export function initAssurances() {
     afficherBiensAssurables();
+}
+
+function estPassePrestigeActif(entreprise) {
+    return (
+        entreprise.prestigePack === true ||
+        entreprise.betaTesteur === true ||
+        localStorage.getItem("prestigePack") === "true" ||
+        localStorage.getItem("geoEmpireBeta") === "1"
+    );
 }
 
 function afficherBiensAssurables() {
     const entreprise = getEntreprise();
-    const container = document.getElementById("assurance");
-    container.innerHTML = "";
+    const container = document.getElementById("assurances");
+    if (!container) return;
 
-    for (const categorie in entreprise.biens) {
-        const bloc = document.createElement("div");
-        bloc.className = "categorie-bloc";
-        bloc.innerHTML = `<h2>${categorie}</h2>`;
+    const categoriesActives = Object.entries(entreprise.biens || {}).filter(
+        ([, styles]) => Object.values(styles).some(b => (b.quantite || 0) > 0)
+    );
 
-        for (const style in entreprise.biens[categorie]) {
-            const bien = entreprise.biens[categorie][style];
-
-            const item = document.createElement("div");
-            item.className = "bien-item";
-
-            item.innerHTML = `
-                <div class="bien-nom">${style}</div>
-                <div class="bien-quantite">Quantité : ${bien.quantite}</div>
-                <div class="bien-prix">Prix moyen : ${bien.prixAchatMoyen.toLocaleString()} €</div>
-
-                <div class="assurance-options">
-                    ${genererBoutonsAssurance()}
+    if (categoriesActives.length === 0) {
+        container.innerHTML = `
+            <div class="premium-panel">
+                <h2 class="premium-title">Assurances des Biens</h2>
+                <div class="premium-box">
+                    <p>Vous ne possédez encore aucun bien à assurer. Achetez d'abord des biens dans <strong>Catalogue & Gestion</strong>.</p>
                 </div>
-            `;
-
-            bloc.appendChild(item);
-        }
-
-        container.appendChild(bloc);
+            </div>
+        `;
+        return;
     }
+
+    const estPrestige = estPassePrestigeActif(entreprise);
+
+    container.innerHTML = `
+        <div class="premium-panel">
+            <h2 class="premium-title">Assurances Obligatoires des Biens</h2>
+            <p style="font-size:14px; color:#bae6fd; margin-bottom:14px;">
+                Protégez vos actifs contre les sinistres et incidents d'exploitation.
+            </p>
+            <div class="premium-box">
+                ${categoriesActives.map(([categorie, styles]) => `
+                    <div class="categorie-bloc" style="margin-bottom:18px;">
+                        <h3 style="color:#7ec8ff; border-bottom:1px solid rgba(56,189,248,0.3); padding-bottom:6px;">${categorie}</h3>
+                        ${Object.entries(styles)
+                            .filter(([, bien]) => (bien.quantite || 0) > 0)
+                            .map(([style, bien]) => {
+                                const contratActuel = bien.assurance
+                                    ? `<span style="color:#34d399; font-weight:bold;">✓ Couvert par ${bien.assurance.type} (${bien.assurance.couverture}%${bien.assurance.braquage ? " + Anti-braquage" : ""})</span>`
+                                    : `<span style="color:#f87171; font-weight:bold;">⚠️ Aucune assurance souscrite</span>`;
+
+                                return `
+                                <div class="bien-item gestion-item" data-cat="${categorie}" data-style="${style}" style="margin-top:10px;">
+                                    <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+                                        <div class="bien-nom" style="font-weight:bold; font-size:16px;">${style} (${bien.quantite} en stock)</div>
+                                        <div>${contratActuel}</div>
+                                    </div>
+                                    <div class="bien-prix" style="font-size:13px; color:#cbd5e1; margin:6px 0 10px 0;">
+                                        Valeur unitaire moyenne : <strong>${Math.floor(bien.prixAchatMoyen).toLocaleString("fr-FR")} Ø</strong>
+                                    </div>
+                                    <div class="assurance-options" style="display:flex; flex-wrap:wrap; gap:8px;">
+                                        ${genererBoutonsAssurance(bien, estPrestige)}
+                                    </div>
+                                </div>
+                                `;
+                            }).join("")}
+                    </div>
+                `).join("")}
+            </div>
+        </div>
+    `;
+
+    container.querySelectorAll(".assurance-btn").forEach(btn => {
+        btn.onclick = () => {
+            const type = btn.dataset.type;
+            const a = ASSURANCES[type];
+            const item = btn.closest(".bien-item");
+            const categorie = item.dataset.cat;
+            const style = item.dataset.style;
+
+            const ent = getEntreprise();
+            const bien = ent.biens?.[categorie]?.[style];
+            if (!bien) return;
+
+            const coutTotal = Math.max(100, Math.floor(bien.prixAchatMoyen * a.coutMultiplicateur * (bien.quantite || 1)));
+
+            if ((ent.argent || 0) < coutTotal) {
+                alert(`Fonds insuffisants ! Coût du contrat : ${coutTotal.toLocaleString("fr-FR")} Ø.`);
+                return;
+            }
+
+            ent.argent -= coutTotal;
+            bien.assurance = {
+                type,
+                couverture: a.couverture,
+                braquage: a.braquage
+            };
+
+            sauvegarderEntreprise();
+            const soldeEl = document.getElementById("solde");
+            if (soldeEl) soldeEl.textContent = ent.argent.toLocaleString("fr-FR");
+
+            alert(`Contrat "${type}" activé pour ${style} (-${coutTotal.toLocaleString("fr-FR")} Ø).`);
+            afficherBiensAssurables();
+        };
+    });
 }
 
-function genererBoutonsAssurance() {
+function genererBoutonsAssurance(bien, estPrestige) {
     let html = "";
 
-    for (const nom in ASSURANCES) {
-        const a = ASSURANCES[nom];
+    for (const [nom, a] of Object.entries(ASSURANCES)) {
+        if (a.prestigeOnly && !estPrestige) continue;
 
-        if (a.prestigeOnly && !localStorage.getItem("prestigePack")) continue;
+        const coutTotal = Math.max(100, Math.floor((bien.prixAchatMoyen || 0) * a.coutMultiplicateur * (bien.quantite || 1)));
+        const estActif = bien.assurance?.type === nom;
 
         html += `
-            <button class="assurance-btn" data-type="${nom}">
-                ${nom} (${a.couverture}%)
+            <button class="assurance-btn premium-btn" data-type="${nom}" style="margin:0; padding:7px 12px; font-size:13px; ${estActif ? "background:#059669; border:1px solid #fff;" : ""}">
+                ${nom} (${a.couverture}%) — ${coutTotal.toLocaleString("fr-FR")} Ø
             </button>
         `;
     }
@@ -66,37 +137,4 @@ function genererBoutonsAssurance() {
     return html;
 }
 
-document.addEventListener("click", e => {
-    if (!e.target.classList.contains("assurance-btn")) return;
-
-    const type = e.target.dataset.type;
-    const a = ASSURANCES[type];
-
-    const entreprise = getEntreprise();
-
-    const item = e.target.closest(".bien-item");
-    const style = item.querySelector(".bien-nom").textContent;
-    const categorie = item.closest(".categorie-bloc").querySelector("h2").textContent;
-
-    const bien = entreprise.biens[categorie][style];
-
-    const coutUnitaire = Math.floor(bien.prixAchatMoyen * a.coutMultiplicateur);
-
-    if (entreprise.argent < coutUnitaire) {
-        alert("Fonds insuffisants !");
-        return;
-    }
-
-    entreprise.argent -= coutUnitaire;
-
-    bien.assurance = {
-        type: type,
-        couverture: a.couverture,
-        braquage: a.braquage
-    };
-
-    sauvegarderEntreprise(entreprise);
-
-    alert(`Assurance "${type}" appliquée à ${style}`);
-});
 window.initAssurances = initAssurances;
