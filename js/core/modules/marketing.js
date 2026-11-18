@@ -1,132 +1,205 @@
 // ============================================
-// MARKETING — MODULE PREMIUM BLEU
+// MARKETING — AGENCES SPÉCIALISÉES & JAUGE IA
 // ============================================
 
-import { getData, saveData } from "../geoData.js";
+import { getData, saveData, ajouterHistorique } from "../geoData.js";
 
-// Conversion dynamique PRIX → %
-// Basée sur : investissement initial, capital, bénéfice, bonus, autres joueurs
-function calculerImpactMarketing(client, prixInvesti, data) {
+export const AGENCES_DEFAUT = {
+    "GastroPub Régie": {
+        categories: ["Restaurants"],
+        description: "Campagnes locales, influence culinaire et visibilité des enseignes de restauration.",
+        coutPalier: 5000,
+        visibilite: 20
+    },
+    "RetailBoost Média": {
+        categories: ["Commerces"],
+        description: "Affichage urbain, promotions en vitrine et trafic clientèle en zone commerciale.",
+        coutPalier: 4500,
+        visibilite: 20
+    },
+    "ImmoPrestige Diffusion": {
+        categories: ["Appartements", "Maisons"],
+        description: "Portails immobiliers nationaux, visites virtuelles et ciblage acquéreurs/locataires.",
+        coutPalier: 8000,
+        visibilite: 20
+    },
+    "CorpSpace Advisory": {
+        categories: ["Bureaux", "Entrepôts"],
+        description: "Réseau B2B, prospection grands comptes et commercialisation de surfaces professionnelles.",
+        coutPalier: 7000,
+        visibilite: 20
+    },
+    "Hôtelia & Luxe Network": {
+        categories: ["Hôtels"],
+        description: "Plateformes internationales de réservation, tourisme d'affaires et clientèle prestige.",
+        coutPalier: 12000,
+        visibilite: 20
+    }
+};
 
-    // Sécurité
-    if (!client) return 0;
+export function initialiserAgencesMarketing(entreprise) {
+    if (!entreprise.marketing) {
+        entreprise.marketing = { totalInvestissements: 0, clients: {} };
+    }
+    if (!entreprise.marketing.clients || typeof entreprise.marketing.clients !== "object") {
+        entreprise.marketing.clients = {};
+    }
 
-    const investissementInitial = client.investissementInitial || 0;
-    const capitalEntreprise = data.entreprise.capital || 0;
-    const beneficeJournalier = data.entreprise.beneficeJournalier || 0;
-    const bonusInvisible = client.bonus || 0;
-
-    // Impact des autres joueurs
-    const totalInvestissements = data.entreprise.marketing.totalInvestissements || 0;
-    const partJoueur = prixInvesti / Math.max(totalInvestissements, prixInvesti);
-
-    // Conversion dynamique
-    let pourcentage = 0;
-
-    // 1. Base : prix → % (faible)
-    pourcentage += prixInvesti / 10000; // 10 000 € = +1%
-
-    // 2. Impact du capital (joueur moyen)
-    pourcentage += (capitalEntreprise / 1_000_000) * 0.5;
-
-    // 3. Impact du bénéfice (gros joueur)
-    pourcentage += (beneficeJournalier / 100_000) * 0.5;
-
-    // 4. Impact du bonus invisible
-    pourcentage += bonusInvisible / 100;
-
-    // 5. Impact des autres joueurs (équilibré)
-    pourcentage *= partJoueur;
-
-    // 6. Limite stricte : jamais plus de +30%
-    const satisfactionActuelle = client.satisfaction || 0;
-    const maxPossible = 30 - satisfactionActuelle;
-
-    return Math.min(pourcentage, maxPossible);
+    let modifie = false;
+    for (const [nomAgence, cfg] of Object.entries(AGENCES_DEFAUT)) {
+        const existant = entreprise.marketing.clients[nomAgence];
+        if (!existant || !Array.isArray(existant.categories)) {
+            entreprise.marketing.clients[nomAgence] = {
+                categories: cfg.categories,
+                description: cfg.description,
+                coutPalier: cfg.coutPalier,
+                visibilite: typeof existant?.visibilite === "number" ? existant.visibilite : cfg.visibilite,
+                totalVerse: existant?.totalVerse || 0
+            };
+            modifie = true;
+        }
+    }
+    if (modifie) saveData();
 }
 
-window.initMarketing = function () {
-    const zone = document.getElementById("marketing-contenu");
+export function getVisibilitePourCategorie(entreprise, categorie) {
+    initialiserAgencesMarketing(entreprise);
+    for (const agence of Object.values(entreprise.marketing.clients)) {
+        if (Array.isArray(agence.categories) && agence.categories.includes(categorie)) {
+            return Math.max(0, Math.min(100, Math.round(agence.visibilite || 0)));
+        }
+    }
+    return 20;
+}
+
+function getEtatJauge(visibilite) {
+    if (visibilite >= 75) {
+        return {
+            label: "VERT — Saturation maximale (100 % des ventes & locations validées)",
+            couleur: "#34d399",
+            fond: "rgba(16, 185, 129, 0.18)"
+        };
+    }
+    if (visibilite >= 35) {
+        return {
+            label: "ORANGE — Demande modérée (50 % à 75 % écoulés par cycle)",
+            couleur: "#fbbf24",
+            fond: "rgba(245, 158, 11, 0.18)"
+        };
+    }
+    return {
+        label: "ROUGE — Visibilité faible (20 % à 35 % écoulés par cycle)",
+        couleur: "#f87171",
+        fond: "rgba(239, 68, 68, 0.18)"
+    };
+}
+
+export function initMarketing() {
+    const zone = document.getElementById("marketing-contenu") || document.getElementById("marketing");
     if (!zone) return;
 
     const data = getData();
-    const clients = data.entreprise.marketing.clients || {};
+    const e = data.entreprise;
+    initialiserAgencesMarketing(e);
 
-    zone.innerHTML = "";
+    const agences = e.marketing.clients;
 
-    Object.entries(clients).forEach(([nom, client]) => {
-
-        const bloc = document.createElement("div");
-        bloc.className = "marketing-item";
-
-        // Détection automatique de la classe couleur
-        let couleurClass = "";
-        const c = (client.couleur || "").toLowerCase();
-
-        if (c.includes("ff4d4d")) couleurClass = "marketing-red";
-        else if (c.includes("8c42") || c.includes("a64d")) couleurClass = "marketing-orange";
-        else if (c.includes("d93d") || c.includes("e44d")) couleurClass = "marketing-yellow";
-        else if (c.includes("4caf50") || c.includes("4dff88")) couleurClass = "marketing-green";
-        else if (c.includes("2196f3") || c.includes("4da6ff")) couleurClass = "marketing-blue";
-        else if (c.includes("9c27b0") || c.includes("b84dff")) couleurClass = "marketing-purple";
-
-        bloc.classList.add(couleurClass);
-
-        const categories = Array.isArray(client.categorie)
-            ? client.categorie.join(", ")
-            : client.categorie || "Non définie";
-
-        bloc.innerHTML = `
-            <div class="marketing-nom" style="color:${client.couleur}">
-                ${nom}
+    zone.innerHTML = `
+        <div class="premium-panel">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:14px;">
+                <h2 class="premium-title" style="margin:0;">Agences Marketing & Diffusion Commerciale</h2>
+                <span style="background:rgba(0,45,85,0.85); border:1px solid #38bdf8; padding:6px 12px; border-radius:8px; font-size:13px; color:#bae6fd;">
+                    Budget cumulé investi : <strong>${(e.marketing.totalInvestissements || 0).toLocaleString("fr-FR")} Ø</strong>
+                </span>
             </div>
 
-            <div class="marketing-categorie">
-                Catégorie : <strong>${categories}</strong>
+            <div class="premium-box" style="margin-bottom:16px; font-size:13px; color:#cbd5e1;">
+                Subventionnez chaque agence spécialisée pour pousser sa jauge dans le <strong style="color:#34d399;">VERT (75 % à 100 %)</strong> : l'IA commerciale écoulera alors <strong>100 %</strong> de vos ventes et locations dès la clôture.
             </div>
 
-            <div class="marketing-satisfaction">
-                Satisfaction : <strong>${client.satisfaction}%</strong>
+            <div style="display:flex; flex-direction:column; gap:14px;">
+                ${Object.entries(agences).map(([nom, ag]) => {
+                    const vis = Math.max(0, Math.min(100, Math.round(ag.visibilite || 0)));
+                    const etat = getEtatJauge(vis);
+                    const palier1 = ag.coutPalier || 5000;
+                    const palierMax = Math.max(palier1, Math.ceil((100 - vis) / 25) * palier1);
+
+                    return `
+                    <div class="premium-box" style="border-left: 4px solid ${etat.couleur}; margin-bottom:0;">
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px; margin-bottom:8px;">
+                            <div>
+                                <div style="font-size:17px; font-weight:bold; color:#fff;">📢 ${nom}</div>
+                                <div style="font-size:12px; color:#7ec8ff; margin-top:2px;">
+                                    Secteurs couverts : <strong>${ag.categories.join(" & ")}</strong>
+                                </div>
+                                <div style="font-size:13px; color:#cbd5e1; margin-top:4px;">${ag.description}</div>
+                            </div>
+                            <span style="background:${etat.fond}; color:${etat.couleur}; border:1px solid ${etat.couleur}; padding:4px 10px; border-radius:6px; font-size:12px; font-weight:bold;">
+                                ${etat.label}
+                            </span>
+                        </div>
+
+                        <div style="margin:10px 0;">
+                            <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:4px;">
+                                <span>Indice de visibilité marché :</span>
+                                <strong style="color:${etat.couleur};">${vis} % / 100 %</strong>
+                            </div>
+                            <div style="width:100%; height:12px; background:rgba(0,0,0,0.5); border-radius:6px; overflow:hidden; border:1px solid rgba(255,255,255,0.12);">
+                                <div style="width:${vis}%; height:100%; background:${etat.couleur}; transition:width 0.3s ease;"></div>
+                            </div>
+                        </div>
+
+                        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:10px;">
+                            <button type="button" class="btn-subvention-agence premium-btn" data-agence="${nom}" data-montant="${palier1}" data-gain="25" style="margin:0; padding:7px 13px; font-size:13px; background:#0284c7;">
+                                +25 % visibilité (${palier1.toLocaleString("fr-FR")} Ø)
+                            </button>
+                            ${vis < 100 ? `
+                                <button type="button" class="btn-subvention-agence premium-btn" data-agence="${nom}" data-montant="${palierMax}" data-gain="${100 - vis}" style="margin:0; padding:7px 13px; font-size:13px; background:#059669;">
+                                    Mettre au taquet 100 % (${palierMax.toLocaleString("fr-FR")} Ø)
+                                </button>
+                            ` : `
+                                <span style="color:#34d399; font-weight:bold; font-size:13px;">✓ Visibilité au maximum (100 %)</span>
+                            `}
+                        </div>
+                    </div>
+                    `;
+                }).join("")}
             </div>
+        </div>
+    `;
 
-            <div class="satisfaction-bar">
-                <div class="satisfaction-fill" style="width:${client.satisfaction}%;"></div>
-            </div>
+    zone.querySelectorAll(".btn-subvention-agence").forEach(btn => {
+        btn.onclick = () => {
+            const nomAgence = btn.dataset.agence;
+            const montant = Number(btn.dataset.montant);
+            const gain = Number(btn.dataset.gain);
 
-            <div class="marketing-actions">
-                <input type="number" class="marketing-input" placeholder="Montant (€)" value="0">
-                <button class="marketing-btn">Investir</button>
-            </div>
-        `;
+            const d = getData();
+            const ent = d.entreprise;
+            const agence = ent.marketing?.clients?.[nomAgence];
+            if (!agence) return;
 
-        const btn = bloc.querySelector(".marketing-btn");
-        const input = bloc.querySelector(".marketing-input");
+            if ((ent.argent || 0) < montant) {
+                alert(`Fonds insuffisants ! Il vous faut ${montant.toLocaleString("fr-FR")} Ø pour financer cette campagne.`);
+                return;
+            }
 
-        btn.addEventListener("click", () => {
-            const prix = parseInt(input.value);
-            if (isNaN(prix) || prix <= 0) return;
+            ent.argent -= montant;
+            agence.visibilite = Math.min(100, (agence.visibilite || 0) + gain);
+            agence.totalVerse = (agence.totalVerse || 0) + montant;
 
-            // Calcul dynamique
-            const impact = calculerImpactMarketing(client, prix, data);
+            ent.marketing.totalInvestissements = (ent.marketing.totalInvestissements || 0) + montant;
+            ent.finances.depensesMarketing = (ent.finances.depensesMarketing || 0) + montant;
 
-            // Mise à jour satisfaction
-            client.satisfaction = Math.min(30, (client.satisfaction || 0) + impact);
+            const auteur = ent.utilisateurActif || ent.pdg || "Fondateur";
+            ajouterHistorique(`[Marketing — ${nomAgence}] Subvention de ${montant.toLocaleString("fr-FR")} Ø (visibilité : ${agence.visibilite} %)`, "depense", auteur);
 
-            // Mise à jour bonus invisible
-            client.bonus = (client.bonus || 0) + impact / 2;
+            const soldeEl = document.getElementById("solde");
+            if (soldeEl) soldeEl.textContent = ent.argent.toLocaleString("fr-FR");
 
-            // Mise à jour total investissements
-            data.entreprise.marketing.totalInvestissements =
-                (data.entreprise.marketing.totalInvestissements || 0) + prix;
-
-            // Envoi au tableau de finances
-            data.entreprise.finances.depensesMarketing =
-                (data.entreprise.finances.depensesMarketing || 0) + prix;
-
-            saveData();
             initMarketing();
-        });
-
-        zone.appendChild(bloc);
+        };
     });
-};
+}
+
+window.initMarketing = initMarketing;
