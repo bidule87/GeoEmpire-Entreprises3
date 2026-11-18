@@ -1,8 +1,8 @@
 // ============================================
-//  GESTION — LOYERS & VENTES (1H EN BÊTA / 00H00 EN NORMAL)
+//  GESTION — LOYERS & VENTES (TRAÇABILITÉ JOUEURS + LOCATION RÉCURRENTE)
 // ============================================
 
-import { saveData, getInfosTempsJeu, traiterCloture } from "../geoData.js";
+import { saveData, getInfosTempsJeu, traiterCloture, ajouterHistorique } from "../geoData.js";
 import { getEntreprise, estPdgGeneral } from "../entrepriseCore.js";
 import { migrerAnciensBiensVersSiege } from "./entreprises.js";
 
@@ -39,6 +39,7 @@ export function initGestion() {
     const sieges = e.commercesGPS || [];
     const droits = getDroitsUtilisateurActif();
     const temps = getInfosTempsJeu();
+    const auteurActuel = e.utilisateurActif || e.pdg || "Fondateur";
 
     const peutVendre = droits === "complet" || droits === "achetee";
     const peutLouer = droits === "complet" || droits === "louee";
@@ -55,7 +56,7 @@ export function initGestion() {
     if (locAttente.length > 0 || venAttente.length > 0) {
         const lignesLoc = locAttente.map((o, idx) => `
             <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; padding:6px 10px; background:rgba(2,132,199,0.25); border-radius:6px; margin-bottom:5px; font-size:13px;">
-                <span>🔑 <strong>Location (${labelEcheance}) :</strong> [${o.siegeNom || "Entreprise"}] ${o.quantite || 1}× ${o.style} (${(o.ajustement || 0) >= 0 ? "+" : ""}${o.ajustement || 0}%)</span>
+                <span>🔑 <strong>Location (${labelEcheance}) :</strong> [${o.siegeNom || "Entreprise"}] ${o.quantite || 1}× ${o.style} (${(o.ajustement || 0) >= 0 ? "+" : ""}${o.ajustement || 0}%) • <em style="color:#fde68a;">Par ${o.auteur || auteurActuel}</em></span>
                 <button class="btn-annuler-loc" data-idx="${idx}" style="background:#b91c1c; color:#fff; border:none; border-radius:5px; padding:4px 9px; cursor:pointer; font-size:12px;">Annuler</button>
             </div>
         `).join("");
@@ -64,7 +65,7 @@ export function initGestion() {
             const gainSecurise = Number(o.gainNetEstime || 0).toLocaleString("fr-FR");
             return `
             <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; padding:6px 10px; background:rgba(5,150,105,0.25); border-radius:6px; margin-bottom:5px; font-size:13px;">
-                <span>💰 <strong>Vente (${labelEcheance}) :</strong> [${o.siegeNom || "Entreprise"}] ${o.quantite || 1}× ${o.style} (${(o.ajustement || 0) >= 0 ? "+" : ""}${o.ajustement || 0}%) → Règlement estimé : <strong>+${gainSecurise} Ø</strong></span>
+                <span>💰 <strong>Vente (${labelEcheance}) :</strong> [${o.siegeNom || "Entreprise"}] ${o.quantite || 1}× ${o.style} (${(o.ajustement || 0) >= 0 ? "+" : ""}${o.ajustement || 0}%) → +${gainSecurise} Ø • <em style="color:#fde68a;">Par ${o.auteur || auteurActuel}</em></span>
                 <button class="btn-annuler-ven" data-idx="${idx}" style="background:#b91c1c; color:#fff; border:none; border-radius:5px; padding:4px 9px; cursor:pointer; font-size:12px;">Annuler</button>
             </div>
             `;
@@ -85,9 +86,14 @@ export function initGestion() {
         <div class="premium-panel">
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
                 <h2 class="premium-title" style="margin:0;">Loyers & Ventes par Entreprise</h2>
-                <span style="background:rgba(0,45,85,0.85); border:1px solid ${temps.modeBeta ? "#34d399" : "#38bdf8"}; padding:5px 12px; border-radius:8px; font-size:13px; color:#bae6fd;">
-                    Prochaine clôture dans <strong id="chrono-cloture-header">${temps.tempsAvantCloture}</strong>
-                </span>
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    <span style="background:rgba(0,45,85,0.85); border:1px solid #fbbf24; padding:5px 12px; border-radius:8px; font-size:13px; color:#fde68a;">
+                        👤 Session : <strong>${auteurActuel}</strong>
+                    </span>
+                    <span style="background:rgba(0,45,85,0.85); border:1px solid ${temps.modeBeta ? "#34d399" : "#38bdf8"}; padding:5px 12px; border-radius:8px; font-size:13px; color:#bae6fd;">
+                        Prochaine clôture dans <strong id="chrono-cloture-header">${temps.tempsAvantCloture}</strong>
+                    </span>
+                </div>
             </div>
 
             ${ordresAttenteHTML}
@@ -114,7 +120,7 @@ export function initGestion() {
                                 Object.entries(styles)
                                     .filter(([, bien]) => (bien.quantite || 0) > 0)
                                     .map(([style, bien]) => {
-                                        const enLoc = bien.enLocation || 0;
+                                        const enLoc = Math.min(bien.quantite, bien.enLocation || 0);
                                         const prixMoyen = bien.prixAchatMoyen || 15000;
                                         const loyerUnitaireNet = Math.floor(prixMoyen * 0.02 * 0.75);
                                         const prixReventeUnitaireNet = Math.floor(prixMoyen * 1.25 * 0.90);
@@ -123,9 +129,16 @@ export function initGestion() {
                                         <div style="margin-top:12px; padding:12px; background:rgba(0,35,70,0.75); border-radius:10px; border:1px solid rgba(56,189,248,0.25);">
                                             <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-bottom:6px;">
                                                 <div style="font-size:16px; font-weight:bold; color:#fff;">${style} <span style="font-size:12px; color:#7ec8ff;">(${categorie})</span></div>
-                                                <span style="background:rgba(52,211,153,0.2); color:#34d399; padding:3px 8px; border-radius:6px; font-size:12px; font-weight:bold;">
-                                                    En location active : ${enLoc} / ${bien.quantite}
-                                                </span>
+                                                <div style="display:flex; gap:8px; align-items:center;">
+                                                    <span style="background:${enLoc > 0 ? "rgba(52,211,153,0.2)" : "rgba(148,163,184,0.2)"}; color:${enLoc > 0 ? "#34d399" : "#cbd5e1"}; padding:3px 8px; border-radius:6px; font-size:12px; font-weight:bold;">
+                                                        ${enLoc > 0 ? `🔄 Location active reconduite : ${enLoc} / ${bien.quantite}` : `Disponible : ${bien.quantite} unité(s)`}
+                                                    </span>
+                                                    ${enLoc > 0 && peutLouer ? `
+                                                        <button class="btn-stopper-loc" data-siege="${siege.id}" data-cat="${categorie}" data-style="${style}" style="background:#475569; color:#fff; border:none; border-radius:5px; padding:3px 8px; cursor:pointer; font-size:11px;">
+                                                            Retirer du bail
+                                                        </button>
+                                                    ` : ""}
+                                                </div>
                                             </div>
 
                                             <div style="display:flex; gap:16px; flex-wrap:wrap; font-size:13px; color:#cbd5e1; margin-bottom:10px;">
@@ -161,7 +174,7 @@ export function initGestion() {
                                                         data-siege="${siege.id}" data-cat="${categorie}" data-style="${style}"
                                                         style="margin:0; padding:8px 14px; font-size:13px; background:#0284c7;"
                                                         ${peutLouer ? "" : 'disabled style="opacity:0.4;"'}>
-                                                        🔑 Louer
+                                                        🔑 ${enLoc > 0 ? "Mettre à jour la location" : "Louer"}
                                                     </button>
                                                     <button class="btn-vendre premium-btn"
                                                         data-siege="${siege.id}" data-cat="${categorie}" data-style="${style}"
@@ -222,11 +235,25 @@ function bindGestionEvents() {
         };
     });
 
+    document.querySelectorAll(".btn-stopper-loc").forEach(btn => {
+        btn.onclick = () => {
+            const { siege: siegeId, cat, style } = btn.dataset;
+            const e = getEntreprise();
+            const siege = (e.commercesGPS || []).find(s => String(s.id) === String(siegeId));
+            const bien = siege?.biens?.[cat]?.[style];
+            if (!bien) return;
+
+            bien.enLocation = 0;
+            ajouterHistorique(`[${siege.nom}] Arrêt du bail locatif sur ${style}`, "gestion");
+            initGestion();
+        };
+    });
+
     document.querySelectorAll(".btn-annuler-loc").forEach(btn => {
         btn.onclick = () => {
             const e = getEntreprise();
-            e.locationsEnAttente.splice(Number(btn.dataset.idx), 1);
-            saveData();
+            const ordre = e.locationsEnAttente.splice(Number(btn.dataset.idx), 1)[0];
+            if (ordre) ajouterHistorique(`Annulation de l'ordre de location : [${ordre.siegeNom}] ${ordre.style}`, "gestion");
             initGestion();
         };
     });
@@ -234,8 +261,8 @@ function bindGestionEvents() {
     document.querySelectorAll(".btn-annuler-ven").forEach(btn => {
         btn.onclick = () => {
             const e = getEntreprise();
-            e.ventesEnAttente.splice(Number(btn.dataset.idx), 1);
-            saveData();
+            const ordre = e.ventesEnAttente.splice(Number(btn.dataset.idx), 1)[0];
+            if (ordre) ajouterHistorique(`Annulation de l'ordre de vente : [${ordre.siegeNom}] ${ordre.style}`, "gestion");
             initGestion();
         };
     });
@@ -244,6 +271,7 @@ function bindGestionEvents() {
         btn.onclick = () => {
             const { siege: siegeId, cat, style } = btn.dataset;
             const e = getEntreprise();
+            const auteur = e.utilisateurActif || e.pdg || "Fondateur";
             const siege = (e.commercesGPS || []).find(s => String(s.id) === String(siegeId));
             const bien = siege?.biens?.[cat]?.[style];
             if (!bien) return;
@@ -261,10 +289,11 @@ function bindGestionEvents() {
                 categorie: cat,
                 style,
                 quantite: qte,
-                ajustement: ajust
+                ajustement: ajust,
+                auteur
             });
 
-            saveData();
+            ajouterHistorique(`[${siege.nom}] Programmation mise en location : ${qte}× ${style} (${ajust >= 0 ? "+" : ""}${ajust}%)`, "gestion", auteur);
             initGestion();
         };
     });
@@ -273,6 +302,7 @@ function bindGestionEvents() {
         btn.onclick = () => {
             const { siege: siegeId, cat, style } = btn.dataset;
             const e = getEntreprise();
+            const auteur = e.utilisateurActif || e.pdg || "Fondateur";
             const siege = (e.commercesGPS || []).find(s => String(s.id) === String(siegeId));
             const bien = siege?.biens?.[cat]?.[style];
             if (!bien) return;
@@ -294,10 +324,11 @@ function bindGestionEvents() {
                 style,
                 quantite: qte,
                 ajustement: ajust,
-                gainNetEstime
+                gainNetEstime,
+                auteur
             });
 
-            saveData();
+            ajouterHistorique(`[${siege.nom}] Programmation mise en vente : ${qte}× ${style} (${ajust >= 0 ? "+" : ""}${ajust}%)`, "gestion", auteur);
             initGestion();
         };
     });
@@ -305,6 +336,7 @@ function bindGestionEvents() {
     document.querySelectorAll(".btn-tout-louer-siege").forEach(btn => {
         btn.onclick = () => {
             const e = getEntreprise();
+            const auteur = e.utilisateurActif || e.pdg || "Fondateur";
             const siege = (e.commercesGPS || []).find(s => String(s.id) === String(btn.dataset.siege));
             if (!siege?.biens) return;
 
@@ -320,12 +352,13 @@ function bindGestionEvents() {
                             categorie: cat,
                             style,
                             quantite: bien.quantite,
-                            ajustement: 0
+                            ajustement: 0,
+                            auteur
                         });
                     }
                 }
             }
-            saveData();
+            ajouterHistorique(`[${siege.nom}] Programmation location groupée de tout le parc`, "gestion", auteur);
             initGestion();
         };
     });
@@ -333,6 +366,7 @@ function bindGestionEvents() {
     document.querySelectorAll(".btn-tout-vendre-siege").forEach(btn => {
         btn.onclick = () => {
             const e = getEntreprise();
+            const auteur = e.utilisateurActif || e.pdg || "Fondateur";
             const siege = (e.commercesGPS || []).find(s => String(s.id) === String(btn.dataset.siege));
             if (!siege?.biens) return;
 
@@ -350,12 +384,13 @@ function bindGestionEvents() {
                             style,
                             quantite: bien.quantite,
                             ajustement: 0,
-                            gainNetEstime: Math.floor(prixMoyen * 1.25 * 0.90 * bien.quantite)
+                            gainNetEstime: Math.floor(prixMoyen * 1.25 * 0.90 * bien.quantite),
+                            auteur
                         });
                     }
                 }
             }
-            saveData();
+            ajouterHistorique(`[${siege.nom}] Programmation vente groupée de tout le parc`, "gestion", auteur);
             initGestion();
         };
     });
