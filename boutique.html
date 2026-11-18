@@ -55,6 +55,7 @@
             cursor: pointer;
             font-size: 14px;
             margin-top: 6px;
+            width: 100%;
         }
         .btn-pack:hover { filter: brightness(1.12); }
         .btn-pack.or { background: linear-gradient(90deg, #d97706, #fbbf24); color: #0f172a; }
@@ -111,28 +112,28 @@
 </div>
 
 <main class="boutique-wrapper">
-    <h2 style="color: #7ec8ff; margin-top: 0;">Packs & Extensions Geo Empire</h2>
-    <p style="font-size: 14px; color: #bae6fd;">Débloquez les scans longue portée sur la Carte GPS et renforcez votre trésorerie.</p>
+    <h2 style="color: #7ec8ff; margin-top: 0;">Boutique Officielle Geo Empire</h2>
+    <p style="font-size: 14px; color: #bae6fd;">Débloquez le Passe Prestige ou échangez vos Tokens (GT) pour accélérer votre expansion.</p>
 
     <div class="boutique-grid">
-        <!-- PACK PREMIUM (DÉBLOQUE 10 KM & 20 KM) -->
+        <!-- CARTE 1 : PASSE PRESTIGE (ACHAT ARGENT RÉEL / CB) -->
         <div class="pack-card premium">
             <div>
-                <span class="pack-badge" style="background:#fbbf24; color:#0f172a;">PACK PREMIUM</span>
-                <h3 style="margin: 8px 0; color: #fde68a;">Extension Radar 10 & 20 km</h3>
+                <span class="pack-badge" style="background:#fbbf24; color:#0f172a;">PASSE PRESTIGE • 9,99 €</span>
+                <h3 style="margin: 8px 0; color: #fde68a;">Radar 10 & 20 km + Assurance Ultime</h3>
                 <p style="font-size: 13px; line-height: 1.5;">
-                    • Débloque les rayons de scan <strong>10 km</strong> et <strong>20 km</strong> sur la Carte GPS<br>
-                    • Débloque l'export CSV du catalogue<br>
-                    • Bonus immédiat de <strong>+25 000 Ø</strong>
+                    • Débloque les rayons GPS <strong>10 km</strong> et <strong>20 km</strong><br>
+                    • Débloque l'assurance <strong>Prestige Ultime (120 % + Anti-braquage)</strong><br>
+                    • Bonus immédiat : <strong>+50 000 Ø</strong>
                 </p>
             </div>
             <div>
-                <div style="font-size: 16px; font-weight: bold; color: #fbbf24;">Coût : 50 Crowns (CRW)</div>
-                <button id="btn-pack-premium" class="btn-pack or">Activer le Pack Premium</button>
+                <div style="font-size: 13px; font-weight: bold; color: #fbbf24;">Achat Carte Bancaire (9,99 €)</div>
+                <button id="btn-pack-premium" class="btn-pack or">💳 Acheter le Passe Prestige (9,99 €)</button>
             </div>
         </div>
 
-        <!-- PACK DÉMARRAGE TRÉSORERIE -->
+        <!-- CARTE 2 : INJECTION DE CAPITAL -->
         <div class="pack-card">
             <div>
                 <span class="pack-badge" style="background:rgba(52,211,153,0.2); color:#34d399; border:1px solid #34d399;">TRÉSORERIE</span>
@@ -142,43 +143,42 @@
                 </p>
             </div>
             <div>
-                <div style="font-size: 16px; font-weight: bold; color: #34d399;">Coût : 5 Tokens (GT)</div>
+                <div style="font-size: 15px; font-weight: bold; color: #34d399;">Coût : 5 Tokens (GT)</div>
                 <button class="btn-pack vert" data-achat="capital-50k">Échanger 5 GT</button>
             </div>
         </div>
 
-        <!-- PACK EXPANSION -->
+        <!-- CARTE 3 : FONDS HOLDING -->
         <div class="pack-card">
             <div>
                 <span class="pack-badge" style="background:rgba(56,189,248,0.2); color:#38bdf8; border:1px solid #38bdf8;">EXPANSION</span>
                 <h3 style="margin: 8px 0; color: #fff;">Fonds Holding +250 000 Ø</h3>
                 <p style="font-size: 13px; line-height: 1.5;">
-                    Ajoute <strong>250 000 Ø</strong> + <strong>10 Crowns (CRW)</strong> pour accélérer votre montée vers les 10 entreprises.
+                    Ajoute <strong>250 000 Ø</strong> à votre groupe pour accélérer votre montée vers les 10 entreprises.
                 </p>
             </div>
             <div>
-                <div style="font-size: 16px; font-weight: bold; color: #38bdf8;">Coût : 20 Tokens (GT)</div>
+                <div style="font-size: 15px; font-weight: bold; color: #38bdf8;">Coût : 20 Tokens (GT)</div>
                 <button class="btn-pack" data-achat="capital-250k">Échanger 20 GT</button>
             </div>
         </div>
 
-        <!-- CONVERTISSEUR TOKENS -> CROWNS -->
+        <!-- CARTE 4 : TICKET LOTERIE PRESTIGE -->
         <div class="pack-card">
             <div>
-                <span class="pack-badge" style="background:rgba(168,85,247,0.2); color:#d8b4fe; border:1px solid #a855f7;">CHANGE</span>
-                <h3 style="margin: 8px 0; color: #fff;">Lot de 25 Crowns (CRW)</h3>
+                <span class="pack-badge" style="background:rgba(168,85,247,0.2); color:#d8b4fe; border:1px solid #a855f7;">LOTERIE PRESTIGE</span>
+                <h3 style="margin: 8px 0; color: #fff;">Accès Loterie Crowns (CRW)</h3>
                 <p style="font-size: 13px; line-height: 1.5;">
-                    Convertissez vos Tokens (GT) en Crowns (CRW) pour débloquer les améliorations Prestige et Premium.
+                    Les <strong>Crowns (CRW)</strong> se gagnent exclusivement à la loterie dans l'onglet <strong>Prestige</strong>.
                 </p>
             </div>
             <div>
-                <div style="font-size: 16px; font-weight: bold; color: #d8b4fe;">Coût : 10 Tokens (GT)</div>
-                <button class="btn-pack" data-achat="crowns-25">Échanger 10 GT</button>
+                <a href="prestige.html" class="btn-pack" style="display:block; text-align:center; text-decoration:none; background:linear-gradient(90deg, #7e22ce, #a855f7);">Aller à la Loterie Prestige →</a>
             </div>
         </div>
     </div>
 
-    <!-- ACCÈS TESTEUR BÊTA (CODE SECRET) -->
+    <!-- ENCART CODE TESTEUR BÊTA -->
     <div class="beta-box">
         <div>
             <strong style="color: #38bdf8; font-size: 15px;">🔑 Accès Testeur Bêta</strong>
@@ -188,7 +188,7 @@
         </div>
         <div class="beta-form">
             <input type="text" id="input-code-beta" placeholder="Code Bêta...">
-            <button id="btn-valider-beta" class="btn-pack" style="margin-top:0;">Activer le code</button>
+            <button id="btn-valider-beta" class="btn-pack" style="margin-top:0; width:auto;">Activer le code</button>
         </div>
     </div>
 </main>
@@ -196,7 +196,7 @@
 <script type="module">
     import { getData, saveData } from "./js/core/geoData.js";
 
-    // 👇 CODE SECRET BÊTA (change-le ici quand tu veux)
+    // CODE SECRET BÊTA (modifiable ici à tout moment)
     const CODE_BETA_VALIDE = "GEO-BETA-2026";
 
     function logBoutique(texte) {
@@ -209,6 +209,16 @@
         });
     }
 
+    function estBetaActif() {
+        const e = getData().entreprise;
+        return e.betaTesteur === true || localStorage.getItem("geoEmpireBeta") === "1";
+    }
+
+    function estPassePrestigeActif() {
+        const e = getData().entreprise;
+        return e.prestigePack === true || localStorage.getItem("prestigePack") === "true";
+    }
+
     function majAffichage() {
         const e = getData().entreprise;
         document.getElementById("solde").textContent = (e.argent || 0).toLocaleString("fr-FR");
@@ -216,36 +226,37 @@
         document.getElementById("crowns").textContent = (e.crowns || 0).toLocaleString("fr-FR");
 
         const btnPrem = document.getElementById("btn-pack-premium");
-        if (e.prestigePack) {
-            btnPrem.textContent = "✓ Pack Premium Actif";
+        if (estPassePrestigeActif()) {
+            btnPrem.textContent = "✓ Passe Prestige Actif";
             btnPrem.disabled = true;
             btnPrem.style.opacity = "0.7";
         }
 
         const statutBeta = document.getElementById("statut-beta");
-        if (e.betaTesteur) {
+        if (estBetaActif()) {
             statutBeta.innerHTML = `<span style="color:#34d399; font-weight:bold;">✓ Accès Testeur Bêta actif : rayons 10 km et 20 km débloqués sur la Carte GPS.</span>`;
         }
     }
 
-    // Activation Pack Premium
+    // Achat Passe Prestige (Carte Bancaire - mode simulation pour tests)
     document.getElementById("btn-pack-premium").addEventListener("click", () => {
         const e = getData().entreprise;
-        if (e.prestigePack) return;
-        if ((e.crowns || 0) < 50) {
-            alert("Il vous faut 50 Crowns (CRW) pour activer le Pack Premium.");
+        if (estPassePrestigeActif()) return;
+
+        if (!confirm("Passerelle Carte Bancaire (Mode Test) : confirmer l'achat du Passe Prestige (9,99 €) ?")) {
             return;
         }
-        e.crowns -= 50;
+
         e.prestigePack = true;
-        e.argent = (e.argent || 0) + 25000;
-        logBoutique("Achat du Pack Premium (Radar 10/20 km + 25 000 Ø)");
+        localStorage.setItem("prestigePack", "true");
+        e.argent = (e.argent || 0) + 50000;
+        logBoutique("Achat Passe Prestige via Carte Bancaire (+50 000 Ø)");
         saveData();
         majAffichage();
-        alert("Pack Premium activé ! Les rayons 10 km et 20 km sont désormais débloqués sur la Carte GPS.");
+        alert("Passe Prestige activé ! Rayons 10/20 km et Assurance Ultime débloqués.");
     });
 
-    // Packs Tokens
+    // Échanges Tokens (GT) -> Géo (Ø)
     document.querySelectorAll("[data-achat]").forEach(btn => {
         btn.addEventListener("click", () => {
             const e = getData().entreprise;
@@ -260,13 +271,7 @@
                 if ((e.tokens || 0) < 20) return alert("Tokens (GT) insuffisants (20 GT requis).");
                 e.tokens -= 20;
                 e.argent = (e.argent || 0) + 250000;
-                e.crowns = (e.crowns || 0) + 10;
-                logBoutique("Échange Boutique : +250 000 Ø et +10 CRW contre 20 GT");
-            } else if (type === "crowns-25") {
-                if ((e.tokens || 0) < 10) return alert("Tokens (GT) insuffisants (10 GT requis).");
-                e.tokens -= 10;
-                e.crowns = (e.crowns || 0) + 25;
-                logBoutique("Échange Boutique : +25 CRW contre 10 GT");
+                logBoutique("Échange Boutique : +250 000 Ø contre 20 GT");
             }
 
             saveData();
@@ -280,6 +285,7 @@
         if (saisie === CODE_BETA_VALIDE) {
             const e = getData().entreprise;
             e.betaTesteur = true;
+            localStorage.setItem("geoEmpireBeta", "1");
             logBoutique("Activation de l'accès Testeur Bêta");
             saveData();
             majAffichage();
