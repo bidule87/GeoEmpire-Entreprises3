@@ -3,7 +3,7 @@
 // =======================================
 
 import { getEntreprise } from "../entrepriseCore.js";
-import { getData, saveData } from "../geoData.js";
+import { getData, saveData, loadData } from "../geoData.js";
 
 let filtreCategorie = "tous";
 let siegeSelectionneId = null;
@@ -54,10 +54,10 @@ function siegeAutoriseCategorie(siege, config) {
 }
 
 export function initAcheter() {
+    loadData();
     const e = getEntreprise();
     const sieges = e.commercesGPS || [];
 
-    // Normalise les IDs manquants éventuels
     sieges.forEach((s, idx) => {
         if (s.id === undefined || s.id === null || s.id === "") {
             s.id = `siege_${Date.now()}_${idx}`;
@@ -176,16 +176,13 @@ function afficherBiensDisponibles() {
                 </div>
 
                 <div style="display:flex; flex-wrap:wrap; gap:14px; font-size:13px; color:#cbd5e1; margin:6px 0 10px 0;">
-                    <span>Loyer brut : <strong style="color:#34d399;">+${loyerBrut.toLocaleString("fr-FR")} Ø/cycle</strong></span>
-                    <span>Charges d'exploitation : -${charges.toLocaleString("fr-FR")} Ø</span>
-                    <span>Impôts locaux : -${impotsMois.toLocaleString("fr-FR")} Ø</span>
-                    <span>Revenu net estimé : <strong style="color:#38bdf8;">+${rentabiliteNette.toLocaleString("fr-FR")} Ø/cycle</strong></span>
+                    <span>Revenu locatif estimé : <strong style="color:#38bdf8;">+${rentabiliteNette.toLocaleString("fr-FR")} Ø/cycle</strong></span>
                 </div>
 
                 <div class="achat-zone" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
                     <input type="number" class="achat-input input-text" min="1" value="1" style="max-width:90px; padding:6px 10px; margin:0;">
-                    <button class="achat-max-btn premium-btn" style="margin:0; padding:6px 12px; font-size:13px; background:#1e40af;">MAX</button>
-                    <button class="achat-valider-btn premium-btn" style="margin:0; padding:6px 14px; font-size:13px; background:#059669;">Acheter pour ${siegeActif.nom}</button>
+                    <button type="button" class="achat-max-btn premium-btn" style="margin:0; padding:6px 12px; font-size:13px; background:#1e40af;">MAX</button>
+                    <button type="button" class="achat-valider-btn premium-btn" style="margin:0; padding:6px 14px; font-size:13px; background:#059669;">Acheter pour ${siegeActif.nom}</button>
                 </div>
             `;
 
@@ -201,7 +198,8 @@ function afficherBiensDisponibles() {
             btnValider.addEventListener("click", () => {
                 const qte = parseInt(input.value, 10);
                 if (isNaN(qte) || qte <= 0) return;
-                gererAchatCible(siegeActif.id, categorie, style, prix, qte);
+                const idActuel = document.getElementById("select-siege-achat")?.value || siegeSelectionneId;
+                gererAchatCible(idActuel, categorie, style, prix, qte);
             });
 
             bloc.appendChild(item);
@@ -219,6 +217,7 @@ function afficherBiensDisponibles() {
 }
 
 function gererAchatCible(siegeId, categorie, style, prix, quantiteAchetee) {
+    loadData();
     const data = getData();
     const entreprise = data.entreprise;
     const siege = (entreprise.commercesGPS || []).find(s => String(s.id) === String(siegeId));
