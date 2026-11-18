@@ -1,30 +1,17 @@
-// ======================================================
-//  GEO EMPIRE — ENTREPRISE, GOUVERNANCE & HOLDING
-//  Rythme : 1 jour réel = 1 mois jeu | 12 jours = 1 an
-// ======================================================
+// ============================================
+// ENTREPRISE CORE — GOUVERNANCE, HIÉRARCHIE & HOLDING
+// ============================================
 
-import { getData, saveData } from "./geoData.js";
+import { getData, saveData, ajouterHistorique } from "./geoData.js";
 
 export const SEUIL_HOLDING = 10;
-export const PECULE_DEPART_ASSOCIE = 5000;
-
-function logAction(texte, type = "gestion") {
-    const data = getData();
-    if (!Array.isArray(data.historique)) data.historique = [];
-    data.historique.unshift({
-        date: new Date().toLocaleString("fr-FR"),
-        texte,
-        type
-    });
-}
+export const PECULE_DEPART_ASSOCIE = 15000;
 
 export function getEntreprise() {
-    const data = getData();
-    const e = data.entreprise;
-    if (!Array.isArray(e.commercesGPS)) e.commercesGPS = [];
+    const e = getData().entreprise;
     if (!e.pdg) e.pdg = "Fondateur";
     if (!e.utilisateurActif) e.utilisateurActif = e.pdg;
-
+    if (!Array.isArray(e.commercesGPS)) e.commercesGPS = [];
     if (!e.holding) {
         e.holding = {
             active: false,
@@ -35,15 +22,6 @@ export function getEntreprise() {
             associes: []
         };
     }
-    if (!Array.isArray(e.holding.associes)) e.holding.associes = [];
-
-    e.commercesGPS.forEach(s => {
-        if (!Array.isArray(s.associes)) s.associes = [];
-        s.associes = s.associes.map(a =>
-            typeof a === "string" ? { nom: a, droits: "complet" } : a
-        );
-    });
-
     return e;
 }
 
@@ -51,177 +29,183 @@ export function sauvegarderEntreprise() {
     saveData();
 }
 
-export function changerNomEntreprise(nom) {
+export function estPdgGeneral() {
     const e = getEntreprise();
-    e.nom = (nom || "").trim() || "Mon Entreprise";
+    return (e.utilisateurActif || e.pdg) === e.pdg;
+}
+
+export function basculerUtilisateurActif(nomUtilisateur) {
+    const e = getEntreprise();
+    e.utilisateurActif = nomUtilisateur || e.pdg;
     saveData();
+}
+
+export function changerNomEntreprise(nouveauNom) {
+    const e = getEntreprise();
+    e.nom = nouveauNom.trim() || "Mon Empire";
+    ajouterHistorique(`Groupe renommé en "${e.nom}"`, "gestion");
 }
 
 export function changerNomJoueur(nouveauNom) {
     const e = getEntreprise();
     const ancienPdg = e.pdg;
-    const nomPropre = (nouveauNom || "").trim() || "Fondateur";
-    e.pdg = nomPropre;
+    e.pdg = nouveauNom.trim() || "Fondateur";
     if (e.utilisateurActif === ancienPdg) {
-        e.utilisateurActif = nomPropre;
+        e.utilisateurActif = e.pdg;
     }
-    saveData();
-}
-
-export function basculerUtilisateurActif(nomUtilisateur) {
-    const e = getEntreprise();
-    e.utilisateurActif = nomUtilisateur;
-    saveData();
-}
-
-export function estPdgGeneral() {
-    const e = getEntreprise();
-    return e.utilisateurActif === e.pdg;
+    ajouterHistorique(`Fondateur (PDG) renommé en "${e.pdg}"`, "gestion");
 }
 
 export function changerPhotoEntreprise(base64) {
     const e = getEntreprise();
     e.logo = base64;
-    saveData();
+    ajouterHistorique("Logo du groupe / Holding mis à jour", "gestion");
 }
 
+// ============================================
+// SIÈGES GPS & HIÉRARCHIE (FONDATEUR / DG / COMMERCIAL)
+// ============================================
 export function getSiegesGPS() {
     return getEntreprise().commercesGPS || [];
 }
 
-export function majSiegeGPS(id, updates) {
+export function majSiegeGPS(id, modifications) {
+    const e = getEntreprise();
+    const siege = e.commercesGPS.find(s => String(s.id) === String(id));
+    if (!siege) return;
+    Object.assign(siege, modifications);
+    saveData();
+}
+
+export function changerPhotoSiegeGPS(id, base64) {
+    const e = getEntreprise();
+    const siege = e.commercesGPS.find(s => String(s.id) === String(id));
+    if (!siege) return;
+    siege.logo = base64;
+    ajouterHistorique(`[${siege.nom}] Photo de l'entreprise mise à jour`, "gestion");
+}
+
+export function ajouterMembreSiege(id, nomMembre, role = "commercial", droits = "complet") {
+    const clean = nomMembre.trim();
+    if (!clean) return false;
     const e = getEntreprise();
     const siege = e.commercesGPS.find(s => String(s.id) === String(id));
     if (!siege) return false;
-    Object.assign(siege, updates);
-    saveData();
-    return true;
-}
 
-export function ajouterAssocieSiege(id, nomAssocie, droits = "complet") {
-    const e = getEntreprise();
-    const siege = e.commercesGPS.find(s => String(s.id) === String(id));
-    const nomPropre = (nomAssocie || "").trim();
-    if (!siege || !nomPropre) return false;
-
-    const existant = siege.associes.find(a => a.nom.toLowerCase() === nomPropre.toLowerCase());
-    if (existant) {
-        existant.droits = droits;
-    } else {
-        siege.associes.push({ nom: nomPropre, droits });
-        logAction(`Associé ajouté sur ${siege.nom} : ${nomPropre}`);
+    if (!Array.isArray(siege.associes)) siege.associes = [];
+    if (siege.associes.some(a => a.nom.toLowerCase() === clean.toLowerCase())) {
+        alert("Ce membre fait déjà partie de cette entreprise.");
+        return false;
     }
-    saveData();
+
+    siege.associes.push({
+        nom: clean,
+        role, // "dg" (Directeur Général Associé) ou "commercial" (Directeur Commercial / Joueur)
+        droits, // "complet", "achetee", "louee", "bloque"
+        dateAjout: new Date().toLocaleDateString("fr-FR")
+    });
+
+    const libelleRole = role === "dg" ? "Directeur Général (Associé)" : "Directeur Commercial (Joueur)";
+    ajouterHistorique(`[${siege.nom}] Recrutement de ${clean} en tant que ${libelleRole}`, "gestion");
     return true;
 }
 
-export function changerDroitsAssocieSiege(id, nomAssocie, nouveauxDroits) {
+export function majMembreSiege(id, nomMembre, champs) {
     const e = getEntreprise();
     const siege = e.commercesGPS.find(s => String(s.id) === String(id));
-    if (!siege) return false;
+    if (!siege || !Array.isArray(siege.associes)) return;
 
-    const assoc = siege.associes.find(a => a.nom === nomAssocie);
-    if (!assoc) return false;
-
-    assoc.droits = nouveauxDroits;
-    saveData();
-    return true;
+    const membre = siege.associes.find(a => a.nom === nomMembre);
+    if (!membre) return;
+    Object.assign(membre, champs);
+    ajouterHistorique(`[${siege.nom}] Permissions de ${nomMembre} modifiées (${membre.droits})`, "gestion");
 }
 
-export function virerAssocieSiege(id, nomAssocie) {
-    const e = getEntreprise();
+export function virerMembreSiege(id, nomMembre) {
     if (!estPdgGeneral()) {
-        return { ok: false, message: `Autorisation refusée : seul le PDG général (${e.pdg}) peut virer un associé.` };
+        return { ok: false, message: "Seul le Fondateur (PDG Général) peut licencier un membre." };
     }
-
+    const e = getEntreprise();
     const siege = e.commercesGPS.find(s => String(s.id) === String(id));
-    if (!siege) return { ok: false, message: "Entreprise introuvable." };
+    if (!siege || !Array.isArray(siege.associes)) return { ok: false, message: "Entreprise introuvable." };
 
     if ((e.argent || 0) < PECULE_DEPART_ASSOCIE) {
-        return { ok: false, message: `Trésorerie insuffisante pour verser le pécule de départ (${PECULE_DEPART_ASSOCIE.toLocaleString("fr-FR")} Ø).` };
+        return { ok: false, message: `Fonds insuffisants pour l'indemnité de départ (${PECULE_DEPART_ASSOCIE.toLocaleString("fr-FR")} Ø).` };
     }
 
     e.argent -= PECULE_DEPART_ASSOCIE;
-    siege.associes = siege.associes.filter(a => a.nom !== nomAssocie);
+    siege.associes = siege.associes.filter(a => a.nom !== nomMembre);
+    if (e.utilisateurActif === nomMembre) e.utilisateurActif = e.pdg;
 
-    if (e.utilisateurActif === nomAssocie) {
-        e.utilisateurActif = e.pdg;
-    }
-
-    logAction(`${nomAssocie} révoqué de ${siege.nom} par le PDG général (pécule : ${PECULE_DEPART_ASSOCIE} Ø)`);
-    saveData();
+    ajouterHistorique(`[${siege.nom}] Départ de ${nomMembre} (-${PECULE_DEPART_ASSOCIE.toLocaleString("fr-FR")} Ø)`, "depense");
     return { ok: true };
 }
 
+// ============================================
+// HOLDING (10 ENTREPRISES)
+// ============================================
 export function creerHolding(nomHolding) {
     const e = getEntreprise();
-    if (e.commercesGPS.length < SEUIL_HOLDING) return false;
-
-    e.holding.active = true;
-    e.holding.nom = (nomHolding || "").trim() || `${e.nom} Holding`;
-    e.holding.dateCreation = new Date().toLocaleDateString("fr-FR");
-    e.holding.bonusRevenus = 0.20;
-    e.holding.filialesIds = e.commercesGPS.map(s => String(s.id));
-
-    logAction(`Création de la Holding "${e.holding.nom}" (${e.commercesGPS.length} entreprises)`, "prestige");
-    saveData();
+    if (e.commercesGPS.length < SEUIL_HOLDING) {
+        alert(`Il faut au moins ${SEUIL_HOLDING} entreprises pour fonder une Holding.`);
+        return false;
+    }
+    e.holding = {
+        active: true,
+        nom: (nomHolding || `${e.nom} Holding`).trim(),
+        dateCreation: new Date().toLocaleDateString("fr-FR"),
+        bonusRevenus: 0.20,
+        filialesIds: e.commercesGPS.map(s => s.id),
+        associes: e.holding?.associes || []
+    };
+    ajouterHistorique(`Fondation de la Holding "${e.holding.nom}" (+20 % de revenus)`, "prestige");
     return true;
 }
 
 export function synchroniserFilialesHolding() {
     const e = getEntreprise();
     if (!e.holding?.active) return;
-    e.holding.filialesIds = e.commercesGPS.map(s => String(s.id));
-    saveData();
+    e.holding.filialesIds = e.commercesGPS.map(s => s.id);
+    ajouterHistorique(`Filiales de "${e.holding.nom}" synchronisées (${e.holding.filialesIds.length})`, "prestige");
 }
 
-export function ajouterAssocieHolding(nomAssocie, droits = "complet") {
-    const e = getEntreprise();
-    const nomPropre = (nomAssocie || "").trim();
-    if (!e.holding?.active || !nomPropre) return false;
-
-    const existant = e.holding.associes.find(a => a.nom.toLowerCase() === nomPropre.toLowerCase());
-    if (existant) {
-        existant.droits = droits;
-    } else {
-        e.holding.associes.push({ nom: nomPropre, droits });
-        logAction(`Associé ajouté à la Holding "${e.holding.nom}" : ${nomPropre}`);
-    }
-    saveData();
-    return true;
-}
-
-export function changerDroitsAssocieHolding(nomAssocie, nouveauxDroits) {
+export function ajouterAssocieHolding(nomMembre, droits = "complet") {
+    const clean = nomMembre.trim();
+    if (!clean) return false;
     const e = getEntreprise();
     if (!e.holding?.active) return false;
 
-    const assoc = e.holding.associes.find(a => a.nom === nomAssocie);
-    if (!assoc) return false;
+    if (!Array.isArray(e.holding.associes)) e.holding.associes = [];
+    if (e.holding.associes.some(a => a.nom.toLowerCase() === clean.toLowerCase())) return false;
 
-    assoc.droits = nouveauxDroits;
-    saveData();
+    e.holding.associes.push({
+        nom: clean,
+        role: "dg",
+        droits,
+        dateAjout: new Date().toLocaleDateString("fr-FR")
+    });
+    ajouterHistorique(`[Holding ${e.holding.nom}] Nomination de ${clean} (Directeur Général Associé)`, "prestige");
     return true;
 }
 
-export function virerAssocieHolding(nomAssocie) {
+export function changerDroitsAssocieHolding(nomMembre, nouveauxDroits) {
     const e = getEntreprise();
-    if (!estPdgGeneral()) {
-        return { ok: false, message: `Autorisation refusée : seul le PDG général (${e.pdg}) peut virer un associé de la Holding.` };
-    }
+    const a = (e.holding?.associes || []).find(x => x.nom === nomMembre);
+    if (!a) return;
+    a.droits = nouveauxDroits;
+    ajouterHistorique(`[Holding ${e.holding.nom}] Droits de ${nomMembre} mis à jour`, "prestige");
+}
 
+export function virerAssocieHolding(nomMembre) {
+    if (!estPdgGeneral()) return { ok: false, message: "Réservé au Fondateur." };
+    const e = getEntreprise();
     if ((e.argent || 0) < PECULE_DEPART_ASSOCIE) {
-        return { ok: false, message: `Trésorerie insuffisante pour verser le pécule de départ (${PECULE_DEPART_ASSOCIE.toLocaleString("fr-FR")} Ø).` };
+        return { ok: false, message: `Fonds insuffisants (${PECULE_DEPART_ASSOCIE.toLocaleString("fr-FR")} Ø).` };
     }
-
     e.argent -= PECULE_DEPART_ASSOCIE;
-    e.holding.associes = e.holding.associes.filter(a => a.nom !== nomAssocie);
-
-    if (e.utilisateurActif === nomAssocie) {
-        e.utilisateurActif = e.pdg;
-    }
-
-    logAction(`${nomAssocie} révoqué de la Holding par le PDG général (pécule : ${PECULE_DEPART_ASSOCIE} Ø)`);
-    saveData();
+    e.holding.associes = (e.holding.associes || []).filter(a => a.nom !== nomMembre);
+    if (e.utilisateurActif === nomMembre) e.utilisateurActif = e.pdg;
+    ajouterHistorique(`[Holding] Départ de ${nomMembre} (-${PECULE_DEPART_ASSOCIE.toLocaleString("fr-FR")} Ø)`, "depense");
     return { ok: true };
 }
 
@@ -229,17 +213,16 @@ export function calculerValeurEntreprise() {
     const e = getEntreprise();
     let total = 0;
 
-    if (e.biens) {
-        Object.values(e.biens).forEach(styles => {
-            Object.values(styles).forEach(bien => {
-                total += (bien.prixAchatMoyen || 0) * (bien.quantite || 0);
+    (e.commercesGPS || []).forEach(s => {
+        total += Number(s.prixAchat || 0);
+        if (s.biens) {
+            Object.values(s.biens).forEach(styles => {
+                Object.values(styles).forEach(b => {
+                    total += (b.quantite || 0) * (b.prixAchatMoyen || 0);
+                });
             });
-        });
-    }
-
-    (e.commercesGPS || []).forEach(siege => {
-        total += siege.prixAchat || 0;
+        }
     });
 
-    return total;
+    return Math.floor(total);
 }
