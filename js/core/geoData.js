@@ -1,8 +1,10 @@
 // ============================================
-// GEO DATA — STOCKAGE GLOBAL, TRAÇABILITÉ & DOUBLE RYTHME
+// GEO DATA — STOCKAGE GLOBAL, IA MARCHÉ & BAUX TEMPORAIRES
 // Mode Normal : clôture à 00h00 locale (1 jour = 1 mois | 12 jours = 1 an)
 // Mode Bêta   : clôture toutes les 1h réelles (pour tester rapidement)
 // ============================================
+
+import { getVisibilitePourCategorie, initialiserAgencesMarketing } from "./modules/marketing.js";
 
 const SAVE_KEY = "geoEmpireData";
 const MS_PAR_HEURE = 60 * 60 * 1000;
@@ -29,12 +31,37 @@ export function estModeBetaActif() {
     );
 }
 
+function genererDureeBailIA() {
+    const tirage = Math.random();
+    if (tirage < 0.45) {
+        // Court terme : 1 à 3 cycles
+        const duree = Math.floor(Math.random() * 3) + 1;
+        return { duree, libelle: "Court terme" };
+    }
+    if (tirage < 0.80) {
+        // Moyen terme : 7 à 15 cycles
+        const duree = Math.floor(Math.random() * 9) + 7;
+        return { duree, libelle: "Moyen terme" };
+    }
+    // Long terme : 30 à 60 cycles
+    const duree = Math.floor(Math.random() * 31) + 30;
+    return { duree, libelle: "Long terme" };
+}
+
+function calculerTauxValidationIA(visibilite, ajustementTarif = 0) {
+    if (visibilite >= 75) return 1.0; // Vert / Au taquet : 100 % validé
+    let tauxBase = visibilite >= 35 ? 0.65 : 0.30; // Orange : 65 %, Rouge : 30 %
+    if (ajustementTarif > 20) tauxBase -= 0.10;
+    else if (ajustementTarif < 0) tauxBase += 0.10;
+    return Math.max(0.15, Math.min(1.0, tauxBase));
+}
+
 const defaultData = {
     entreprise: {
         capital: 50000,
-        argent: 50000, // Géo (Ø)
-        tokens: 10,    // GeoTokens (GT)
-        crowns: 0,     // Crowns (CRW)
+        argent: 50000,
+        tokens: 10,
+        crowns: 0,
         beneficeJournalier: 0,
 
         nom: "Mon Empire",
@@ -117,9 +144,6 @@ export function saveData() {
     }
 }
 
-// ============================================
-// JOURNAL HISTORIQUE AVEC TRAÇABILITÉ JOUEUR
-// ============================================
 export function ajouterHistorique(message, type = "info", auteurForce = null) {
     if (!Array.isArray(data.entreprise.historique)) {
         data.entreprise.historique = [];
@@ -205,7 +229,7 @@ export function getInfosTempsJeu() {
 }
 
 // ============================================
-// CLÔTURE AUTOMATIQUE (1H EN BÊTA / 00H00 EN NORMAL)
+// CLÔTURE AUTOMATIQUE + IA MARKETING + FIN DES BAUX
 // ============================================
 export function traiterCloture() {
     const e = data.entreprise;
@@ -235,36 +259,63 @@ export function traiterCloture() {
 
     if (cyclesPasses <= 0) return 0;
 
+    initialiserAgencesMarketing(e);
     const multiplicateurHolding = e.holding?.active ? 1.20 : 1.0;
     const tagCloture = modeBeta ? "Clôture Bêta (1h)" : "Clôture 00h00";
     let totalImpotsMairie = 0;
 
-    // 1. Activation des locations mises en attente (le bien reste en stock et loué indéfiniment)
+    // 1. Traitement IA des locations en attente (attribution d'un bail à durée déterminée)
     if (Array.isArray(e.locationsEnAttente) && e.locationsEnAttente.length > 0) {
+        const reliquatLocations = [];
         e.locationsEnAttente.forEach(ordre => {
             const siege = (e.commercesGPS || []).find(s => String(s.id) === String(ordre.siegeId));
             const bien = siege?.biens?.[ordre.categorie]?.[ordre.style];
-            if (bien && bien.quantite > 0) {
-                bien.enLocation = Math.min(bien.quantite, ordre.quantite);
+            if (!bien || bien.quantite <= 0) return;
+
+            const visibilite = getVisibilitePourCategorie(e, ordre.categorie);
+            const tauxIA = calculerTauxValidationIA(visibilite, ordre.ajustement || 0);
+            const qteLouee = Math.min(
+                bien.quantite - (bien.enLocation || 0),
+                Math.max(1, Math.round(ordre.quantite * tauxIA))
+            );
+            const reste = ordre.quantite - qteLouee;
+
+            if (qteLouee > 0) {
+                const bailInfo = genererDureeBailIA();
+                bien.enLocation = (bien.enLocation || 0) + qteLouee;
                 bien.ajustementLoyer = ordre.ajustement || 0;
+                bien.cyclesRestantsBail = bailInfo.duree;
+                bien.typeBail = bailInfo.libelle;
                 bien.louePar = ordre.auteur || e.utilisateurActif;
+
                 ajouterHistorique(
-                    `${tagCloture} — Mise en location active : [${ordre.siegeNom}] ${bien.enLocation}× ${ordre.style} (demandé par ${bien.louePar})`,
+                    `${tagCloture} — Location validée (visibilité ${visibilite} %) : [${ordre.siegeNom}] ${qteLouee}× ${ordre.style} • Bail ${bailInfo.libelle} (${bailInfo.duree} cycle(s)) (par ${bien.louePar})`,
                     "gain",
                     bien.louePar
                 );
             }
+
+            if (reste > 0) {
+                reliquatLocations.push({ ...ordre, quantite: reste });
+            }
         });
-        e.locationsEnAttente = [];
+        e.locationsEnAttente = reliquatLocations;
     }
 
-    // 2. Exécution des ventes mises en attente (le bien vendu quitte le stock)
+    // 2. Traitement IA des ventes en attente (selon la jauge marketing)
     if (Array.isArray(e.ventesEnAttente) && e.ventesEnAttente.length > 0) {
+        const reliquatVentes = [];
         e.ventesEnAttente.forEach(ordre => {
             const siege = (e.commercesGPS || []).find(s => String(s.id) === String(ordre.siegeId));
             const bien = siege?.biens?.[ordre.categorie]?.[ordre.style];
-            if (bien && bien.quantite > 0) {
-                const qteVendue = Math.min(bien.quantite, ordre.quantite);
+            if (!bien || bien.quantite <= 0) return;
+
+            const visibilite = getVisibilitePourCategorie(e, ordre.categorie);
+            const tauxIA = calculerTauxValidationIA(visibilite, ordre.ajustement || 0);
+            const qteVendue = Math.min(bien.quantite, Math.max(1, Math.round(ordre.quantite * tauxIA)));
+            const reste = ordre.quantite - qteVendue;
+
+            if (qteVendue > 0) {
                 const brut = Math.floor((bien.prixAchatMoyen || 15000) * 1.25 * (1 + (ordre.ajustement || 0) / 100) * qteVendue);
                 const taxeMairie = Math.floor(brut * 0.10);
                 const net = brut - taxeMairie;
@@ -278,28 +329,50 @@ export function traiterCloture() {
                 totalImpotsMairie += taxeMairie;
 
                 ajouterHistorique(
-                    `${tagCloture} — Vente exécutée : [${ordre.siegeNom}] ${qteVendue}× ${ordre.style} → +${net.toLocaleString("fr-FR")} Ø (validé par ${vendeur})`,
+                    `${tagCloture} — Vente exécutée (visibilité ${visibilite} %) : [${ordre.siegeNom}] ${qteVendue}× ${ordre.style} → +${net.toLocaleString("fr-FR")} Ø (par ${vendeur})`,
                     "gain",
                     vendeur
                 );
             }
+
+            if (reste > 0) {
+                const prixMoyen = bien.prixAchatMoyen || 15000;
+                reliquatVentes.push({
+                    ...ordre,
+                    quantite: reste,
+                    gainNetEstime: Math.floor(prixMoyen * 1.25 * (1 + (ordre.ajustement || 0) / 100) * 0.90 * reste)
+                });
+            }
         });
-        e.ventesEnAttente = [];
+        e.ventesEnAttente = reliquatVentes;
         recalculerTotauxBiensGlobaux();
     }
 
-    // 3. Encaissement des loyers récurrents (reconduits automatiquement à chaque cycle)
+    // 3. Encaissement des loyers actifs & expiration des baux (retour au stock libre sans renouvellement auto)
     let loyersBrutsCycle = 0;
     (e.commercesGPS || []).forEach(siege => {
         loyersBrutsCycle += 1500;
         if (!siege.biens) return;
         Object.values(siege.biens).forEach(styles => {
-            Object.values(styles).forEach(bien => {
-                // Les biens restent loués indéfiniment tant qu'ils ne sont pas vendus ou retirés
+            Object.entries(styles).forEach(([style, bien]) => {
                 const qteLoc = Math.min(bien.quantite || 0, bien.enLocation || 0);
                 if (qteLoc > 0) {
                     const coef = 1 + ((bien.ajustementLoyer || 0) / 100);
                     loyersBrutsCycle += Math.floor((bien.prixAchatMoyen || 15000) * 0.02 * coef * qteLoc);
+
+                    // Décompte de la durée du bail
+                    if (typeof bien.cyclesRestantsBail === "number") {
+                        bien.cyclesRestantsBail = Math.max(0, bien.cyclesRestantsBail - cyclesPasses);
+                        if (bien.cyclesRestantsBail === 0) {
+                            bien.enLocation = 0;
+                            bien.typeBail = null;
+                            ajouterHistorique(
+                                `[${siege.nom}] Fin de bail sur ${style} : le bien est revenu disponible dans votre entreprise`,
+                                "info",
+                                "Système / Baux"
+                            );
+                        }
+                    }
                 }
             });
         });
@@ -316,10 +389,17 @@ export function traiterCloture() {
         e.finances.revenusLocations = (e.finances.revenusLocations || 0) + netLoyers;
 
         ajouterHistorique(
-            `${tagCloture} (${cyclesPasses} cycle(s)) — Loyers mensuels encaissés : +${netLoyers.toLocaleString("fr-FR")} Ø`,
+            `${tagCloture} (${cyclesPasses} cycle(s)) — Loyers encaissés : +${netLoyers.toLocaleString("fr-FR")} Ø`,
             "gain",
             "Système / Clôture"
         );
+    }
+
+    // 4. Usure naturelle de la visibilité marketing (-6 % par cycle)
+    if (e.marketing?.clients) {
+        Object.values(e.marketing.clients).forEach(ag => {
+            ag.visibilite = Math.max(10, (ag.visibilite || 20) - 6 * cyclesPasses);
+        });
     }
 
     if (totalImpotsMairie > 0) {
@@ -419,6 +499,7 @@ export function setLogo(url) {
 }
 
 loadData();
+
 if (typeof window !== "undefined") {
     window.addEventListener("storage", ev => {
         if (ev.key === SAVE_KEY) loadData();
