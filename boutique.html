@@ -2,42 +2,295 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Geo Empire – Boutique</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        .boutique-wrapper {
+            max-width: 1150px;
+            margin: 20px auto;
+            padding: 22px;
+            background: rgba(0, 25, 45, 0.86);
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            color: #d9eaff;
+            box-shadow: 0 0 25px rgba(0, 0, 0, 0.65);
+        }
+        .boutique-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .pack-card {
+            background: rgba(0, 42, 75, 0.85);
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            border-radius: 12px;
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        .pack-card.premium {
+            border: 2px solid #fbbf24;
+            background: linear-gradient(160deg, rgba(45, 35, 10, 0.75), rgba(0, 35, 65, 0.9));
+        }
+        .pack-badge {
+            display: inline-block;
+            padding: 3px 9px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: bold;
+            width: fit-content;
+        }
+        .btn-pack {
+            padding: 10px 14px;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(90deg, #0284c7, #38bdf8);
+            color: #fff;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 6px;
+        }
+        .btn-pack:hover { filter: brightness(1.12); }
+        .btn-pack.or { background: linear-gradient(90deg, #d97706, #fbbf24); color: #0f172a; }
+        .btn-pack.vert { background: linear-gradient(90deg, #059669, #10b981); }
+        .beta-box {
+            margin-top: 26px;
+            padding: 18px;
+            border-radius: 12px;
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px dashed #38bdf8;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 14px;
+        }
+        .beta-form {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .beta-form input {
+            padding: 9px 12px;
+            border-radius: 8px;
+            border: 1px solid #38bdf8;
+            background: rgba(0, 25, 50, 0.95);
+            color: #fff;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+    </style>
 </head>
 
 <body>
 
-<header>
-    <h1>Boutique</h1>
-    <nav>
+<header style="padding: 15px 30px;">
+    <h1 style="color: white; text-shadow: 0 2px 10px rgba(0,0,0,0.8); margin-bottom: 10px;">Boutique</h1>
+    <nav style="display: flex; flex-wrap: wrap; gap: 10px;">
         <a href="index.html">Accueil</a>
-        <a href="carte.html">Carte</a>
+        <a href="carte.html">Carte GPS</a>
         <a href="entreprises.html">Entreprises</a>
         <a href="immobilier.html">Immobilier</a>
         <a href="finances.html">Finances</a>
+        <a href="historique.html">Historique</a>
         <a href="prestige.html">Prestige</a>
         <a href="profil.html">Profil</a>
     </nav>
 </header>
 
 <div id="topbar">
-    <span id="solde">0</span> €
-    | Tokens : <span id="tokens">0</span>
-    | Crowns : <span id="crowns">0</span>
+    <span id="solde">50 000</span> Ø
+    | Tokens : <span id="tokens">10</span> GT
+    | Crowns : <span id="crowns">0</span> CRW
 </div>
 
-<main id="boutique-container"></main>
+<main class="boutique-wrapper">
+    <h2 style="color: #7ec8ff; margin-top: 0;">Packs & Extensions Geo Empire</h2>
+    <p style="font-size: 14px; color: #bae6fd;">Débloquez les scans longue portée sur la Carte GPS et renforcez votre trésorerie.</p>
 
-<!-- CORE -->
-<script type="module" src="./js/core/geoData.js"></script>
-<script type="module" src="./js/core/entrepriseCore.js"></script>
-<script type="module" src="./js/core/core.js"></script>
-<script type="module" src="./js/core/systeme.js"></script>
-<script type="module" src="./js/core/ui.js"></script>
+    <div class="boutique-grid">
+        <!-- PACK PREMIUM (DÉBLOQUE 10 KM & 20 KM) -->
+        <div class="pack-card premium">
+            <div>
+                <span class="pack-badge" style="background:#fbbf24; color:#0f172a;">PACK PREMIUM</span>
+                <h3 style="margin: 8px 0; color: #fde68a;">Extension Radar 10 & 20 km</h3>
+                <p style="font-size: 13px; line-height: 1.5;">
+                    • Débloque les rayons de scan <strong>10 km</strong> et <strong>20 km</strong> sur la Carte GPS<br>
+                    • Débloque l'export CSV du catalogue<br>
+                    • Bonus immédiat de <strong>+25 000 Ø</strong>
+                </p>
+            </div>
+            <div>
+                <div style="font-size: 16px; font-weight: bold; color: #fbbf24;">Coût : 50 Crowns (CRW)</div>
+                <button id="btn-pack-premium" class="btn-pack or">Activer le Pack Premium</button>
+            </div>
+        </div>
 
-<!-- MODULE BOUTIQUE -->
-<script type="module" src="./js/core/modules/boutique.js"></script>
+        <!-- PACK DÉMARRAGE TRÉSORERIE -->
+        <div class="pack-card">
+            <div>
+                <span class="pack-badge" style="background:rgba(52,211,153,0.2); color:#34d399; border:1px solid #34d399;">TRÉSORERIE</span>
+                <h3 style="margin: 8px 0; color: #fff;">Injection de Capital +50 000 Ø</h3>
+                <p style="font-size: 13px; line-height: 1.5;">
+                    Ajoute immédiatement <strong>50 000 Ø</strong> à votre trésorerie pour acquérir de nouveaux sièges sur la carte.
+                </p>
+            </div>
+            <div>
+                <div style="font-size: 16px; font-weight: bold; color: #34d399;">Coût : 5 Tokens (GT)</div>
+                <button class="btn-pack vert" data-achat="capital-50k">Échanger 5 GT</button>
+            </div>
+        </div>
+
+        <!-- PACK EXPANSION -->
+        <div class="pack-card">
+            <div>
+                <span class="pack-badge" style="background:rgba(56,189,248,0.2); color:#38bdf8; border:1px solid #38bdf8;">EXPANSION</span>
+                <h3 style="margin: 8px 0; color: #fff;">Fonds Holding +250 000 Ø</h3>
+                <p style="font-size: 13px; line-height: 1.5;">
+                    Ajoute <strong>250 000 Ø</strong> + <strong>10 Crowns (CRW)</strong> pour accélérer votre montée vers les 10 entreprises.
+                </p>
+            </div>
+            <div>
+                <div style="font-size: 16px; font-weight: bold; color: #38bdf8;">Coût : 20 Tokens (GT)</div>
+                <button class="btn-pack" data-achat="capital-250k">Échanger 20 GT</button>
+            </div>
+        </div>
+
+        <!-- CONVERTISSEUR TOKENS -> CROWNS -->
+        <div class="pack-card">
+            <div>
+                <span class="pack-badge" style="background:rgba(168,85,247,0.2); color:#d8b4fe; border:1px solid #a855f7;">CHANGE</span>
+                <h3 style="margin: 8px 0; color: #fff;">Lot de 25 Crowns (CRW)</h3>
+                <p style="font-size: 13px; line-height: 1.5;">
+                    Convertissez vos Tokens (GT) en Crowns (CRW) pour débloquer les améliorations Prestige et Premium.
+                </p>
+            </div>
+            <div>
+                <div style="font-size: 16px; font-weight: bold; color: #d8b4fe;">Coût : 10 Tokens (GT)</div>
+                <button class="btn-pack" data-achat="crowns-25">Échanger 10 GT</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ACCÈS TESTEUR BÊTA (CODE SECRET) -->
+    <div class="beta-box">
+        <div>
+            <strong style="color: #38bdf8; font-size: 15px;">🔑 Accès Testeur Bêta</strong>
+            <div id="statut-beta" style="font-size: 13px; color: #cbd5e1; margin-top: 4px;">
+                Entrez votre code d'invitation pour débloquer les rayons 10 km et 20 km durant la phase de test.
+            </div>
+        </div>
+        <div class="beta-form">
+            <input type="text" id="input-code-beta" placeholder="Code Bêta...">
+            <button id="btn-valider-beta" class="btn-pack" style="margin-top:0;">Activer le code</button>
+        </div>
+    </div>
+</main>
+
+<script type="module">
+    import { getData, saveData } from "./js/core/geoData.js";
+
+    // 👇 CODE SECRET BÊTA (change-le ici quand tu veux)
+    const CODE_BETA_VALIDE = "GEO-BETA-2026";
+
+    function logBoutique(texte) {
+        const data = getData();
+        if (!Array.isArray(data.historique)) data.historique = [];
+        data.historique.unshift({
+            date: new Date().toLocaleString("fr-FR"),
+            texte,
+            type: "boutique"
+        });
+    }
+
+    function majAffichage() {
+        const e = getData().entreprise;
+        document.getElementById("solde").textContent = (e.argent || 0).toLocaleString("fr-FR");
+        document.getElementById("tokens").textContent = (e.tokens || 0).toLocaleString("fr-FR");
+        document.getElementById("crowns").textContent = (e.crowns || 0).toLocaleString("fr-FR");
+
+        const btnPrem = document.getElementById("btn-pack-premium");
+        if (e.prestigePack) {
+            btnPrem.textContent = "✓ Pack Premium Actif";
+            btnPrem.disabled = true;
+            btnPrem.style.opacity = "0.7";
+        }
+
+        const statutBeta = document.getElementById("statut-beta");
+        if (e.betaTesteur) {
+            statutBeta.innerHTML = `<span style="color:#34d399; font-weight:bold;">✓ Accès Testeur Bêta actif : rayons 10 km et 20 km débloqués sur la Carte GPS.</span>`;
+        }
+    }
+
+    // Activation Pack Premium
+    document.getElementById("btn-pack-premium").addEventListener("click", () => {
+        const e = getData().entreprise;
+        if (e.prestigePack) return;
+        if ((e.crowns || 0) < 50) {
+            alert("Il vous faut 50 Crowns (CRW) pour activer le Pack Premium.");
+            return;
+        }
+        e.crowns -= 50;
+        e.prestigePack = true;
+        e.argent = (e.argent || 0) + 25000;
+        logBoutique("Achat du Pack Premium (Radar 10/20 km + 25 000 Ø)");
+        saveData();
+        majAffichage();
+        alert("Pack Premium activé ! Les rayons 10 km et 20 km sont désormais débloqués sur la Carte GPS.");
+    });
+
+    // Packs Tokens
+    document.querySelectorAll("[data-achat]").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const e = getData().entreprise;
+            const type = btn.dataset.achat;
+
+            if (type === "capital-50k") {
+                if ((e.tokens || 0) < 5) return alert("Tokens (GT) insuffisants (5 GT requis).");
+                e.tokens -= 5;
+                e.argent = (e.argent || 0) + 50000;
+                logBoutique("Échange Boutique : +50 000 Ø contre 5 GT");
+            } else if (type === "capital-250k") {
+                if ((e.tokens || 0) < 20) return alert("Tokens (GT) insuffisants (20 GT requis).");
+                e.tokens -= 20;
+                e.argent = (e.argent || 0) + 250000;
+                e.crowns = (e.crowns || 0) + 10;
+                logBoutique("Échange Boutique : +250 000 Ø et +10 CRW contre 20 GT");
+            } else if (type === "crowns-25") {
+                if ((e.tokens || 0) < 10) return alert("Tokens (GT) insuffisants (10 GT requis).");
+                e.tokens -= 10;
+                e.crowns = (e.crowns || 0) + 25;
+                logBoutique("Échange Boutique : +25 CRW contre 10 GT");
+            }
+
+            saveData();
+            majAffichage();
+        });
+    });
+
+    // Validation du code Testeur Bêta
+    document.getElementById("btn-valider-beta").addEventListener("click", () => {
+        const saisie = document.getElementById("input-code-beta").value.trim().toUpperCase();
+        if (saisie === CODE_BETA_VALIDE) {
+            const e = getData().entreprise;
+            e.betaTesteur = true;
+            logBoutique("Activation de l'accès Testeur Bêta");
+            saveData();
+            majAffichage();
+            alert("Code Bêta validé ! Les rayons 10 km et 20 km sont débloqués sur la Carte GPS.");
+        } else {
+            alert("Code Bêta invalide.");
+        }
+    });
+
+    majAffichage();
+</script>
 
 </body>
 </html>
