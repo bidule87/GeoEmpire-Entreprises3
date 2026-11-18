@@ -2,55 +2,154 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Historique financier</title>
-    <link rel="stylesheet" href="/menu.css">
-    <!-- tes autres CSS -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geo Empire – Historique Financier</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .hist-wrapper {
+            max-width: 1100px;
+            margin: 20px auto;
+            padding: 22px;
+            background: rgba(0, 25, 45, 0.86);
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            color: #d9eaff;
+            box-shadow: 0 0 25px rgba(0, 0, 0, 0.65);
+        }
+        .hist-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 14px;
+            font-size: 14px;
+        }
+        .hist-table th {
+            text-align: left;
+            padding: 10px 12px;
+            background: rgba(0, 45, 85, 0.9);
+            color: #7ec8ff;
+            border-bottom: 1px solid rgba(56, 189, 248, 0.4);
+        }
+        .hist-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .hist-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 5px;
+            font-size: 11px;
+            font-weight: bold;
+            background: rgba(255, 255, 255, 0.1);
+        }
+    </style>
 </head>
 
 <body>
 
-    <!-- HEADER VIOLET -->
-    <div class="menu-container">
-        <h1 class="title">GEO EMPIRE</h1>
+<header style="padding: 15px 30px;">
+    <h1 style="color: white; text-shadow: 0 2px 10px rgba(0,0,0,0.8); margin-bottom: 10px;">Historique Financier</h1>
+    <nav style="display: flex; flex-wrap: wrap; gap: 10px;">
+        <a href="index.html">Accueil</a>
+        <a href="carte.html">Carte GPS</a>
+        <a href="entreprises.html">Entreprises</a>
+        <a href="immobilier.html">Immobilier</a>
+        <a href="finances.html">Finances</a>
+        <a href="prestige.html">Prestige</a>
+        <a href="profil.html">Profil</a>
+        <a href="boutique.html">Boutique</a>
+    </nav>
+</header>
 
-        <div class="menu-grid">
-            <a href="finances.html" class="menu-btn finances">Finances</a>
-            <a href="immobilier.html" class="menu-btn immobilier">Immobilier</a>
-            <a href="entreprises.html" class="menu-btn entreprises">Entreprises</a>
-            <a href="carte.html" class="menu-btn carte">Carte (GPS)</a>
-            <a href="prestige.html" class="menu-btn prestige">Prestige</a>
-            <a href="profil.html" class="menu-btn profil">Profil</a>
-            <a href="boutique.html" class="menu-btn prestige">Boutique</a>
-        </div>
+<div id="topbar">
+    <span id="solde">0</span> Ø
+    | Tokens : <span id="tokens">0</span> GT
+    | Crowns : <span id="crowns">0</span> CRW
+</div>
+
+<main class="hist-wrapper">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <h2 style="color: #7ec8ff; margin: 0;">Journal des opérations (<span id="nb-operations">0</span>)</h2>
+        <button id="btn-export-csv" class="premium-btn" style="margin: 0; background: #0284c7;">Exporter Excel / CSV</button>
     </div>
 
-    <main>
-
-        <h1>Historique financier</h1>
-
-        <table id="table-historique">
+    <div style="overflow-x: auto;">
+        <table class="hist-table">
             <thead>
                 <tr>
-                    <th>Date</th>
+                    <th>Date & Heure</th>
                     <th>Type</th>
-                    <th>Détails</th>
-                    <th>Montant</th>
+                    <th>Détails de l'opération</th>
                 </tr>
             </thead>
-            <tbody id="historique-tbody"></tbody>
+            <tbody id="tbody-historique"></tbody>
         </table>
+    </div>
+</main>
 
-        <!-- Ton bouton était en dehors du HTML → replacé ici -->
-        <button id="btn-export" class="btn secondary" disabled>Export Excel / Sheets</button>
+<script type="module">
+    import { getData } from "./js/core/geoData.js";
 
-    </main>
+    const BADGES = {
+        achat: { label: "ACHAT", couleur: "#38bdf8" },
+        gain: { label: "RECETTE", couleur: "#34d399" },
+        depense: { label: "DÉPENSE", couleur: "#f87171" },
+        gestion: { label: "GOUVERNANCE", couleur: "#fbbf24" },
+        prestige: { label: "HOLDING / PRESTIGE", couleur: "#c084fc" },
+        boutique: { label: "BOUTIQUE", couleur: "#f472b6" },
+        info: { label: "INFO", couleur: "#94a3b8" }
+    };
 
-    <script type="module" src="/js/core/modules/historique.js"></script>
+    function afficherHistorique() {
+        const e = getData().entreprise;
+
+        document.getElementById("solde").textContent = (e.argent || 0).toLocaleString("fr-FR");
+        document.getElementById("tokens").textContent = (e.tokens || 0).toLocaleString("fr-FR");
+        document.getElementById("crowns").textContent = (e.crowns || 0).toLocaleString("fr-FR");
+
+        const liste = Array.isArray(e.historique) ? e.historique : [];
+        document.getElementById("nb-operations").textContent = liste.length;
+
+        const tbody = document.getElementById("tbody-historique");
+        if (liste.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#94a3b8; padding:20px;">Aucune opération enregistrée pour le moment.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = liste.map(item => {
+            const cfg = BADGES[item.type] || BADGES.info;
+            const texte = item.message || item.texte || "Opération enregistrée";
+            return `
+                <tr>
+                    <td style="white-space:nowrap; color:#94a3b8;">${item.date || "-"}</td>
+                    <td><span class="hist-badge" style="color:${cfg.couleur};">${cfg.label}</span></td>
+                    <td>${texte}</td>
+                </tr>
+            `;
+        }).join("");
+    }
+
+    document.getElementById("btn-export-csv").addEventListener("click", () => {
+        const liste = getData().entreprise.historique || [];
+        if (liste.length === 0) return alert("Aucune donnée à exporter.");
+
+        let csv = "Date;Type;Details\n";
+        liste.forEach(item => {
+            const texte = (item.message || item.texte || "").replace(/;/g, ",");
+            csv += `${item.date || ""};${item.type || "info"};${texte}\n`;
+        });
+
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "geo_empire_historique.csv";
+        a.click();
+        URL.revokeObjectURL(url);
+    });
+
+    afficherHistorique();
+</script>
 
 </body>
 </html>
-<div id="topbar">
-    <span id="solde">0</span> €
-    | Tokens : <span id="tokens">0</span>
-    | Crowns : <span id="crowns">0</span>
-</div>
