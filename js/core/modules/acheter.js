@@ -57,6 +57,13 @@ export function initAcheter() {
     const e = getEntreprise();
     const sieges = e.commercesGPS || [];
 
+    // Normalise les IDs manquants éventuels
+    sieges.forEach((s, idx) => {
+        if (s.id === undefined || s.id === null || s.id === "") {
+            s.id = `siege_${Date.now()}_${idx}`;
+        }
+    });
+
     if (sieges.length > 0 && !sieges.some(s => String(s.id) === String(siegeSelectionneId))) {
         siegeSelectionneId = String(sieges[0].id);
     }
@@ -107,7 +114,7 @@ function afficherBiensDisponibles() {
     siegeSelectionneId = String(siegeActif.id);
 
     const optionsSiegesHTML = sieges.map(s =>
-        `<option value="${s.id}" ${String(s.id) === siegeSelectionneId ? "selected" : ""}>${s.nom} (${s.secteur})</option>`
+        `<option value="${String(s.id)}" ${String(s.id) === siegeSelectionneId ? "selected" : ""}>${s.nom} (${s.secteur})</option>`
     ).join("");
 
     panel.innerHTML = `
@@ -153,13 +160,18 @@ function afficherBiensDisponibles() {
             const impotsMois = Math.floor(loyerBrut * 0.15);
             const rentabiliteNette = loyerBrut - charges - impotsMois;
 
+            const stockActuel = siegeActif.biens?.[categorie]?.[style]?.quantite || 0;
+
             const item = document.createElement("div");
             item.className = "bien-item gestion-item";
             item.style.marginTop = "10px";
 
             item.innerHTML = `
                 <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;">
-                    <div class="bien-nom" style="font-weight:bold; font-size:16px; color:#fff;">${style}</div>
+                    <div class="bien-nom" style="font-weight:bold; font-size:16px; color:#fff;">
+                        ${style}
+                        ${stockActuel > 0 ? `<span style="background:rgba(52,211,153,0.2); color:#34d399; padding:2px 8px; border-radius:5px; font-size:12px; margin-left:8px;">Détenus ici : ${stockActuel}</span>` : ""}
+                    </div>
                     <div class="bien-prix" style="font-weight:bold; color:#fbbf24;">Prix d'achat : ${prix.toLocaleString("fr-FR")} Ø</div>
                 </div>
 
@@ -189,7 +201,7 @@ function afficherBiensDisponibles() {
             btnValider.addEventListener("click", () => {
                 const qte = parseInt(input.value, 10);
                 if (isNaN(qte) || qte <= 0) return;
-                gererAchatCible(siegeActif, categorie, style, prix, qte);
+                gererAchatCible(siegeActif.id, categorie, style, prix, qte);
             });
 
             bloc.appendChild(item);
@@ -206,11 +218,17 @@ function afficherBiensDisponibles() {
     };
 }
 
-function gererAchatCible(siege, categorie, style, prix, quantiteAchetee) {
+function gererAchatCible(siegeId, categorie, style, prix, quantiteAchetee) {
     const data = getData();
     const entreprise = data.entreprise;
-    const coutTotal = quantiteAchetee * prix;
+    const siege = (entreprise.commercesGPS || []).find(s => String(s.id) === String(siegeId));
 
+    if (!siege) {
+        alert("Erreur : entreprise introuvable.");
+        return;
+    }
+
+    const coutTotal = quantiteAchetee * prix;
     if ((entreprise.argent || 0) < coutTotal) {
         alert(`Fonds insuffisants ! Il vous faut ${coutTotal.toLocaleString("fr-FR")} Ø.`);
         return;
@@ -218,29 +236,32 @@ function gererAchatCible(siege, categorie, style, prix, quantiteAchetee) {
 
     entreprise.argent -= coutTotal;
 
-    if (!siege.biens) siege.biens = {};
-    if (!siege.biens[categorie]) siege.biens[categorie] = {};
+    if (!siege.biens || typeof siege.biens !== "object") siege.biens = {};
+    if (!siege.biens[categorie] || typeof siege.biens[categorie] !== "object") siege.biens[categorie] = {};
     if (!siege.biens[categorie][style]) {
         siege.biens[categorie][style] = { quantite: 0, prixAchatMoyen: 0, enLocation: 0, ajustementLoyer: 0 };
     }
 
     const bienSiege = siege.biens[categorie][style];
-    const totalAncienS = bienSiege.prixAchatMoyen * bienSiege.quantite;
-    bienSiege.quantite += quantiteAchetee;
+    const totalAncienS = (bienSiege.prixAchatMoyen || 0) * (bienSiege.quantite || 0);
+    bienSiege.quantite = (bienSiege.quantite || 0) + quantiteAchetee;
     bienSiege.prixAchatMoyen = (totalAncienS + coutTotal) / bienSiege.quantite;
 
+    if (!entreprise.biens || typeof entreprise.biens !== "object") entreprise.biens = {};
     if (!entreprise.biens[categorie]) entreprise.biens[categorie] = {};
     if (!entreprise.biens[categorie][style]) {
         entreprise.biens[categorie][style] = { quantite: 0, prixAchatMoyen: 0 };
     }
     const bienGlobal = entreprise.biens[categorie][style];
-    const totalAncienG = bienGlobal.prixAchatMoyen * bienGlobal.quantite;
-    bienGlobal.quantite += quantiteAchetee;
+    const totalAncienG = (bienGlobal.prixAchatMoyen || 0) * (bienGlobal.quantite || 0);
+    bienGlobal.quantite = (bienGlobal.quantite || 0) + quantiteAchetee;
     bienGlobal.prixAchatMoyen = (totalAncienG + coutTotal) / bienGlobal.quantite;
 
+    const auteur = entreprise.utilisateurActif || entreprise.pdg || "Fondateur";
     if (!Array.isArray(entreprise.historique)) entreprise.historique = [];
     entreprise.historique.unshift({
         date: new Date().toLocaleString("fr-FR"),
+        auteur,
         message: `[${siege.nom}] Achat de ${quantiteAchetee}× ${style} (${categorie}) pour ${coutTotal.toLocaleString("fr-FR")} Ø`,
         type: "achat"
     });
