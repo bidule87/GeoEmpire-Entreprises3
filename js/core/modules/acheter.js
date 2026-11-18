@@ -1,5 +1,5 @@
 // =======================================
-// GEO EMPIRE — MODULE ACHETER (CIBLÉ PAR ENTREPRISE)
+// GEO EMPIRE — MODULE ACHETER (FILTRÉ PAR SECTEUR DE L'ENTREPRISE)
 // =======================================
 
 import { getEntreprise } from "../entrepriseCore.js";
@@ -53,6 +53,30 @@ function siegeAutoriseCategorie(siege, config) {
     return siege.secteur === config.secteur || (config.secteurAlt && siege.secteur === config.secteurAlt);
 }
 
+function majMenuCategoriesPourSiege(siegeActif) {
+    const select = document.getElementById("filtre-acheter");
+    if (!select) return;
+
+    const categoriesAutorisees = Object.entries(CATALOGUE_DEFAUT)
+        .filter(([, cfg]) => siegeAutoriseCategorie(siegeActif, cfg))
+        .map(([cat]) => cat);
+
+    if (filtreCategorie !== "tous" && !categoriesAutorisees.includes(filtreCategorie)) {
+        filtreCategorie = "tous";
+    }
+
+    select.style.display = "block";
+    select.innerHTML = `<option value="tous">Toutes les catégories disponibles</option>`;
+    categoriesAutorisees.forEach(categorie => {
+        select.innerHTML += `<option value="${categorie}">${categorie}</option>`;
+    });
+    select.value = filtreCategorie;
+    select.onchange = () => {
+        filtreCategorie = select.value;
+        afficherBiensDisponibles();
+    };
+}
+
 export function initAcheter() {
     loadData();
     const e = getEntreprise();
@@ -68,19 +92,8 @@ export function initAcheter() {
         siegeSelectionneId = String(sieges[0].id);
     }
 
-    const select = document.getElementById("filtre-acheter");
-    if (select) {
-        select.style.display = "block";
-        select.innerHTML = `<option value="tous">Toutes les catégories</option>`;
-        for (const categorie of Object.keys(CATALOGUE_DEFAUT)) {
-            select.innerHTML += `<option value="${categorie}">${categorie}</option>`;
-        }
-        select.value = filtreCategorie;
-        select.onchange = () => {
-            filtreCategorie = select.value;
-            afficherBiensDisponibles();
-        };
-    }
+    const siegeActif = sieges.find(s => String(s.id) === String(siegeSelectionneId)) || sieges[0];
+    if (siegeActif) majMenuCategoriesPourSiege(siegeActif);
 
     afficherBiensDisponibles();
 }
@@ -112,6 +125,7 @@ function afficherBiensDisponibles() {
 
     const siegeActif = sieges.find(s => String(s.id) === String(siegeSelectionneId)) || sieges[0];
     siegeSelectionneId = String(siegeActif.id);
+    majMenuCategoriesPourSiege(siegeActif);
 
     const optionsSiegesHTML = sieges.map(s =>
         `<option value="${String(s.id)}" ${String(s.id) === siegeSelectionneId ? "selected" : ""}>${s.nom} (${s.secteur})</option>`
@@ -130,26 +144,14 @@ function afficherBiensDisponibles() {
     `;
 
     for (const [categorie, config] of Object.entries(CATALOGUE_DEFAUT)) {
+        // On n'affiche QUE les catégories autorisées pour l'entreprise sélectionnée
+        if (!siegeAutoriseCategorie(siegeActif, config)) continue;
         if (filtreCategorie !== "tous" && filtreCategorie !== categorie) continue;
-
-        const estDebloquee = siegeAutoriseCategorie(siegeActif, config);
-        const secteurRequis = config.secteurAlt ? `${config.secteur} ou ${config.secteurAlt}` : config.secteur;
 
         const bloc = document.createElement("div");
         bloc.className = "categorie-bloc premium-box";
         bloc.style.marginBottom = "18px";
-        bloc.innerHTML = `<h3 style="color:#7ec8ff; margin-top:0;">${categorie} ${estDebloquee ? "✅" : "🔒"}</h3>`;
-
-        if (!estDebloquee) {
-            bloc.innerHTML += `
-                <div style="padding:12px; background:rgba(0,0,0,0.35); border-radius:10px; font-size:14px;">
-                    <span style="color:#fbbf24;">Non disponible pour <strong>${siegeActif.nom}</strong> (${siegeActif.secteur}).</span><br>
-                    Secteur requis : <strong>${secteurRequis}</strong>.
-                </div>
-            `;
-            panel.appendChild(bloc);
-            continue;
-        }
+        bloc.innerHTML = `<h3 style="color:#7ec8ff; margin-top:0;">${categorie}</h3>`;
 
         config.styles.forEach((style, index) => {
             const multiplicateur = coef[index] || 1;
@@ -212,6 +214,7 @@ function afficherBiensDisponibles() {
 
     document.getElementById("select-siege-achat").onchange = ev => {
         siegeSelectionneId = ev.target.value;
+        filtreCategorie = "tous";
         afficherBiensDisponibles();
     };
 }
