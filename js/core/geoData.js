@@ -1,5 +1,5 @@
 // ============================================
-// GEO DATA — STOCKAGE GLOBAL, IA MARCHÉ & BAUX TEMPORAIRES
+// GEO DATA — STOCKAGE GLOBAL, MARCHÉ & BAUX TEMPORAIRES
 // Mode Normal : clôture à 00h00 locale (1 jour = 1 mois | 12 jours = 1 an)
 // Mode Bêta   : clôture toutes les 1h réelles (pour tester rapidement)
 // ============================================
@@ -31,7 +31,7 @@ export function estModeBetaActif() {
     );
 }
 
-function genererDureeBailIA() {
+function genererDureeBailMarche() {
     const tirage = Math.random();
     if (tirage < 0.45) {
         // Court terme : 1 à 3 cycles
@@ -48,7 +48,7 @@ function genererDureeBailIA() {
     return { duree, libelle: "Long terme" };
 }
 
-function calculerTauxValidationIA(visibilite, ajustementTarif = 0) {
+function calculerTauxValidationMarche(visibilite, ajustementTarif = 0) {
     if (visibilite >= 75) return 1.0; // Vert / Au taquet : 100 % validé
     let tauxBase = visibilite >= 35 ? 0.65 : 0.30; // Orange : 65 %, Rouge : 30 %
     if (ajustementTarif > 20) tauxBase -= 0.10;
@@ -229,7 +229,7 @@ export function getInfosTempsJeu() {
 }
 
 // ============================================
-// CLÔTURE AUTOMATIQUE + IA MARKETING + FIN DES BAUX
+// CLÔTURE AUTOMATIQUE + MARCHÉ + FIN DES BAUX
 // ============================================
 export function traiterCloture() {
     const e = data.entreprise;
@@ -264,7 +264,7 @@ export function traiterCloture() {
     const tagCloture = modeBeta ? "Clôture Bêta (1h)" : "Clôture 00h00";
     let totalImpotsMairie = 0;
 
-    // 1. Traitement IA des locations en attente (attribution d'un bail à durée déterminée)
+    // 1. Traitement des locations en attente (attribution d'un bail à durée déterminée)
     if (Array.isArray(e.locationsEnAttente) && e.locationsEnAttente.length > 0) {
         const reliquatLocations = [];
         e.locationsEnAttente.forEach(ordre => {
@@ -273,15 +273,15 @@ export function traiterCloture() {
             if (!bien || bien.quantite <= 0) return;
 
             const visibilite = getVisibilitePourCategorie(e, ordre.categorie);
-            const tauxIA = calculerTauxValidationIA(visibilite, ordre.ajustement || 0);
+            const taux = calculerTauxValidationMarche(visibilite, ordre.ajustement || 0);
             const qteLouee = Math.min(
                 bien.quantite - (bien.enLocation || 0),
-                Math.max(1, Math.round(ordre.quantite * tauxIA))
+                Math.max(1, Math.round(ordre.quantite * taux))
             );
             const reste = ordre.quantite - qteLouee;
 
             if (qteLouee > 0) {
-                const bailInfo = genererDureeBailIA();
+                const bailInfo = genererDureeBailMarche();
                 bien.enLocation = (bien.enLocation || 0) + qteLouee;
                 bien.ajustementLoyer = ordre.ajustement || 0;
                 bien.cyclesRestantsBail = bailInfo.duree;
@@ -289,7 +289,7 @@ export function traiterCloture() {
                 bien.louePar = ordre.auteur || e.utilisateurActif;
 
                 ajouterHistorique(
-                    `${tagCloture} — Location validée (visibilité ${visibilite} %) : [${ordre.siegeNom}] ${qteLouee}× ${ordre.style} • Bail ${bailInfo.libelle} (${bailInfo.duree} cycle(s)) (par ${bien.louePar})`,
+                    `${tagCloture} — Location validée : [${ordre.siegeNom}] ${qteLouee}× ${ordre.style} • Bail ${bailInfo.libelle} (${bailInfo.duree} cycle(s)) (par ${bien.louePar})`,
                     "gain",
                     bien.louePar
                 );
@@ -302,7 +302,7 @@ export function traiterCloture() {
         e.locationsEnAttente = reliquatLocations;
     }
 
-    // 2. Traitement IA des ventes en attente (selon la jauge marketing)
+    // 2. Traitement des ventes en attente (selon la portée marketing)
     if (Array.isArray(e.ventesEnAttente) && e.ventesEnAttente.length > 0) {
         const reliquatVentes = [];
         e.ventesEnAttente.forEach(ordre => {
@@ -311,8 +311,8 @@ export function traiterCloture() {
             if (!bien || bien.quantite <= 0) return;
 
             const visibilite = getVisibilitePourCategorie(e, ordre.categorie);
-            const tauxIA = calculerTauxValidationIA(visibilite, ordre.ajustement || 0);
-            const qteVendue = Math.min(bien.quantite, Math.max(1, Math.round(ordre.quantite * tauxIA)));
+            const taux = calculerTauxValidationMarche(visibilite, ordre.ajustement || 0);
+            const qteVendue = Math.min(bien.quantite, Math.max(1, Math.round(ordre.quantite * taux)));
             const reste = ordre.quantite - qteVendue;
 
             if (qteVendue > 0) {
@@ -329,7 +329,7 @@ export function traiterCloture() {
                 totalImpotsMairie += taxeMairie;
 
                 ajouterHistorique(
-                    `${tagCloture} — Vente exécutée (visibilité ${visibilite} %) : [${ordre.siegeNom}] ${qteVendue}× ${ordre.style} → +${net.toLocaleString("fr-FR")} Ø (par ${vendeur})`,
+                    `${tagCloture} — Vente exécutée : [${ordre.siegeNom}] ${qteVendue}× ${ordre.style} → +${net.toLocaleString("fr-FR")} Ø (par ${vendeur})`,
                     "gain",
                     vendeur
                 );
@@ -395,10 +395,14 @@ export function traiterCloture() {
         );
     }
 
-    // 4. Usure naturelle de la visibilité marketing (-6 % par cycle)
+    // 4. Usure naturelle de la visibilité marketing (respecte la durée de maintien financée)
     if (e.marketing?.clients) {
         Object.values(e.marketing.clients).forEach(ag => {
-            ag.visibilite = Math.max(10, (ag.visibilite || 20) - 6 * cyclesPasses);
+            if ((ag.cyclesMaintien || 0) > 0) {
+                ag.cyclesMaintien = Math.max(0, ag.cyclesMaintien - cyclesPasses);
+            } else {
+                ag.visibilite = Math.max(10, (ag.visibilite || 20) - 6 * cyclesPasses);
+            }
         });
     }
 
