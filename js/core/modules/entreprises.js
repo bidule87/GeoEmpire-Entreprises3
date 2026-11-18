@@ -23,7 +23,38 @@ import {
     virerAssocieHolding,
     calculerValeurEntreprise
 } from "../entrepriseCore.js";
-import { getInfosTempsJeu } from "../geoData.js";
+import { getInfosTempsJeu, saveData } from "../geoData.js";
+
+// Rattache automatiquement les anciens biens achetés avant la mise à jour au 1er siège
+export function migrerAnciensBiensVersSiege(e) {
+    const sieges = e.commercesGPS || [];
+    if (sieges.length === 0 || !e.biens) return;
+
+    const aDejaDesBiensParSiege = sieges.some(s =>
+        s.biens && Object.values(s.biens).some(styles => Object.values(styles).some(b => (b.quantite || 0) > 0))
+    );
+    if (aDejaDesBiensParSiege) return;
+
+    let migre = false;
+    const premierSiege = sieges[0];
+    if (!premierSiege.biens) premierSiege.biens = {};
+
+    for (const [cat, styles] of Object.entries(e.biens)) {
+        for (const [style, info] of Object.entries(styles)) {
+            if ((info.quantite || 0) > 0) {
+                if (!premierSiege.biens[cat]) premierSiege.biens[cat] = {};
+                premierSiege.biens[cat][style] = {
+                    quantite: info.quantite,
+                    prixAchatMoyen: info.prixAchatMoyen || 15000,
+                    enLocation: 0,
+                    ajustementLoyer: 0
+                };
+                migre = true;
+            }
+        }
+    }
+    if (migre) saveData();
+}
 
 function compterBiensDuSiege(siege) {
     let liste = [];
@@ -55,6 +86,8 @@ export function initEntreprise() {
     const e = getEntreprise();
     const container = document.getElementById("entreprise");
     if (!container) return;
+
+    migrerAnciensBiensVersSiege(e);
 
     const valeur = calculerValeurEntreprise();
     const sieges = getSiegesGPS();
@@ -243,6 +276,11 @@ export function initEntreprise() {
             `;
         }).join("");
 
+    // Format carré strict pour le logo (évite qu'une photo prenne tout l'écran)
+    const logoHTML = e.logo
+        ? `<img id="entreprise-logo" src="${e.logo}" alt="Logo" style="width:90px; height:90px; min-width:90px; object-fit:cover; border-radius:14px; border:2px solid #38bdf8; box-shadow:0 4px 12px rgba(0,0,0,0.5);">`
+        : `<div style="width:90px; height:90px; min-width:90px; border-radius:14px; border:2px dashed #38bdf8; background:rgba(0,30,65,0.8); display:flex; align-items:center; justify-content:center; font-size:32px;">🏛️</div>`;
+
     container.innerHTML = `
         <div class="premium-panel">
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:15px;">
@@ -261,19 +299,19 @@ export function initEntreprise() {
             </div>
 
             <div class="premium-box">
-                <div class="entreprise-header">
-                    <img id="entreprise-logo" class="entreprise-logo" src="${e.logo || "assets/default-logo.png"}">
+                <div style="display:flex; align-items:center; gap:18px; flex-wrap:wrap;">
+                    ${logoHTML}
 
-                    <div class="entreprise-infos">
+                    <div style="flex:1; min-width:240px;">
                         <label style="font-size:12px; color:#7ec8ff;">Nom du Groupe :</label>
-                        <input id="entreprise-nom-input" class="input-text" value="${e.nom}">
+                        <input id="entreprise-nom-input" class="input-text" value="${e.nom}" style="margin-bottom:8px;">
 
                         <label style="font-size:12px; color:#7ec8ff;">PDG Général (seul habilité à virer un associé) :</label>
-                        <input id="joueur-nom-input" class="input-text" value="${e.pdg}">
+                        <input id="joueur-nom-input" class="input-text" value="${e.pdg}" style="margin-bottom:10px;">
 
-                        <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                            <button id="btn-save-nom" class="premium-btn">Enregistrer le groupe</button>
-                            <label for="input-logo" class="premium-btn" style="cursor:pointer;">Changer le logo</label>
+                        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                            <button id="btn-save-nom" class="premium-btn" style="margin:0;">Enregistrer le groupe</button>
+                            <label for="input-logo" class="premium-btn" style="cursor:pointer; margin:0; background:#0369a1;">Changer le logo (format carré 90×90)</label>
                             <input id="input-logo" type="file" accept="image/*" style="display:none;">
                         </div>
                     </div>
