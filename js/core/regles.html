@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geo Empire – Règles du Jeu</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .regles-wrapper {
+            max-width: 1100px;
+            margin: 20px auto 40px auto;
+            padding: 24px;
+            background: rgba(0, 25, 45, 0.88);
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            color: #d9eaff;
+            box-shadow: 0 0 25px rgba(0, 0, 0, 0.65);
+        }
+        .regles-sommaire {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 16px 0 24px 0;
+            padding: 12px;
+            background: rgba(0, 15, 35, 0.75);
+            border-radius: 10px;
+            border: 1px solid rgba(56, 189, 248, 0.25);
+        }
+        .regles-sommaire a {
+            padding: 6px 12px;
+            border-radius: 7px;
+            background: rgba(2, 132, 199, 0.25);
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            color: #bae6fd;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: bold;
+        }
+        .regles-sommaire a:hover {
+            background: #0284c7;
+            color: #fff;
+        }
+        .regle-section {
+            background: rgba(0, 38, 70, 0.78);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            border-left: 4px solid #38bdf8;
+            border-radius: 12px;
+            padding: 18px 20px;
+            margin-bottom: 18px;
+        }
+        .regle-section.or {
+            border-left-color: #fbbf24;
+            background: linear-gradient(135deg, rgba(45, 32, 8, 0.55), rgba(0, 35, 65, 0.85));
+        }
+        .regle-section h3 {
+            margin: 0 0 10px 0;
+            color: #7ec8ff;
+            font-size: 18px;
+        }
+        .regle-section.or h3 {
+            color: #fde68a;
+        }
+        .regle-section p {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #e2e8f0;
+        }
+        .regle-section ul {
+            margin: 0;
+            padding-left: 20px;
+            font-size: 14px;
+            line-height: 1.65;
+            color: #cbd5e1;
+        }
+        .regle-section li {
+            margin-bottom: 6px;
+        }
+        .monnaie-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 12px;
+            margin-top: 10px;
+        }
+        .monnaie-carte {
+            background: rgba(0, 20, 45, 0.85);
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            border-radius: 10px;
+            padding: 12px 14px;
+        }
+        .tag-info {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: bold;
+            background: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+            border: 1px solid #34d399;
+        }
+    </style>
+</head>
+
+<body>
+
+<header style="padding: 15px 30px;">
+    <h1 style="color: white; text-shadow: 0 2px 10px rgba(0,0,0,0.8); margin-bottom: 10px;">Règles du Jeu</h1>
+    <nav style="display: flex; flex-wrap: wrap; gap: 10px;">
+        <a href="index.html">Accueil</a>
+        <a href="carte.html">Carte GPS</a>
+        <a href="entreprises.html">Entreprises</a>
+        <a href="boutique.html">Boutique</a>
+        <a href="historique.html">Historique</a>
+        <a href="profil.html">Profil</a>
+    </nav>
+</header>
+
+<div id="topbar">
+    <span id="solde">50 000</span> Ø
+    | Tokens : <span id="tokens">10</span> GT
+    | Crowns : <span id="crowns">0</span> CRW
+</div>
+
+<main class="regles-wrapper">
+    <h2 style="color: #7ec8ff; margin-top: 0;">Guide Officiel — Geo Empire</h2>
+    <p style="font-size: 14px; color: #bae6fd;">
+        Bienvenue dans <strong>Geo Empire</strong>, un jeu de stratégie économique géolocalisé. Développez votre réseau d'entreprises dans le monde réel, gérez vos équipes et hissez votre groupe au sommet du classement.
+    </p>
+
+    <div class="regles-sommaire">
+        <a href="#objectif">1. Objectif & Patrimoine</a>
+        <a href="#monnaies">2. Les 3 Monnaies</a>
+        <a href="#carte">3. Carte GPS & Conquête</a>
+        <a href="#entreprises">4. Entreprises, Équipe & Holding</a>
+        <a href="#achats-ventes">5. Achats, Loyers & Ventes</a>
+        <a href="#operations">6. Assurances, Rénovation & Marketing</a>
+        <a href="#classement">7. Équité & Classement</a>
+    </div>
+
+    <!-- 1. OBJECTIF & PATRIMOINE -->
+    <section id="objectif" class="regle-section">
+        <h3>1. Objectif du jeu & Notion de Patrimoine</h3>
+        <p>
+            Votre but est de bâtir un empire économique rentable à partir de votre capital de départ. Votre réussite repose sur votre <strong>Patrimoine</strong>, qui se compose de deux éléments :
+        </p>
+        <ul>
+            <li><strong>La trésorerie liquide (Ø) :</strong> l'argent disponible immédiatement en caisse pour acheter des commerces, investir dans des biens, payer vos assurances ou verser des primes.</li>
+            <li><strong>La valeur de vos actifs :</strong> la valeur cumulée de toutes les entreprises acquises sur la carte GPS ainsi que des biens détenus dans chacune de vos structures.</li>
+        </ul>
+    </section>
+
+    <!-- 2. LES 3 MONNAIES -->
+    <section id="monnaies" class="regle-section">
+        <h3>2. Les trois monnaies de Geo Empire</h3>
+        <div class="monnaie-grid">
+            <div class="monnaie-carte">
+                <strong style="color: #34d399; font-size: 15px;">Ø — Le Géo (Monnaie courante)</strong>
+                <p style="margin-top: 6px; font-size: 13px;">
+                    C'est le cœur de votre activité. Il sert à acheter des entreprises sur le terrain, acquérir des biens, rénover vos locaux et rémunérer vos collaborateurs. Vous en gagnez grâce à vos loyers et vos ventes.
+                </p>
+            </div>
+            <div class="monnaie-carte">
+                <strong style="color: #fbbf24; font-size: 15px;">GT — Les Tokens (Utilitaire)</strong>
+                <p style="margin-top: 6px; font-size: 13px;">
+                    Monnaie d'accélération et de gestion urgente. Les Tokens permettent notamment de modifier une assurance en urgence sans attendre le renouvellement quotidien ou d'obtenir des coups de pouce en boutique.
+                </p>
+            </div>
+            <div class="monnaie-carte">
+                <strong style="color: #d8b4fe; font-size: 15px;">CRW — Les Crowns (Prestige)</strong>
+                <p style="margin-top: 6px; font-size: 13px;">
+                    Monnaie rare et honorifique. Les Crowns ne s'achètent pas : ils récompensent les joueurs actifs et chanceux via les tirages et événements spéciaux.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3. CARTE GPS -->
+    <section id="carte" class="regle-section">
+        <h3>3. Carte GPS & Acquisition d'entreprises</h3>
+        <p>
+            L'onglet <strong>Carte GPS</strong> détecte votre position réelle et affiche les commerces, bureaux et établissements autour de vous.
+        </p>
+        <ul>
+            <li><strong>Rayon d'action :</strong> vous pouvez explorer et racheter les établissements situés dans votre périmètre radar actif.</li>
+            <li><strong>Propriété exclusive :</strong> une fois acheté, l'établissement rejoint votre groupe dans <strong>Mon Empire</strong>. Vous pouvez le renommer, lui attribuer un logo et y rattacher des biens.</li>
+        </ul>
+    </section>
+
+    <!-- 4. ENTREPRISES, ÉQUIPE & HOLDING -->
+    <section id="entreprises" class="regle-section or">
+        <h3>4. Gouvernance : Entreprises, Équipes & Holding</h3>
+        <p>
+            Chaque entreprise acquise dispose de sa propre gestion et peut accueillir des collaborateurs :
+        </p>
+        <ul>
+            <li><strong>Fondateur (PDG Général) :</strong> détient l'autorité suprême sur l'ensemble du groupe, les recrutements, les licenciements et les finances.</li>
+            <li><strong>Directeur Général (Associé) & Directeur Commercial :</strong> vous pouvez recruter des joueurs ou associés dans chaque entreprise et définir leurs droits d'action (autoriser ventes et locations, bloquer l'une des deux, ou placer en lecture seule).</li>
+            <li><strong>Primes d'équipe :</strong> le dirigeant peut récompenser ses collaborateurs (ou lui-même) en versant une prime directement prélevée sur la trésorerie.</li>
+            <li><strong>La Holding (Palier 10 entreprises) :</strong> dès que vous possédez <strong>10 entreprises</strong>, vous débloquez la possibilité de fonder votre <strong>Holding</strong>. Elle regroupe toutes vos filiales, offre un <strong>bonus de revenus de +20 %</strong> et permet de nommer des Directeurs Généraux au niveau du groupe.</li>
+        </ul>
+    </section>
+
+    <!-- 5. ACHATS, LOYERS & VENTES -->
+    <section id="achats-ventes" class="regle-section">
+        <h3>5. Catalogue, Achats, Loyers & Ventes</h3>
+        <p>
+            Dans la section <strong>Catalogue & Gestion</strong>, vous faites fructifier le capital de vos entreprises :
+        </p>
+        <ul>
+            <li><strong>Acheter des biens :</strong> investissez dans différentes catégories de biens (immobilier, équipements, flottes, commerces...) rattachés à vos structures.</li>
+            <li><strong>Mettre en location :</strong> génère des revenus réguliers au fil du temps tout en conservant la propriété du bien.</li>
+            <li><strong>Mettre en vente :</strong> permet de réaliser une plus-value immédiate en ajustant votre marge commerciale. Attention : une marge trop élevée ralentit la demande, tandis qu'un prix attractif accélère la transaction.</li>
+        </ul>
+    </section>
+
+    <!-- 6. OPÉRATIONS -->
+    <section id="operations" class="regle-section">
+        <h3>6. Opérations : Assurances, Rénovation & Marketing</h3>
+        <ul>
+            <li><strong>Assurances :</strong> protègent vos biens contre les sinistres, incidents et pertes matérielles. Une couverture élevée rembourse mieux en cas de coup dur. Les contrats sont verrouillés à la journée, sauf déblocage d'urgence en Tokens (GT).</li>
+            <li><strong>Rénovation :</strong> entretient et modernise vos actifs afin d'augmenter leur valeur et leur attractivité locative.</li>
+            <li><strong>Marketing :</strong> booste la visibilité de vos enseignes pour attirer plus rapidement des locataires et des acheteurs.</li>
+        </ul>
+    </section>
+
+    <!-- 7. CLASSEMENT -->
+    <section id="classement" class="regle-section">
+        <h3>7. Équité & Classement Général</h3>
+        <p>
+            <span class="tag-info">100 % ÉQUITABLE</span>
+        </p>
+        <p>
+            Geo Empire distingue le classement général des joueurs et le classement prestigieux des <strong>Holdings</strong>. Pour garantir une compétition saine entre tous les joueurs, <strong>le classement est calculé uniquement sur vos performances et vos actifs bâtis en jeu</strong> : les fonds convertis via la boutique apportent du confort de gestion, mais n'offrent aucun avantage artificiel au classement.
+        </p>
+    </section>
+</main>
+
+<script type="module">
+    import { getData } from "./js/core/geoData.js";
+
+    const e = getData().entreprise;
+    document.getElementById("solde").textContent = (e.argent || 0).toLocaleString("fr-FR");
+    document.getElementById("tokens").textContent = (e.tokens || 0).toLocaleString("fr-FR");
+    document.getElementById("crowns").textContent = (e.crowns || 0).toLocaleString("fr-FR");
+</script>
+
+</body>
+</html>
