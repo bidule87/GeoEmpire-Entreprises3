@@ -5,7 +5,7 @@
 import { getEntreprise, sauvegarderEntreprise } from "../entrepriseCore.js";
 import { ajouterHistorique, loadData } from "../geoData.js";
 
-const COUT_MODIFICATION_URGENTE_GT = 5;
+const COUT_MODIFICATION_URGENTE_GT = 25;
 
 const ASSURANCES = {
     "Basique": {
