@@ -2,42 +2,125 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Geo Empire – Profil</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        .profil-wrapper {
+            max-width: 1050px;
+            margin: 20px auto;
+            padding: 22px;
+            background: rgba(0, 25, 45, 0.88);
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            color: #d9eaff;
+            box-shadow: 0 0 25px rgba(0, 0, 0, 0.65);
+        }
+        .profil-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 18px;
+            margin-top: 16px;
+        }
+        .profil-card {
+            flex: 1;
+            min-width: 290px;
+            background: rgba(0, 35, 68, 0.82);
+            border: 1px solid rgba(56, 189, 248, 0.32);
+            border-radius: 12px;
+            padding: 18px;
+        }
+        .profil-avatar-zone {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 14px;
+        }
+        .profil-avatar-img {
+            width: 88px;
+            height: 88px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #38bdf8;
+            background: #0f294a;
+        }
+        .profil-field {
+            margin-bottom: 12px;
+        }
+        .profil-field label {
+            display: block;
+            font-size: 13px;
+            color: #7ec8ff;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        .profil-field input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 9px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(56, 189, 248, 0.45);
+            background: rgba(15, 23, 42, 0.9);
+            color: #fff;
+            font-size: 14px;
+        }
+        .profil-field input[readonly] {
+            opacity: 0.75;
+            cursor: not-allowed;
+            border-color: #34d399;
+        }
+        .badge-securite {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 11px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: bold;
+            background: rgba(16, 185, 129, 0.16);
+            border: 1px solid #34d399;
+            color: #34d399;
+        }
+    </style>
 </head>
 
 <body>
 
-<header>
-    <h1>Profil</h1>
-    <nav>
+<header style="padding: 15px 30px;">
+    <h1 style="color: white; text-shadow: 0 2px 10px rgba(0,0,0,0.8); margin-bottom: 10px;">Profil Joueur</h1>
+    <nav style="display: flex; flex-wrap: wrap; gap: 10px;">
         <a href="index.html">Accueil</a>
-        <a href="carte.html">Carte</a>
+        <a href="carte.html">Carte GPS</a>
         <a href="entreprises.html">Entreprises</a>
         <a href="immobilier.html">Immobilier</a>
         <a href="finances.html">Finances</a>
-        <a href="prestige.html">Prestige</a>
         <a href="boutique.html">Boutique</a>
+        <a href="historique.html">Historique</a>
+        <a href="prestige.html">Prestige</a>
     </nav>
 </header>
 
 <div id="topbar">
-    <span id="solde">0</span> €
-    | Tokens : <span id="tokens">0</span>
-    | Crowns : <span id="crowns">0</span>
+    <span id="solde">50 000</span> Ø
+    | Tokens : <span id="tokens">10</span> GT
+    | Crowns : <span id="crowns">0</span> CRW
 </div>
 
-<main id="profil-container"></main>
+<main id="profil-container" class="profil-wrapper"></main>
 
-<!-- CORE -->
-<script type="module" src="./js/core/geoData.js"></script>
-<script type="module" src="./js/core/entrepriseCore.js"></script>
-<script type="module" src="./js/core/core.js"></script>
-<script type="module" src="./js/core/systeme.js"></script>
-<script type="module" src="./js/core/ui.js"></script>
+<script type="module">
+    import { getData } from "./js/core/geoData.js";
+    import { initProfil } from "./js/core/modules/profil.js";
 
-<!-- MODULE PROFIL -->
-<script type="module" src="./js/core/modules/profil.js"></script>
+    const e = getData().entreprise;
+    document.getElementById("solde").textContent = (e.argent || 0).toLocaleString("fr-FR");
+    document.getElementById("tokens").textContent = (e.tokens || 0).toLocaleString("fr-FR");
+    document.getElementById("crowns").textContent = (e.crowns || 0).toLocaleString("fr-FR");
+
+    initProfil();
+</script>
 
 </body>
 </html>
