@@ -1,5 +1,5 @@
 // ============================================
-//  PATRIMOINE & DOUBLE CLASSEMENT (GLOBAL + HOLDINGS)
+//  PATRIMOINE & DOUBLE CLASSEMENT ANTI-PAY-TO-WIN (GLOBAL + HOLDINGS)
 // ============================================
 
 import { getEntreprise, calculerValeurEntreprise } from "../entrepriseCore.js";
@@ -20,23 +20,25 @@ export function initPatrimoine() {
     const e = getEntreprise();
     const valeurActifs = calculerValeurEntreprise();
     const tresorerie = e.argent || 0;
-    const patrimoineTotal = tresorerie + valeurActifs;
+    const patrimoineBrut = tresorerie + valeurActifs;
+    const capitalBoutique = Number(e.capitalInjecteBoutique || 0);
+    const scoreClassement = Math.max(0, patrimoineBrut - capitalBoutique);
     const nbEntreprises = (e.commercesGPS || []).length;
 
     const joueurActuel = {
         nom: `${e.pdg} (Vous)`,
         groupe: e.nom,
-        patrimoine: patrimoineTotal,
+        patrimoine: scoreClassement,
         holding: e.holding?.active ? e.holding.nom : null,
         nbEntreprises,
         estMoi: true
     };
 
-    // 1. Classement Général — Patrimoine Global (tous les joueurs)
+    // 1. Classement Général — Mérite en jeu (hors injections boutique)
     const classementGlobal = [...JOUEURS_SIMULES, joueurActuel]
         .sort((a, b) => b.patrimoine - a.patrimoine);
 
-    // 2. Classement Général — Holdings (uniquement les joueurs ayant une Holding active)
+    // 2. Classement Général — Holdings
     const classementHoldings = [...JOUEURS_SIMULES, joueurActuel]
         .filter(j => Boolean(j.holding))
         .sort((a, b) => b.patrimoine - a.patrimoine);
@@ -50,15 +52,22 @@ export function initPatrimoine() {
                 <div class="entreprise-stats">
                     <div class="stat-item">Trésorerie liquide : <strong>${tresorerie.toLocaleString("fr-FR")} Ø</strong></div>
                     <div class="stat-item">Valeur des entreprises & biens : <strong>${valeurActifs.toLocaleString("fr-FR")} Ø</strong></div>
-                    <div class="stat-item" style="border:1px solid #fbbf24;">Patrimoine Global : <strong style="color:#fbbf24; font-size:18px;">${patrimoineTotal.toLocaleString("fr-FR")} Ø</strong></div>
+                    <div class="stat-item">Patrimoine Brut : <strong>${patrimoineBrut.toLocaleString("fr-FR")} Ø</strong></div>
+                    <div class="stat-item" style="border:1px solid #34d399;">
+                        Score Classement (Mérite en jeu) :
+                        <strong style="color:#34d399; font-size:18px;">${scoreClassement.toLocaleString("fr-FR")} Ø</strong>
+                    </div>
                     <div class="stat-item">Statut Holding : <strong>${e.holding?.active ? `🏛️ ${e.holding.nom}` : `Non fondée (${nbEntreprises}/10 entreprises)`}</strong></div>
                 </div>
+                <p style="margin:10px 0 0 0; font-size:12px; color:#94a3b8;">
+                    ⚖️ <strong>Équité du classement :</strong> les fonds convertis depuis la Boutique ne sont pas comptabilisés dans le Score Classement. Seuls vos revenus et actifs bâtis en jeu comptent.
+                </p>
             </div>
 
             <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(340px, 1fr)); gap:16px;">
-                <!-- CLASSEMENT 1 : PATRIMOINE GLOBAL -->
+                <!-- CLASSEMENT 1 : PATRIMOINE MÉRITE -->
                 <div class="premium-box">
-                    <h3 style="color:#38bdf8; margin-top:0;">🌍 Classement Général — Patrimoine Global</h3>
+                    <h3 style="color:#38bdf8; margin-top:0;">🌍 Classement Général — Mérite en Jeu</h3>
                     <div style="display:flex; flex-direction:column; gap:8px;">
                         ${classementGlobal.map((j, index) => `
                             <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; border-radius:8px; background:${j.estMoi ? "rgba(56,189,248,0.25)" : "rgba(0,20,45,0.7)"}; border:${j.estMoi ? "1px solid #38bdf8" : "1px solid rgba(255,255,255,0.08)"};">
