@@ -97,10 +97,8 @@
         <a href="index.html">Accueil</a>
         <a href="carte.html">Carte GPS</a>
         <a href="entreprises.html">Entreprises</a>
-        <a href="immobilier.html">Immobilier</a>
-        <a href="finances.html">Finances</a>
         <a href="historique.html">Historique</a>
-        <a href="prestige.html">Prestige</a>
+        <a href="prestige.html">Loterie & Prestige</a>
         <a href="profil.html">Profil</a>
     </nav>
 </header>
@@ -115,13 +113,13 @@
     <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
         <div>
             <h2 style="color: #7ec8ff; margin: 0;">Boutique Officielle Geo Empire</h2>
-            <p style="font-size: 14px; color: #bae6fd; margin: 6px 0 0 0;">Débloquez le Passe Prestige ou échangez vos Tokens (GT) pour accélérer votre expansion.</p>
+            <p style="font-size: 14px; color: #bae6fd; margin: 6px 0 0 0;">Débloquez le Passe Prestige, rechargez vos Tokens (GT) ou accélérez votre expansion.</p>
         </div>
         <div id="info-carte-boutique" style="font-size: 13px;"></div>
     </div>
 
     <div class="boutique-grid">
-        <!-- CARTE 1 : PASSE PRESTIGE (ACHAT CARTE BANCAIRE DU PROFIL) -->
+        <!-- CARTE 1 : PASSE PRESTIGE -->
         <div class="pack-card premium">
             <div>
                 <span class="pack-badge" style="background:#fbbf24; color:#0f172a;">PASSE PRESTIGE • 9,99 €</span>
@@ -129,7 +127,7 @@
                 <p style="font-size: 13px; line-height: 1.5;">
                     • Débloque les rayons GPS <strong>10 km</strong> et <strong>20 km</strong><br>
                     • Débloque l'assurance <strong>Prestige Ultime (120 % + Anti-braquage)</strong><br>
-                    • Bonus immédiat : <strong>+50 000 Ø</strong>
+                    • Bonus immédiat : <strong>+50 000 Ø</strong> & <strong>+15 GT</strong>
                 </p>
             </div>
             <div>
@@ -138,13 +136,43 @@
             </div>
         </div>
 
-        <!-- CARTE 2 : INJECTION DE CAPITAL -->
+        <!-- CARTE 2 : PACK 30 TOKENS (GT) -->
+        <div class="pack-card">
+            <div>
+                <span class="pack-badge" style="background:rgba(245,158,11,0.2); color:#fbbf24; border:1px solid #fbbf24;">TOKENS GT • 4,99 €</span>
+                <h3 style="margin: 8px 0; color: #fff;">Pack Relance +30 Tokens (GT)</h3>
+                <p style="font-size: 13px; line-height: 1.5;">
+                    Idéal pour débloquer immédiatement une modification d'assurance avant minuit (25 GT) ou accélérer vos opérations.
+                </p>
+            </div>
+            <div>
+                <div style="font-size: 14px; font-weight: bold; color: #fbbf24;">Achat Carte Bancaire (4,99 €)</div>
+                <button class="btn-pack or btn-achat-tokens" data-gt="30" data-prix="4,99 €">💳 Acheter 30 GT (4,99 €)</button>
+            </div>
+        </div>
+
+        <!-- CARTE 3 : PACK 100 TOKENS (GT) -->
+        <div class="pack-card">
+            <div>
+                <span class="pack-badge" style="background:rgba(245,158,11,0.2); color:#fbbf24; border:1px solid #fbbf24;">TOKENS GT • 12,99 €</span>
+                <h3 style="margin: 8px 0; color: #fff;">Coffre Stratège +100 Tokens (GT)</h3>
+                <p style="font-size: 13px; line-height: 1.5;">
+                    Réserve complète de <strong>100 GT</strong> pour gérer toutes vos urgences d'assurance et vos échanges en toute liberté.
+                </p>
+            </div>
+            <div>
+                <div style="font-size: 14px; font-weight: bold; color: #fbbf24;">Achat Carte Bancaire (12,99 €)</div>
+                <button class="btn-pack or btn-achat-tokens" data-gt="100" data-prix="12,99 €">💳 Acheter 100 GT (12,99 €)</button>
+            </div>
+        </div>
+
+        <!-- CARTE 4 : INJECTION DE CAPITAL -->
         <div class="pack-card">
             <div>
                 <span class="pack-badge" style="background:rgba(52,211,153,0.2); color:#34d399; border:1px solid #34d399;">TRÉSORERIE</span>
                 <h3 style="margin: 8px 0; color: #fff;">Injection de Capital +50 000 Ø</h3>
                 <p style="font-size: 13px; line-height: 1.5;">
-                    Ajoute immédiatement <strong>50 000 Ø</strong> à votre trésorerie pour acquérir de nouveaux sièges sur la carte.
+                    Ajoute immédiatement <strong>50 000 Ø</strong> à votre trésorerie (non comptabilisé dans le Score Classement).
                 </p>
             </div>
             <div>
@@ -153,13 +181,13 @@
             </div>
         </div>
 
-        <!-- CARTE 3 : FONDS HOLDING -->
+        <!-- CARTE 5 : FONDS HOLDING -->
         <div class="pack-card">
             <div>
                 <span class="pack-badge" style="background:rgba(56,189,248,0.2); color:#38bdf8; border:1px solid #38bdf8;">EXPANSION</span>
                 <h3 style="margin: 8px 0; color: #fff;">Fonds Holding +250 000 Ø</h3>
                 <p style="font-size: 13px; line-height: 1.5;">
-                    Ajoute <strong>250 000 Ø</strong> à votre groupe pour accélérer votre montée vers les 10 entreprises.
+                    Ajoute <strong>250 000 Ø</strong> à votre groupe (non comptabilisé dans le Score Classement).
                 </p>
             </div>
             <div>
@@ -168,17 +196,17 @@
             </div>
         </div>
 
-        <!-- CARTE 4 : TICKET LOTERIE PRESTIGE -->
+        <!-- CARTE 6 : TICKET LOTERIE PRESTIGE -->
         <div class="pack-card">
             <div>
-                <span class="pack-badge" style="background:rgba(168,85,247,0.2); color:#d8b4fe; border:1px solid #a855f7;">LOTERIE PRESTIGE</span>
+                <span class="pack-badge" style="background:rgba(168,85,247,0.2); color:#d8b4fe; border:1px solid #a855f7;">LOTERIE & PRESTIGE</span>
                 <h3 style="margin: 8px 0; color: #fff;">Accès Loterie Crowns (CRW)</h3>
                 <p style="font-size: 13px; line-height: 1.5;">
-                    Les <strong>Crowns (CRW)</strong> se gagnent exclusivement à la loterie dans l'onglet <strong>Prestige</strong>.
+                    Les <strong>Crowns (CRW)</strong> ne s'achètent pas : ils se gagnent exclusivement à la loterie dans <strong>Loterie & Prestige</strong>.
                 </p>
             </div>
             <div>
-                <a href="prestige.html" class="btn-pack" style="display:block; text-align:center; text-decoration:none; background:linear-gradient(90deg, #7e22ce, #a855f7);">Aller à la Loterie Prestige →</a>
+                <a href="prestige.html" class="btn-pack" style="display:block; text-align:center; text-decoration:none; background:linear-gradient(90deg, #7e22ce, #a855f7);">Aller à Loterie & Prestige →</a>
             </div>
         </div>
     </div>
@@ -213,6 +241,11 @@
             message: texte,
             type: "gain"
         });
+    }
+
+    function enregistrerCapitalBoutique(montantGeo) {
+        const e = getData().entreprise;
+        e.capitalInjecteBoutique = Number(e.capitalInjecteBoutique || 0) + Number(montantGeo || 0);
     }
 
     function estBetaActif() {
@@ -273,13 +306,41 @@
         e.prestigePack = true;
         localStorage.setItem("prestigePack", "true");
         e.argent = (e.argent || 0) + 50000;
-        logBoutique(`Achat Passe Prestige via carte •••• ${cb.derniersChiffres} (+50 000 Ø)`);
+        e.tokens = (e.tokens || 0) + 15;
+        enregistrerCapitalBoutique(50000);
+        logBoutique(`Achat Passe Prestige via carte •••• ${cb.derniersChiffres} (+50 000 Ø et +15 GT)`);
         saveData();
         majAffichage();
-        alert("Passe Prestige activé ! Rayons 10/20 km et Assurance Ultime débloqués.");
+        alert("Passe Prestige activé ! Rayons 10/20 km, Assurance Ultime, +50 000 Ø et +15 GT crédités.");
     });
 
-    // Échanges Tokens (GT) -> Géo (Ø)
+    // Achat de Tokens (GT) via Carte Bancaire du Profil
+    document.querySelectorAll(".btn-achat-tokens").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const e = getData().entreprise;
+            const cb = e.profil?.carteBancaire;
+            if (!cb) {
+                if (confirm("Aucune carte n'est encore enregistrée sur votre profil. Voulez-vous ouvrir votre Profil pour l'ajouter ?")) {
+                    window.location.href = "profil.html";
+                }
+                return;
+            }
+
+            const nbGt = Number(btn.dataset.gt || 0);
+            const prix = btn.dataset.prix || "";
+            if (!confirm(`Confirmer l'achat de +${nbGt} Tokens (GT) pour ${prix} avec votre carte ${cb.reseau} •••• ${cb.derniersChiffres} ?`)) {
+                return;
+            }
+
+            e.tokens = (e.tokens || 0) + nbGt;
+            logBoutique(`Achat Boutique : +${nbGt} Tokens (GT) via carte •••• ${cb.derniersChiffres}`);
+            saveData();
+            majAffichage();
+            alert(`+${nbGt} Tokens (GT) ajoutés à votre compte !`);
+        });
+    });
+
+    // Échanges Tokens (GT) -> Géo (Ø) (neutralisés au classement)
     document.querySelectorAll("[data-achat]").forEach(btn => {
         btn.addEventListener("click", () => {
             const e = getData().entreprise;
@@ -289,12 +350,14 @@
                 if ((e.tokens || 0) < 5) return alert("Tokens (GT) insuffisants (5 GT requis).");
                 e.tokens -= 5;
                 e.argent = (e.argent || 0) + 50000;
-                logBoutique("Échange Boutique : +50 000 Ø contre 5 GT");
+                enregistrerCapitalBoutique(50000);
+                logBoutique("Échange Boutique : +50 000 Ø contre 5 GT (hors classement)");
             } else if (type === "capital-250k") {
                 if ((e.tokens || 0) < 20) return alert("Tokens (GT) insuffisants (20 GT requis).");
                 e.tokens -= 20;
                 e.argent = (e.argent || 0) + 250000;
-                logBoutique("Échange Boutique : +250 000 Ø contre 20 GT");
+                enregistrerCapitalBoutique(250000);
+                logBoutique("Échange Boutique : +250 000 Ø contre 20 GT (hors classement)");
             }
 
             saveData();
