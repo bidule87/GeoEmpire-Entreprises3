@@ -1,5 +1,5 @@
 // ============================================
-// PROFIL JOUEUR — CONNEXION PAR E-MAIL, SYNCHRO & JOURNAL IP PRIVÉ
+// PROFIL JOUEUR — CONNEXION PAR E-MAIL, SYNCHRO CLOUD & JOURNAL IP PRIVÉ
 // ============================================
 
 import { getData, saveData, loadData, ajouterHistorique } from "../geoData.js";
@@ -8,10 +8,10 @@ const REGISTRE_UNIQUE_KEY = "geoEmpireCompteUniqueVerrou";
 const JOURNAL_CONNEXIONS_KEY = "geoEmpireJournalConnexions";
 const CODE_MAITRE_ADMIN = "EMPIRE-MASTER-87";
 
-// À remplir à l'étape 2 avec tes identifiants Firebase gratuits pour activer le cloud multi-appareils
+// Base Firebase Realtime Database connectée
 const SYNCHRO_CLOUD_CONFIG = {
-    active: false,
-    databaseURL: "" // Ex : "https://geo-empire-default-rtdb.europe-west1.firebasedatabase.app"
+    active: true,
+    databaseURL: "https://geo-empire-8ca7e-default-rtdb.europe-west1.firebasedatabase.app"
 };
 
 const AVATAR_DEFAUT = "data:image/svg+xml;utf8," + encodeURIComponent(
@@ -49,13 +49,13 @@ function normaliserCleEmail(email) {
     return btoa(email.trim().toLowerCase()).replace(/[^a-zA-Z0-9]/g, "");
 }
 
-// Sauvegarde & lecture Cloud (Firebase Realtime Database via REST, zéro librairie externe requise)
+// Sauvegarde & lecture Cloud (Firebase Realtime Database)
 async function pousserSauvegardeCloud(email, payloadData) {
     if (!SYNCHRO_CLOUD_CONFIG.active || !SYNCHRO_CLOUD_CONFIG.databaseURL || !email) return false;
     try {
         const cle = normaliserCleEmail(email);
-        const url = `${SYNCHRO_CLOUD_CONFIG.databaseURL.replace(/\/$/, "")}/comptes/${cle}.json`;
-        const res = await fetch(url, {
+        const base = SYNCHRO_CLOUD_CONFIG.databaseURL.replace(/\/$/, "");
+        const res = await fetch(`${base}/comptes/${cle}.json`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -74,8 +74,8 @@ async function recupererSauvegardeCloud(email) {
     if (!SYNCHRO_CLOUD_CONFIG.active || !SYNCHRO_CLOUD_CONFIG.databaseURL || !email) return null;
     try {
         const cle = normaliserCleEmail(email);
-        const url = `${SYNCHRO_CLOUD_CONFIG.databaseURL.replace(/\/$/, "")}/comptes/${cle}.json`;
-        const res = await fetch(url);
+        const base = SYNCHRO_CLOUD_CONFIG.databaseURL.replace(/\/$/, "");
+        const res = await fetch(`${base}/comptes/${cle}.json`);
         if (!res.ok) return null;
         return await res.json();
     } catch {
@@ -96,7 +96,6 @@ async function enregistrerLogConnexionSilencieux(profil) {
         appareil: detecterTypeAppareil()
     };
 
-    // Stockage local du journal
     const journal = JSON.parse(localStorage.getItem(JOURNAL_CONNEXIONS_KEY) || "[]");
     const derniere = journal[0];
     if (!derniere || derniere.ip !== entree.ip || derniere.email !== entree.email || (entree.timestamp - derniere.timestamp) > 600000) {
@@ -105,11 +104,10 @@ async function enregistrerLogConnexionSilencieux(profil) {
         localStorage.setItem(JOURNAL_CONNEXIONS_KEY, JSON.stringify(journal));
     }
 
-    // Envoi silencieux vers ton journal central si Cloud actif
     if (SYNCHRO_CLOUD_CONFIG.active && SYNCHRO_CLOUD_CONFIG.databaseURL) {
         try {
-            const url = `${SYNCHRO_CLOUD_CONFIG.databaseURL.replace(/\/$/, "")}/journalConnexions.json`;
-            await fetch(url, {
+            const base = SYNCHRO_CLOUD_CONFIG.databaseURL.replace(/\/$/, "");
+            await fetch(`${base}/journalConnexions.json`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(entree)
@@ -186,8 +184,8 @@ async function chargerJournalAdmin() {
     let logs = JSON.parse(localStorage.getItem(JOURNAL_CONNEXIONS_KEY) || "[]");
     if (SYNCHRO_CLOUD_CONFIG.active && SYNCHRO_CLOUD_CONFIG.databaseURL) {
         try {
-            const url = `${SYNCHRO_CLOUD_CONFIG.databaseURL.replace(/\/$/, "")}/journalConnexions.json`;
-            const res = await fetch(url);
+            const base = SYNCHRO_CLOUD_CONFIG.databaseURL.replace(/\/$/, "");
+            const res = await fetch(`${base}/journalConnexions.json`);
             if (res.ok) {
                 const raw = await res.json();
                 if (raw && typeof raw === "object") {
@@ -249,7 +247,7 @@ export function initProfil() {
                     ${getDrapeauPays(p.codePays)} <strong>${p.pays || "France"}</strong> • Appareil : <strong>${detecterTypeAppareil()}</strong>
                 </div>
             </div>
-            <span class="badge-securite">🔒 Compte Unique & Anti-Multicompte</span>
+            <span class="badge-securite">🔒 Synchro Cloud & Anti-Multicompte Actifs</span>
         </div>
 
         <div class="profil-grid">
@@ -283,7 +281,7 @@ export function initProfil() {
                     <input type="email" id="profil-email" value="${p.email || ""}" ${p.emailVerrouille ? "readonly" : ""} placeholder="votre.email@exemple.fr">
                     <div style="font-size:11px; color:${p.emailVerrouille ? "#34d399" : "#fbbf24"}; margin-top:4px;">
                         ${p.emailVerrouille
-                            ? "✓ Compte unique lié à cet e-mail. Saisissez ce même e-mail sur mobile ou tablette pour retrouver votre empire."
+                            ? "✓ Compte unique lié à cet e-mail. Entrez ce même e-mail sur mobile ou tablette pour retrouver votre empire."
                             : "⚠️ Une seule adresse e-mail autorisée par joueur (verrouillée après validation)."}
                     </div>
                 </div>
@@ -294,7 +292,7 @@ export function initProfil() {
                     </button>
                     ${!p.emailVerrouille ? `
                         <button type="button" id="btn-recuperer-email" class="premium-btn" style="background:#0284c7; margin:0;">
-                            🔄 J'ai déjà un compte e-mail
+                            🔄 Charger mon compte e-mail
                         </button>
                     ` : ""}
                 </div>
@@ -380,6 +378,9 @@ export function initProfil() {
     `;
 
     detecterConnexionGeo(p);
+    if (p.emailVerrouille && p.email) {
+        pousserSauvegardeCloud(p.email, data);
+    }
     bindProfilEvents();
     if (panneauAdminOuvert) afficherTableauAdmin();
 }
@@ -423,7 +424,6 @@ async function afficherTableauAdmin() {
 }
 
 function bindProfilEvents() {
-    // Ouverture discrète du registre réservé au créateur (5 clics sur le titre + code maître)
     const titre = document.getElementById("titre-passeport-profil");
     if (titre) {
         titre.onclick = () => {
@@ -447,7 +447,6 @@ function bindProfilEvents() {
         };
     }
 
-    // Upload photo de profil
     const inputPhoto = document.getElementById("input-photo-profil");
     if (inputPhoto) {
         inputPhoto.onchange = ev => {
@@ -463,7 +462,6 @@ function bindProfilEvents() {
         };
     }
 
-    // Sauvegarde + synchro cloud automatique par e-mail
     const btnSave = document.getElementById("btn-save-profil");
     if (btnSave) {
         btnSave.onclick = async () => {
@@ -501,26 +499,23 @@ function bindProfilEvents() {
             if (e.personnel) e.personnel.nom = surnom;
 
             saveData();
-            await pousserSauvegardeCloud(p.email, d);
+            const okCloud = await pousserSauvegardeCloud(p.email, d);
             await enregistrerLogConnexionSilencieux(p);
             ajouterHistorique(`Profil joueur mis à jour (${surnom} • ${p.pays})`, "info", surnom);
 
-            alert("Profil enregistré et synchronisé !");
+            alert(okCloud
+                ? "Profil enregistré et synchronisé sur le Cloud ! Vous pouvez maintenant ouvrir votre compte avec cet e-mail sur mobile ou tablette."
+                : "Profil enregistré localement !");
             initProfil();
         };
     }
 
-    // Connexion sur un nouvel appareil (mobile / tablette) uniquement avec son e-mail
     const btnRecup = document.getElementById("btn-recuperer-email");
     if (btnRecup) {
         btnRecup.onclick = async () => {
             const emailInput = document.getElementById("profil-email")?.value.trim().toLowerCase();
             if (!emailInput || !emailInput.includes("@")) {
                 return alert("Saisissez d'abord l'adresse e-mail de votre compte dans le champ ci-dessus.");
-            }
-
-            if (!SYNCHRO_CLOUD_CONFIG.active) {
-                return alert("La synchronisation Cloud automatique sera active dès le branchement de ta base Firebase (Étape 2).");
             }
 
             const sauvegardeCloud = await recupererSauvegardeCloud(emailInput);
@@ -539,7 +534,6 @@ function bindProfilEvents() {
         };
     }
 
-    // Carte bancaire Boutique
     const btnSaveCb = document.getElementById("btn-save-cb");
     if (btnSaveCb) {
         btnSaveCb.onclick = async () => {
