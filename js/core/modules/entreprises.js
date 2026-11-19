@@ -1,5 +1,5 @@
 // =======================================
-// GEO EMPIRE — MODULE ENTREPRISES (HIÉRARCHIE & PHOTOS)
+// GEO EMPIRE — MODULE ENTREPRISES (HIÉRARCHIE, PRIMES & PHOTOS)
 // =======================================
 
 import {
@@ -16,13 +16,17 @@ import {
     changerPhotoSiegeGPS,
     ajouterMembreSiege,
     majMembreSiege,
+    verserPrimeMembreSiege,
     virerMembreSiege,
     creerHolding,
     synchroniserFilialesHolding,
     ajouterAssocieHolding,
     changerDroitsAssocieHolding,
+    verserPrimeAssocieHolding,
     virerAssocieHolding,
-    calculerValeurEntreprise
+    calculerValeurEntreprise,
+    calculerValeurSiege,
+    verserPrimePdg
 } from "../entrepriseCore.js";
 import { getInfosTempsJeu, saveData } from "../geoData.js";
 
@@ -107,6 +111,11 @@ function peutGererPermissions(e, siege) {
     return (siege?.associes || []).some(a => a.nom === actif && a.role === "dg");
 }
 
+function majSoldeTopbar() {
+    const soldeEl = document.getElementById("solde");
+    if (soldeEl) soldeEl.textContent = (getEntreprise().argent || 0).toLocaleString("fr-FR");
+}
+
 export function initEntreprise() {
     const e = getEntreprise();
     const container = document.getElementById("entreprise");
@@ -115,6 +124,7 @@ export function initEntreprise() {
     migrerAnciensBiensVersSiege(e);
 
     const valeur = calculerValeurEntreprise();
+    const primeMaxGlobale = Math.max(500, Math.floor(valeur * 0.10));
     const sieges = getSiegesGPS();
     const nbSieges = sieges.length;
     const estPdg = estPdgGeneral();
@@ -141,23 +151,35 @@ export function initEntreprise() {
         const associesHoldingHTML = (e.holding.associes || []).length === 0
             ? `<span style="color:#94a3b8; font-size:13px;">Aucun Directeur Général Holding nommé</span>`
             : e.holding.associes.map(a => `
-                <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; background:rgba(245,158,11,0.12); border:1px solid rgba(251,191,36,0.4); padding:8px 10px; border-radius:8px; margin-bottom:6px;">
-                    <div>
-                        <strong style="color:#fde68a;">👔 ${a.nom}</strong>
-                        <span style="font-size:12px; color:#cbd5e1; margin-left:6px;">(Directeur Général Associé)</span>
+                <div style="display:flex; flex-direction:column; gap:8px; background:rgba(245,158,11,0.12); border:1px solid rgba(251,191,36,0.4); padding:10px; border-radius:8px; margin-bottom:8px;">
+                    <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px;">
+                        <div>
+                            <strong style="color:#fde68a;">👔 ${a.nom}</strong>
+                            <span style="font-size:12px; color:#cbd5e1; margin-left:6px;">(Directeur Général Associé)</span>
+                            <span style="font-size:11px; color:#34d399; margin-left:8px;">• Primes reçues : ${(a.primeTotal || 0).toLocaleString("fr-FR")} Ø</span>
+                        </div>
+                        <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+                            <select class="select-droits-holding" data-nom="${a.nom}" style="padding:4px 8px; border-radius:6px; background:#0f294a; color:#fff; border:1px solid #fbbf24; font-size:12px;">
+                                <option value="complet" ${a.droits === "complet" ? "selected" : ""}>Tout autoriser</option>
+                                <option value="achetee" ${a.droits === "achetee" ? "selected" : ""}>Vente uniquement (Location bloquée)</option>
+                                <option value="louee" ${a.droits === "louee" ? "selected" : ""}>Location uniquement (Vente bloquée)</option>
+                            </select>
+                            ${estPdg ? `
+                                <button type="button" class="btn-virer-holding" data-nom="${a.nom}" style="background:#b91c1c; color:#fff; border:none; border-radius:6px; padding:4px 9px; cursor:pointer; font-size:12px; font-weight:bold;">
+                                    Virer (-${PECULE_DEPART_ASSOCIE.toLocaleString("fr-FR")} Ø)
+                                </button>
+                            ` : ""}
+                        </div>
                     </div>
-                    <div style="display:flex; gap:6px; align-items:center;">
-                        <select class="select-droits-holding" data-nom="${a.nom}" style="padding:4px 8px; border-radius:6px; background:#0f294a; color:#fff; border:1px solid #fbbf24; font-size:12px;">
-                            <option value="complet" ${a.droits === "complet" ? "selected" : ""}>Tout autoriser</option>
-                            <option value="achetee" ${a.droits === "achetee" ? "selected" : ""}>Vente uniquement (Location bloquée)</option>
-                            <option value="louee" ${a.droits === "louee" ? "selected" : ""}>Location uniquement (Vente bloquée)</option>
-                        </select>
-                        ${estPdg ? `
-                            <button type="button" class="btn-virer-holding" data-nom="${a.nom}" style="background:#b91c1c; color:#fff; border:none; border-radius:6px; padding:4px 9px; cursor:pointer; font-size:12px; font-weight:bold;">
-                                Virer (-${PECULE_DEPART_ASSOCIE.toLocaleString("fr-FR")} Ø)
-                            </button>
-                        ` : ""}
-                    </div>
+
+                    ${estPdg ? `
+                        <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap; padding-top:6px; border-top:1px dashed rgba(251,191,36,0.25);">
+                            <span style="font-size:12px; color:#fde68a;">💰 Prime :</span>
+                            <input type="number" class="input-prime-holding" data-nom="${a.nom}" min="1" max="${primeMaxGlobale}" placeholder="Montant Ø (max ${primeMaxGlobale.toLocaleString("fr-FR")})" style="width:185px; padding:4px 8px; border-radius:6px; border:1px solid #fbbf24; background:rgba(0,20,45,0.9); color:#fff; font-size:12px;">
+                            <button type="button" class="btn-max-prime-holding" data-nom="${a.nom}" data-max="${primeMaxGlobale}" style="padding:4px 8px; border-radius:6px; border:1px solid #fbbf24; background:rgba(245,158,11,0.25); color:#fde68a; cursor:pointer; font-size:11px; font-weight:bold;">Max (10 %)</button>
+                            <button type="button" class="btn-verser-prime-holding" data-nom="${a.nom}" style="padding:4px 10px; border-radius:6px; border:none; background:#059669; color:#fff; cursor:pointer; font-size:12px; font-weight:bold;">Verser la prime</button>
+                        </div>
+                    ` : ""}
                 </div>
             `).join("");
 
@@ -228,6 +250,8 @@ export function initEntreprise() {
         : sieges.map(s => {
             const peutControler = peutGererPermissions(e, s);
             const biensDuSiege = compterBiensDuSiege(s, e);
+            const valeurSiege = calculerValeurSiege(s);
+            const primeMaxSiege = Math.max(500, Math.floor(valeurSiege * 0.10));
 
             const biensHTML = biensDuSiege.length === 0
                 ? `<span style="color:#94a3b8; font-size:13px;">Aucun bien acheté sur cette structure</span>`
@@ -246,24 +270,36 @@ export function initEntreprise() {
                 : membres.map(a => {
                     const estDG = a.role === "dg";
                     return `
-                    <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; background:${estDG ? "rgba(245,158,11,0.14)" : "rgba(59,130,246,0.14)"}; border:1px solid ${estDG ? "rgba(251,191,36,0.45)" : "rgba(59,130,246,0.45)"}; padding:8px 10px; border-radius:8px; margin-bottom:6px;">
-                        <div>
-                            <strong style="color:${estDG ? "#fde68a" : "#93c5fd"};">${estDG ? "👔" : "💼"} ${a.nom}</strong>
-                            <span style="font-size:12px; color:#cbd5e1; margin-left:6px;">• ${estDG ? "Directeur Général (Associé)" : "Directeur Commercial (Joueur)"}</span>
+                    <div style="display:flex; flex-direction:column; gap:8px; background:${estDG ? "rgba(245,158,11,0.14)" : "rgba(59,130,246,0.14)"}; border:1px solid ${estDG ? "rgba(251,191,36,0.45)" : "rgba(59,130,246,0.45)"}; padding:10px; border-radius:8px; margin-bottom:8px;">
+                        <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px;">
+                            <div>
+                                <strong style="color:${estDG ? "#fde68a" : "#93c5fd"};">${estDG ? "👔" : "💼"} ${a.nom}</strong>
+                                <span style="font-size:12px; color:#cbd5e1; margin-left:6px;">• ${estDG ? "Directeur Général (Associé)" : "Directeur Commercial (Joueur)"}</span>
+                                <span style="font-size:11px; color:#34d399; margin-left:8px;">• Primes cumulées : ${(a.primeTotal || 0).toLocaleString("fr-FR")} Ø</span>
+                            </div>
+                            <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+                                <select class="select-droits-siege" data-id="${String(s.id)}" data-nom="${a.nom}" ${peutControler ? "" : "disabled"} style="padding:4px 8px; border-radius:6px; background:#0f294a; color:#fff; border:1px solid #38bdf8; font-size:12px;">
+                                    <option value="complet" ${a.droits === "complet" ? "selected" : ""}>✅ Tout autoriser (Louer + Vendre)</option>
+                                    <option value="achetee" ${a.droits === "achetee" ? "selected" : ""}>🔒 Bloquer la location (Vente seule)</option>
+                                    <option value="louee" ${a.droits === "louee" ? "selected" : ""}>🔒 Bloquer la vente (Location seule)</option>
+                                    <option value="bloque" ${a.droits === "bloque" ? "selected" : ""}>⛔ Tout bloquer (Lecture seule)</option>
+                                </select>
+                                ${estPdg ? `
+                                    <button type="button" class="btn-virer-siege" data-id="${String(s.id)}" data-nom="${a.nom}" style="background:#b91c1c; color:#fff; border:none; border-radius:6px; padding:4px 9px; cursor:pointer; font-size:12px; font-weight:bold;">
+                                        Licencier (-${PECULE_DEPART_ASSOCIE.toLocaleString("fr-FR")} Ø)
+                                    </button>
+                                ` : ""}
+                            </div>
                         </div>
-                        <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
-                            <select class="select-droits-siege" data-id="${String(s.id)}" data-nom="${a.nom}" ${peutControler ? "" : "disabled"} style="padding:4px 8px; border-radius:6px; background:#0f294a; color:#fff; border:1px solid #38bdf8; font-size:12px;">
-                                <option value="complet" ${a.droits === "complet" ? "selected" : ""}>✅ Tout autoriser (Louer + Vendre)</option>
-                                <option value="achetee" ${a.droits === "achetee" ? "selected" : ""}>🔒 Bloquer la location (Vente seule)</option>
-                                <option value="louee" ${a.droits === "louee" ? "selected" : ""}>🔒 Bloquer la vente (Location seule)</option>
-                                <option value="bloque" ${a.droits === "bloque" ? "selected" : ""}>⛔ Tout bloquer (Lecture seule)</option>
-                            </select>
-                            ${estPdg ? `
-                                <button type="button" class="btn-virer-siege" data-id="${String(s.id)}" data-nom="${a.nom}" style="background:#b91c1c; color:#fff; border:none; border-radius:6px; padding:4px 9px; cursor:pointer; font-size:12px; font-weight:bold;">
-                                    Licencier (-${PECULE_DEPART_ASSOCIE.toLocaleString("fr-FR")} Ø)
-                                </button>
-                            ` : ""}
-                        </div>
+
+                        ${peutControler ? `
+                            <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap; padding-top:6px; border-top:1px dashed rgba(56,189,248,0.25);">
+                                <span style="font-size:12px; color:#7ec8ff;">💰 Prime :</span>
+                                <input type="number" class="input-prime-siege" data-id="${String(s.id)}" data-nom="${a.nom}" min="1" max="${primeMaxSiege}" placeholder="Montant Ø (max ${primeMaxSiege.toLocaleString("fr-FR")})" style="width:185px; padding:4px 8px; border-radius:6px; border:1px solid rgba(56,189,248,0.5); background:rgba(0,20,45,0.9); color:#fff; font-size:12px;">
+                                <button type="button" class="btn-max-prime-siege" data-id="${String(s.id)}" data-nom="${a.nom}" data-max="${primeMaxSiege}" style="padding:4px 8px; border-radius:6px; border:1px solid #38bdf8; background:rgba(2,132,199,0.25); color:#bae6fd; cursor:pointer; font-size:11px; font-weight:bold;">Max (10 %)</button>
+                                <button type="button" class="btn-verser-prime-siege" data-id="${String(s.id)}" data-nom="${a.nom}" style="padding:4px 10px; border-radius:6px; border:none; background:#059669; color:#fff; cursor:pointer; font-size:12px; font-weight:bold;">Verser la prime</button>
+                            </div>
+                        ` : ""}
                     </div>
                     `;
                 }).join("");
@@ -279,7 +315,7 @@ export function initEntreprise() {
                         ${photoSiegeHTML}
                         <div>
                             <span style="background:rgba(56,189,248,0.2); color:#38bdf8; padding:3px 8px; border-radius:6px; font-size:12px; font-weight:bold;">${s.secteur}</span>
-                            <div style="color:#94a3b8; font-size:12px; margin-top:4px;">Acquis le ${s.dateAchat || "Aujourd'hui"} • ${(s.prixAchat || 0).toLocaleString("fr-FR")} Ø</div>
+                            <div style="color:#94a3b8; font-size:12px; margin-top:4px;">Acquis le ${s.dateAchat || "Aujourd'hui"} • Valeur : ${valeurSiege.toLocaleString("fr-FR")} Ø</div>
                             <label for="logo-siege-${String(s.id)}" style="display:inline-block; margin-top:5px; font-size:12px; color:#38bdf8; cursor:pointer; text-decoration:underline;">
                                 📷 Changer la photo de cette entreprise
                             </label>
@@ -302,7 +338,7 @@ export function initEntreprise() {
 
                 <div style="margin-bottom:12px;">
                     <div style="font-size:12px; color:#7ec8ff; font-weight:bold; margin-bottom:6px;">
-                        Équipe & Verrous d'action (${membres.length} membre(s)) :
+                        Équipe, Primes & Verrous d'action (${membres.length} membre(s)) :
                     </div>
                     ${membresHTML}
                     ${peutControler ? `
@@ -372,6 +408,16 @@ export function initEntreprise() {
                         </div>
                     </div>
                 </div>
+
+                ${estPdg ? `
+                    <div style="margin-top:14px; padding-top:12px; border-top:1px solid rgba(56,189,248,0.25); display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                        <span style="font-size:13px; color:#7ec8ff; font-weight:bold;">💰 Prime Fondateur (${e.pdg}) :</span>
+                        <input type="number" id="input-prime-pdg" min="1" max="${primeMaxGlobale}" placeholder="Max ${primeMaxGlobale.toLocaleString("fr-FR")} Ø" style="width:175px; padding:6px 10px; border-radius:6px; border:1px solid #38bdf8; background:rgba(0,20,45,0.9); color:#fff; font-size:13px;">
+                        <button type="button" id="btn-max-prime-pdg" style="padding:6px 10px; border-radius:6px; border:1px solid #38bdf8; background:rgba(2,132,199,0.25); color:#bae6fd; cursor:pointer; font-size:12px; font-weight:bold;">Max (10 %)</button>
+                        <button type="button" id="btn-verser-prime-pdg" style="padding:6px 12px; border-radius:6px; border:none; background:#059669; color:#fff; cursor:pointer; font-size:13px; font-weight:bold;">Verser</button>
+                        <span style="font-size:12px; color:#34d399;">(Cumul versé : ${(e.primePdgTotal || 0).toLocaleString("fr-FR")} Ø)</span>
+                    </div>
+                ` : ""}
             </div>
 
             ${holdingHTML}
@@ -391,7 +437,7 @@ export function initEntreprise() {
         </div>
     `;
 
-    // ÉVÉNEMENTS GROUPE
+    // ÉVÉNEMENTS GROUPE & PRIME PDG
     document.getElementById("select-session-utilisateur").onchange = ev => {
         basculerUtilisateurActif(ev.target.value);
         initEntreprise();
@@ -413,6 +459,26 @@ export function initEntreprise() {
         };
         reader.readAsDataURL(file);
     };
+
+    const btnMaxPdg = document.getElementById("btn-max-prime-pdg");
+    if (btnMaxPdg) {
+        btnMaxPdg.onclick = () => {
+            const inp = document.getElementById("input-prime-pdg");
+            if (inp) inp.value = primeMaxGlobale;
+        };
+    }
+
+    const btnVerserPdg = document.getElementById("btn-verser-prime-pdg");
+    if (btnVerserPdg) {
+        btnVerserPdg.onclick = () => {
+            const montant = document.getElementById("input-prime-pdg")?.value;
+            const res = verserPrimePdg(montant);
+            if (!res.ok) return alert(res.message);
+            majSoldeTopbar();
+            alert("Prime versée au Fondateur !");
+            initEntreprise();
+        };
+    }
 
     // ÉVÉNEMENTS HOLDING
     const btnCreerH = document.getElementById("btn-creer-holding");
@@ -450,14 +516,33 @@ export function initEntreprise() {
         };
     });
 
+    container.querySelectorAll(".btn-max-prime-holding").forEach(btn => {
+        btn.onclick = () => {
+            const nom = btn.dataset.nom;
+            const inp = container.querySelector(`.input-prime-holding[data-nom="${CSS.escape(nom)}"]`);
+            if (inp) inp.value = btn.dataset.max;
+        };
+    });
+
+    container.querySelectorAll(".btn-verser-prime-holding").forEach(btn => {
+        btn.onclick = () => {
+            const nom = btn.dataset.nom;
+            const inp = container.querySelector(`.input-prime-holding[data-nom="${CSS.escape(nom)}"]`);
+            const res = verserPrimeAssocieHolding(nom, inp?.value);
+            if (!res.ok) return alert(res.message);
+            majSoldeTopbar();
+            alert(`Prime versée à ${nom} !`);
+            initEntreprise();
+        };
+    });
+
     container.querySelectorAll(".btn-virer-holding").forEach(btn => {
         btn.onclick = () => {
             const nom = btn.dataset.nom;
             if (!confirm(`Virer ${nom} de la Holding (-${PECULE_DEPART_ASSOCIE.toLocaleString("fr-FR")} Ø) ?`)) return;
             const res = virerAssocieHolding(nom);
             if (!res.ok) return alert(res.message);
-            const soldeEl = document.getElementById("solde");
-            if (soldeEl) soldeEl.textContent = getEntreprise().argent.toLocaleString("fr-FR");
+            majSoldeTopbar();
             initEntreprise();
         };
     });
@@ -505,14 +590,33 @@ export function initEntreprise() {
             };
         });
 
+        bloc.querySelectorAll(".btn-max-prime-siege").forEach(btn => {
+            btn.onclick = () => {
+                const nom = btn.dataset.nom;
+                const inp = bloc.querySelector(`.input-prime-siege[data-nom="${CSS.escape(nom)}"]`);
+                if (inp) inp.value = btn.dataset.max;
+            };
+        });
+
+        bloc.querySelectorAll(".btn-verser-prime-siege").forEach(btn => {
+            btn.onclick = () => {
+                const nom = btn.dataset.nom;
+                const inp = bloc.querySelector(`.input-prime-siege[data-nom="${CSS.escape(nom)}"]`);
+                const res = verserPrimeMembreSiege(id, nom, inp?.value);
+                if (!res.ok) return alert(res.message);
+                majSoldeTopbar();
+                alert(`Prime versée à ${nom} !`);
+                initEntreprise();
+            };
+        });
+
         bloc.querySelectorAll(".btn-virer-siege").forEach(btn => {
             btn.onclick = () => {
                 const nom = btn.dataset.nom;
                 if (!confirm(`Licencier ${nom} (-${PECULE_DEPART_ASSOCIE.toLocaleString("fr-FR")} Ø) ?`)) return;
                 const res = virerMembreSiege(id, nom);
                 if (!res.ok) return alert(res.message);
-                const soldeEl = document.getElementById("solde");
-                if (soldeEl) soldeEl.textContent = getEntreprise().argent.toLocaleString("fr-FR");
+                majSoldeTopbar();
                 initEntreprise();
             };
         });
