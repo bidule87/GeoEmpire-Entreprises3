@@ -1,9 +1,11 @@
 // ============================================
-// ASSURANCES — COUVERTURE PROGRESSIVE & GUIDE DES RÈGLES
+// ASSURANCES — COUVERTURE PROGRESSIVE, VERROUILLAGE JOURNALIER & TOKENS GT
 // ============================================
 
 import { getEntreprise, sauvegarderEntreprise } from "../entrepriseCore.js";
 import { ajouterHistorique, loadData } from "../geoData.js";
+
+const COUT_MODIFICATION_URGENTE_GT = 5;
 
 const ASSURANCES = {
     "Basique": {
@@ -51,6 +53,19 @@ export function initAssurances() {
     afficherBiensAssurables();
 }
 
+function getDateJourCle() {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, "0");
+    const d = String(now.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+}
+
+function estVerrouilleAujourdhui(bien) {
+    if (!bien.assurance) return false;
+    return bien.assurance.derniereModifJour === getDateJourCle();
+}
+
 function estPassePrestigeActif(entreprise) {
     return (
         entreprise.prestigePack === true ||
@@ -63,6 +78,15 @@ function estPassePrestigeActif(entreprise) {
 function calculerCoutContrat(bien, formule) {
     const valeurLot = (bien.prixAchatMoyen || 15000) * (bien.quantite || 1);
     return Math.max(150, Math.floor(valeurLot * formule.tauxPrix));
+}
+
+function majTopbarRessources(entreprise) {
+    const soldeEl = document.getElementById("solde");
+    const tokensEl = document.getElementById("tokens");
+    const crownsEl = document.getElementById("crowns");
+    if (soldeEl) soldeEl.textContent = (entreprise.argent || 0).toLocaleString("fr-FR");
+    if (tokensEl) tokensEl.textContent = (entreprise.tokens || 0).toLocaleString("fr-FR");
+    if (crownsEl) crownsEl.textContent = (entreprise.crowns || 0).toLocaleString("fr-FR");
 }
 
 function afficherBiensAssurables() {
@@ -105,6 +129,9 @@ function afficherBiensAssurables() {
                     <p style="margin-top:0;">
                         Vos établissements et biens sont exposés aux <strong>catastrophes naturelles</strong> (tempêtes, inondations, incendies, séismes) ainsi qu'aux <strong>braquages</strong>. Lorsqu'un sinistre frappe un bien, son état général diminue, ce qui réduit ses revenus locatifs jusqu'à sa remise en état dans l'onglet <strong>Rénovation</strong>.
                     </p>
+                    <div style="padding:10px 12px; margin-bottom:10px; background:rgba(245,158,11,0.14); border:1px solid #fbbf24; border-radius:8px; color:#fde68a;">
+                        <strong>⏳ Règle d'engagement journalier :</strong> Une fois un contrat souscrit ou modifié sur un bien, il reste verrouillé jusqu'à la fin de la journée (minuit). En cas d'erreur ou d'urgence, vous pouvez forcer une modification immédiate moyennant <strong>${COUT_MODIFICATION_URGENTE_GT} Tokens (GT)</strong>.
+                    </div>
                     <div style="display:flex; flex-direction:column; gap:8px; margin-top:10px;">
                         ${Object.entries(ASSURANCES).map(([nom, a]) => `
                             <div style="padding:8px 12px; background:rgba(0,15,35,0.7); border-left:3px solid ${a.couleur}; border-radius:6px;">
@@ -135,9 +162,14 @@ function afficherBiensAssurables() {
         <div class="premium-panel">
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:14px;">
                 <h2 class="premium-title" style="margin:0;">Assurances & Protection du Patrimoine</h2>
-                <span style="background:rgba(0,45,85,0.85); border:1px solid #38bdf8; padding:6px 12px; border-radius:8px; font-size:13px; color:#bae6fd;">
-                    👤 Souscripteur : <strong>${entreprise.utilisateurActif || entreprise.pdg || "Fondateur"}</strong>
-                </span>
+                <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                    <span style="background:rgba(245,158,11,0.15); border:1px solid #fbbf24; padding:6px 12px; border-radius:8px; font-size:13px; color:#fde68a;">
+                        🪙 Tokens disponibles : <strong>${(entreprise.tokens || 0).toLocaleString("fr-FR")} GT</strong>
+                    </span>
+                    <span style="background:rgba(0,45,85,0.85); border:1px solid #38bdf8; padding:6px 12px; border-radius:8px; font-size:13px; color:#bae6fd;">
+                        👤 Souscripteur : <strong>${entreprise.utilisateurActif || entreprise.pdg || "Fondateur"}</strong>
+                    </span>
+                </div>
             </div>
 
             ${guideHTML}
@@ -175,6 +207,7 @@ function afficherBiensAssurables() {
                             .map(([style, bien]) => {
                                 const formuleActuelle = bien.assurance ? ASSURANCES[bien.assurance.type] : null;
                                 const couleurBordure = formuleActuelle ? formuleActuelle.couleur : "#f87171";
+                                const verrouille = estVerrouilleAujourdhui(bien);
 
                                 return `
                                 <div class="bien-item" data-siege="${siege.id}" data-cat="${categorie}" data-style="${style}"
@@ -185,7 +218,12 @@ function afficherBiensAssurables() {
                                             <span style="font-weight:bold; font-size:16px; color:#fff;">${style}</span>
                                             <span style="font-size:12px; color:#7ec8ff; margin-left:6px;">(${categorie} • ${bien.quantite} unité(s))</span>
                                         </div>
-                                        <div>
+                                        <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
+                                            ${verrouille ? `
+                                                <span style="background:rgba(245,158,11,0.18); border:1px solid #fbbf24; color:#fde68a; padding:4px 9px; border-radius:6px; font-size:11px; font-weight:bold;">
+                                                    ⏳ Modifié aujourd'hui (${COUT_MODIFICATION_URGENTE_GT} GT pour changer avant minuit)
+                                                </span>
+                                            ` : ""}
                                             ${bien.assurance
                                                 ? `<span style="background:rgba(16,185,129,0.18); border:1px solid ${couleurBordure}; color:${couleurBordure}; padding:4px 10px; border-radius:6px; font-size:12px; font-weight:bold;">
                                                         🛡️ Couvert : ${bien.assurance.type} (${bien.assurance.couverture} %)
@@ -198,7 +236,7 @@ function afficherBiensAssurables() {
                                     </div>
 
                                     <div style="display:flex; flex-direction:column; gap:8px;">
-                                        ${genererLignesFormules(bien, estPrestige)}
+                                        ${genererLignesFormules(bien, estPrestige, verrouille)}
                                     </div>
                                 </div>
                                 `;
@@ -213,12 +251,20 @@ function afficherBiensAssurables() {
     bindAssuranceEvents();
 }
 
-function genererLignesFormules(bien, estPrestige) {
+function genererLignesFormules(bien, estPrestige, verrouille) {
     let html = "";
     for (const [nom, a] of Object.entries(ASSURANCES)) {
         if (a.prestigeOnly && !estPrestige) continue;
         const coutTotal = calculerCoutContrat(bien, a);
         const estActif = bien.assurance?.type === nom;
+
+        const libelleBouton = verrouille
+            ? `🔒 Changer (${coutTotal.toLocaleString("fr-FR")} Ø + ${COUT_MODIFICATION_URGENTE_GT} GT)`
+            : `Souscrire (${coutTotal.toLocaleString("fr-FR")} Ø)`;
+
+        const styleBouton = verrouille
+            ? "margin:0; padding:7px 14px; font-size:13px; background:linear-gradient(90deg, #b45309, #d97706); color:#fff;"
+            : "margin:0; padding:7px 14px; font-size:13px; background:#0284c7;";
 
         html += `
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; padding:9px 12px; border-radius:8px; background:${estActif ? "rgba(16,185,129,0.15)" : "rgba(15,23,42,0.8)"}; border:1px solid ${estActif ? a.couleur : "rgba(148,163,184,0.22)"};">
@@ -234,8 +280,8 @@ function genererLignesFormules(bien, estPrestige) {
                 <div>
                     ${estActif
                         ? `<span style="color:#34d399; font-weight:bold; font-size:13px; padding:6px 12px; display:inline-block;">✓ Contrat actif</span>`
-                        : `<button type="button" class="assurance-line-btn premium-btn" data-type="${nom}" style="margin:0; padding:7px 14px; font-size:13px; background:#0284c7;">
-                                Souscrire (${coutTotal.toLocaleString("fr-FR")} Ø)
+                        : `<button type="button" class="assurance-line-btn premium-btn" data-type="${nom}" style="${styleBouton}">
+                                ${libelleBouton}
                            </button>`
                     }
                 </div>
@@ -275,7 +321,26 @@ function bindAssuranceEvents() {
             if (!bien) return;
 
             const coutTotal = calculerCoutContrat(bien, formule);
-            if ((ent.argent || 0) < coutTotal) {
+            const verrouille = estVerrouilleAujourdhui(bien);
+
+            if (verrouille) {
+                if ((ent.tokens || 0) < COUT_MODIFICATION_URGENTE_GT) {
+                    alert(`Ce contrat a déjà été modifié aujourd'hui. Il est verrouillé jusqu'à minuit, ou déblocable immédiatement contre ${COUT_MODIFICATION_URGENTE_GT} Tokens (GT) (solde actuel : ${ent.tokens || 0} GT).`);
+                    return;
+                }
+                if ((ent.argent || 0) < coutTotal) {
+                    alert(`Fonds insuffisants ! Coût du contrat : ${coutTotal.toLocaleString("fr-FR")} Ø.`);
+                    return;
+                }
+                const ok = confirm(
+                    `Ce contrat a déjà été modifié aujourd'hui.\n` +
+                    `Changement gratuit disponible demain à partir de 00h00.\n\n` +
+                    `Voulez-vous forcer la modification maintenant pour ${coutTotal.toLocaleString("fr-FR")} Ø + ${COUT_MODIFICATION_URGENTE_GT} Tokens (GT) ?`
+                );
+                if (!ok) return;
+
+                ent.tokens -= COUT_MODIFICATION_URGENTE_GT;
+            } else if ((ent.argent || 0) < coutTotal) {
                 alert(`Fonds insuffisants ! Coût du contrat : ${coutTotal.toLocaleString("fr-FR")} Ø.`);
                 return;
             }
@@ -285,15 +350,14 @@ function bindAssuranceEvents() {
                 type,
                 couverture: formule.couverture,
                 braquage: formule.braquage,
-                souscritPar: auteur
+                souscritPar: auteur,
+                derniereModifJour: getDateJourCle()
             };
 
-            ajouterHistorique(`[${siege.nom}] Souscription assurance "${type}" sur ${style} (-${coutTotal.toLocaleString("fr-FR")} Ø)`, "depense", auteur);
+            const detailTokens = verrouille ? ` + ${COUT_MODIFICATION_URGENTE_GT} GT (modification urgente)` : "";
+            ajouterHistorique(`[${siege.nom}] Souscription assurance "${type}" sur ${style} (-${coutTotal.toLocaleString("fr-FR")} Ø${detailTokens})`, "depense", auteur);
             sauvegarderEntreprise();
-
-            const soldeEl = document.getElementById("solde");
-            if (soldeEl) soldeEl.textContent = ent.argent.toLocaleString("fr-FR");
-
+            majTopbarRessources(ent);
             afficherBiensAssurables();
         };
     });
@@ -310,13 +374,16 @@ function bindAssuranceEvents() {
             if (!siege?.biens) return;
 
             let coutGlobal = 0;
+            let tokensUrgenceRequis = 0;
             const aAssurer = [];
 
             for (const [cat, styles] of Object.entries(siege.biens)) {
                 for (const [style, bien] of Object.entries(styles)) {
                     if ((bien.quantite || 0) > 0 && bien.assurance?.type !== type) {
                         coutGlobal += calculerCoutContrat(bien, formule);
-                        aAssurer.push({ cat, style, bien });
+                        const estVerrou = estVerrouilleAujourdhui(bien);
+                        if (estVerrou) tokensUrgenceRequis += COUT_MODIFICATION_URGENTE_GT;
+                        aAssurer.push({ cat, style, bien, estVerrou });
                     }
                 }
             }
@@ -325,26 +392,41 @@ function bindAssuranceEvents() {
                 return alert(`Tous les biens de "${siege.nom}" disposent déjà de la formule "${type}".`);
             }
 
-            if ((ent.argent || 0) < coutGlobal) {
+            if (tokensUrgenceRequis > 0) {
+                if ((ent.tokens || 0) < tokensUrgenceRequis) {
+                    return alert(`Certains contrats ont déjà été modifiés aujourd'hui. Il vous faut ${tokensUrgenceRequis} Tokens (GT) pour forcer la mise à jour avant minuit (solde : ${ent.tokens || 0} GT).`);
+                }
+                if ((ent.argent || 0) < coutGlobal) {
+                    return alert(`Fonds insuffisants ! Il vous faut ${coutGlobal.toLocaleString("fr-FR")} Ø pour assurer l'ensemble de cette entreprise.`);
+                }
+                const ok = confirm(
+                    `Certains lots ont déjà été modifiés aujourd'hui.\n` +
+                    `Forcer le passage en "${type}" sur ${aAssurer.length} lot(s) coûtera ${coutGlobal.toLocaleString("fr-FR")} Ø + ${tokensUrgenceRequis} Tokens (GT).\n\n` +
+                    `Continuer ?`
+                );
+                if (!ok) return;
+
+                ent.tokens -= tokensUrgenceRequis;
+            } else if ((ent.argent || 0) < coutGlobal) {
                 return alert(`Fonds insuffisants ! Il vous faut ${coutGlobal.toLocaleString("fr-FR")} Ø pour assurer l'ensemble de cette entreprise.`);
             }
 
             ent.argent -= coutGlobal;
+            const jourCle = getDateJourCle();
             aAssurer.forEach(({ bien }) => {
                 bien.assurance = {
                     type,
                     couverture: formule.couverture,
                     braquage: formule.braquage,
-                    souscritPar: auteur
+                    souscritPar: auteur,
+                    derniereModifJour: jourCle
                 };
             });
 
-            ajouterHistorique(`[${siege.nom}] Couverture intégrale "${type}" sur ${aAssurer.length} lot(s) (-${coutGlobal.toLocaleString("fr-FR")} Ø)`, "depense", auteur);
+            const detailTokens = tokensUrgenceRequis > 0 ? ` + ${tokensUrgenceRequis} GT` : "";
+            ajouterHistorique(`[${siege.nom}] Couverture intégrale "${type}" sur ${aAssurer.length} lot(s) (-${coutGlobal.toLocaleString("fr-FR")} Ø${detailTokens})`, "depense", auteur);
             sauvegarderEntreprise();
-
-            const soldeEl = document.getElementById("solde");
-            if (soldeEl) soldeEl.textContent = ent.argent.toLocaleString("fr-FR");
-
+            majTopbarRessources(ent);
             afficherBiensAssurables();
         };
     });
