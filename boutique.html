@@ -112,11 +112,16 @@
 </div>
 
 <main class="boutique-wrapper">
-    <h2 style="color: #7ec8ff; margin-top: 0;">Boutique Officielle Geo Empire</h2>
-    <p style="font-size: 14px; color: #bae6fd;">Débloquez le Passe Prestige ou échangez vos Tokens (GT) pour accélérer votre expansion.</p>
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+        <div>
+            <h2 style="color: #7ec8ff; margin: 0;">Boutique Officielle Geo Empire</h2>
+            <p style="font-size: 14px; color: #bae6fd; margin: 6px 0 0 0;">Débloquez le Passe Prestige ou échangez vos Tokens (GT) pour accélérer votre expansion.</p>
+        </div>
+        <div id="info-carte-boutique" style="font-size: 13px;"></div>
+    </div>
 
     <div class="boutique-grid">
-        <!-- CARTE 1 : PASSE PRESTIGE (ACHAT ARGENT RÉEL / CB) -->
+        <!-- CARTE 1 : PASSE PRESTIGE (ACHAT CARTE BANCAIRE DU PROFIL) -->
         <div class="pack-card premium">
             <div>
                 <span class="pack-badge" style="background:#fbbf24; color:#0f172a;">PASSE PRESTIGE • 9,99 €</span>
@@ -194,18 +199,19 @@
 </main>
 
 <script type="module">
-    import { getData, saveData } from "./js/core/geoData.js";
+    import { getData, saveData, loadData } from "./js/core/geoData.js";
 
-    // CODE SECRET BÊTA (modifiable ici à tout moment)
     const CODE_BETA_VALIDE = "GEO-BETA-2026";
 
     function logBoutique(texte) {
         const data = getData();
-        if (!Array.isArray(data.historique)) data.historique = [];
-        data.historique.unshift({
+        if (!Array.isArray(data.entreprise.historique)) data.entreprise.historique = [];
+        const auteur = data.entreprise.utilisateurActif || data.entreprise.pdg || "Fondateur";
+        data.entreprise.historique.unshift({
             date: new Date().toLocaleString("fr-FR"),
-            texte,
-            type: "boutique"
+            auteur,
+            message: texte,
+            type: "gain"
         });
     }
 
@@ -220,10 +226,19 @@
     }
 
     function majAffichage() {
+        loadData();
         const e = getData().entreprise;
         document.getElementById("solde").textContent = (e.argent || 0).toLocaleString("fr-FR");
         document.getElementById("tokens").textContent = (e.tokens || 0).toLocaleString("fr-FR");
         document.getElementById("crowns").textContent = (e.crowns || 0).toLocaleString("fr-FR");
+
+        const infoCarte = document.getElementById("info-carte-boutique");
+        const cb = e.profil?.carteBancaire;
+        if (cb) {
+            infoCarte.innerHTML = `<span style="background:rgba(16,185,129,0.16); border:1px solid #34d399; color:#34d399; padding:6px 12px; border-radius:8px; font-weight:bold;">💳 ${cb.reseau} •••• ${cb.derniersChiffres}</span>`;
+        } else {
+            infoCarte.innerHTML = `<a href="profil.html" style="background:rgba(245,158,11,0.16); border:1px solid #fbbf24; color:#fde68a; padding:6px 12px; border-radius:8px; text-decoration:none; font-weight:bold;">⚠️ Enregistrer une carte dans Profil</a>`;
+        }
 
         const btnPrem = document.getElementById("btn-pack-premium");
         if (estPassePrestigeActif()) {
@@ -238,19 +253,27 @@
         }
     }
 
-    // Achat Passe Prestige (Carte Bancaire - mode simulation pour tests)
+    // Achat Passe Prestige via la carte enregistrée dans le Profil
     document.getElementById("btn-pack-premium").addEventListener("click", () => {
         const e = getData().entreprise;
         if (estPassePrestigeActif()) return;
 
-        if (!confirm("Passerelle Carte Bancaire (Mode Test) : confirmer l'achat du Passe Prestige (9,99 €) ?")) {
+        const cb = e.profil?.carteBancaire;
+        if (!cb) {
+            if (confirm("Aucune carte n'est encore enregistrée sur votre profil. Voulez-vous ouvrir votre Profil pour l'ajouter ?")) {
+                window.location.href = "profil.html";
+            }
+            return;
+        }
+
+        if (!confirm(`Confirmer le paiement de 9,99 € avec votre carte ${cb.reseau} •••• ${cb.derniersChiffres} (${cb.titulaire}) ?`)) {
             return;
         }
 
         e.prestigePack = true;
         localStorage.setItem("prestigePack", "true");
         e.argent = (e.argent || 0) + 50000;
-        logBoutique("Achat Passe Prestige via Carte Bancaire (+50 000 Ø)");
+        logBoutique(`Achat Passe Prestige via carte •••• ${cb.derniersChiffres} (+50 000 Ø)`);
         saveData();
         majAffichage();
         alert("Passe Prestige activé ! Rayons 10/20 km et Assurance Ultime débloqués.");
