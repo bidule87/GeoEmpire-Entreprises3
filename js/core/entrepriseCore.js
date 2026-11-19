@@ -1,5 +1,5 @@
 // ============================================
-// ENTREPRISE CORE — GOUVERNANCE, HIÉRARCHIE & HOLDING
+// ENTREPRISE CORE — GOUVERNANCE, HIÉRARCHIE, PRIMES & HOLDING
 // ============================================
 
 import { getData, saveData, ajouterHistorique } from "./geoData.js";
@@ -11,6 +11,7 @@ export function getEntreprise() {
     const e = getData().entreprise;
     if (!e.pdg) e.pdg = "Fondateur";
     if (!e.utilisateurActif) e.utilisateurActif = e.pdg;
+    if (typeof e.primePdgTotal !== "number") e.primePdgTotal = 0;
     if (!Array.isArray(e.commercesGPS)) e.commercesGPS = [];
     if (!e.holding) {
         e.holding = {
@@ -63,6 +64,51 @@ export function changerPhotoEntreprise(base64) {
 }
 
 // ============================================
+// CALCUL DES VALEURS & PLAFONDS DE PRIME (10 %)
+// ============================================
+export function calculerValeurSiege(siege) {
+    if (!siege) return 0;
+    let total = Number(siege.prixAchat || 0);
+    if (siege.biens) {
+        Object.values(siege.biens).forEach(styles => {
+            Object.values(styles).forEach(b => {
+                total += (b.quantite || 0) * (b.prixAchatMoyen || 0);
+            });
+        });
+    }
+    return Math.floor(total);
+}
+
+export function calculerValeurEntreprise() {
+    const e = getEntreprise();
+    let total = 0;
+    (e.commercesGPS || []).forEach(s => {
+        total += calculerValeurSiege(s);
+    });
+    return Math.floor(total);
+}
+
+export function verserPrimePdg(montant) {
+    const e = getEntreprise();
+    const valeur = Math.floor(Number(montant) || 0);
+    const maxAutorise = Math.max(500, Math.floor(calculerValeurEntreprise() * 0.10));
+
+    if (valeur <= 0) return { ok: false, message: "Veuillez saisir un montant de prime supérieur à 0 Ø." };
+    if (valeur > maxAutorise) {
+        return { ok: false, message: `Prime trop élevée ! Maximum autorisé (10 % du patrimoine) : ${maxAutorise.toLocaleString("fr-FR")} Ø.` };
+    }
+    if ((e.argent || 0) < valeur) {
+        return { ok: false, message: `Trésorerie insuffisante (${(e.argent || 0).toLocaleString("fr-FR")} Ø disponibles).` };
+    }
+
+    e.argent -= valeur;
+    e.primePdgTotal = (e.primePdgTotal || 0) + valeur;
+    ajouterHistorique(`Prime versée au Fondateur ${e.pdg} (-${valeur.toLocaleString("fr-FR")} Ø)`, "depense", e.pdg);
+    saveData();
+    return { ok: true };
+}
+
+// ============================================
 // SIÈGES GPS & HIÉRARCHIE (FONDATEUR / DG / COMMERCIAL)
 // ============================================
 export function getSiegesGPS() {
@@ -100,8 +146,10 @@ export function ajouterMembreSiege(id, nomMembre, role = "commercial", droits = 
 
     siege.associes.push({
         nom: clean,
-        role, // "dg" (Directeur Général Associé) ou "commercial" (Directeur Commercial / Joueur)
-        droits, // "complet", "achetee", "louee", "bloque"
+        role,
+        droits,
+        primeTotal: 0,
+        dernierePrime: 0,
         dateAjout: new Date().toLocaleDateString("fr-FR")
     });
 
@@ -119,6 +167,34 @@ export function majMembreSiege(id, nomMembre, champs) {
     if (!membre) return;
     Object.assign(membre, champs);
     ajouterHistorique(`[${siege.nom}] Permissions de ${nomMembre} modifiées (${membre.droits})`, "gestion");
+}
+
+export function verserPrimeMembreSiege(id, nomMembre, montant) {
+    const e = getEntreprise();
+    const siege = e.commercesGPS.find(s => String(s.id) === String(id));
+    if (!siege || !Array.isArray(siege.associes)) return { ok: false, message: "Entreprise introuvable." };
+
+    const membre = siege.associes.find(a => a.nom === nomMembre);
+    if (!membre) return { ok: false, message: "Collaborateur introuvable." };
+
+    const valeur = Math.floor(Number(montant) || 0);
+    const maxAutorise = Math.max(500, Math.floor(calculerValeurSiege(siege) * 0.10));
+
+    if (valeur <= 0) return { ok: false, message: "Veuillez saisir un montant de prime supérieur à 0 Ø." };
+    if (valeur > maxAutorise) {
+        return { ok: false, message: `Maximum autorisé (10 % de la valeur de ${siege.nom}) : ${maxAutorise.toLocaleString("fr-FR")} Ø.` };
+    }
+    if ((e.argent || 0) < valeur) {
+        return { ok: false, message: `Trésorerie insuffisante (${(e.argent || 0).toLocaleString("fr-FR")} Ø disponibles).` };
+    }
+
+    e.argent -= valeur;
+    membre.primeTotal = (membre.primeTotal || 0) + valeur;
+    membre.dernierePrime = valeur;
+
+    ajouterHistorique(`[${siege.nom}] Prime versée à ${membre.nom} (-${valeur.toLocaleString("fr-FR")} Ø)`, "depense", e.utilisateurActif || e.pdg);
+    saveData();
+    return { ok: true };
 }
 
 export function virerMembreSiege(id, nomMembre) {
@@ -182,6 +258,8 @@ export function ajouterAssocieHolding(nomMembre, droits = "complet") {
         nom: clean,
         role: "dg",
         droits,
+        primeTotal: 0,
+        dernierePrime: 0,
         dateAjout: new Date().toLocaleDateString("fr-FR")
     });
     ajouterHistorique(`[Holding ${e.holding.nom}] Nomination de ${clean} (Directeur Général Associé)`, "prestige");
@@ -196,6 +274,31 @@ export function changerDroitsAssocieHolding(nomMembre, nouveauxDroits) {
     ajouterHistorique(`[Holding ${e.holding.nom}] Droits de ${nomMembre} mis à jour`, "prestige");
 }
 
+export function verserPrimeAssocieHolding(nomMembre, montant) {
+    const e = getEntreprise();
+    const a = (e.holding?.associes || []).find(x => x.nom === nomMembre);
+    if (!a) return { ok: false, message: "Directeur Général introuvable." };
+
+    const valeur = Math.floor(Number(montant) || 0);
+    const maxAutorise = Math.max(500, Math.floor(calculerValeurEntreprise() * 0.10));
+
+    if (valeur <= 0) return { ok: false, message: "Veuillez saisir un montant de prime supérieur à 0 Ø." };
+    if (valeur > maxAutorise) {
+        return { ok: false, message: `Maximum autorisé (10 % du patrimoine global) : ${maxAutorise.toLocaleString("fr-FR")} Ø.` };
+    }
+    if ((e.argent || 0) < valeur) {
+        return { ok: false, message: `Trésorerie insuffisante (${(e.argent || 0).toLocaleString("fr-FR")} Ø disponibles).` };
+    }
+
+    e.argent -= valeur;
+    a.primeTotal = (a.primeTotal || 0) + valeur;
+    a.dernierePrime = valeur;
+
+    ajouterHistorique(`[Holding ${e.holding.nom}] Prime versée à ${a.nom} (-${valeur.toLocaleString("fr-FR")} Ø)`, "depense", e.utilisateurActif || e.pdg);
+    saveData();
+    return { ok: true };
+}
+
 export function virerAssocieHolding(nomMembre) {
     if (!estPdgGeneral()) return { ok: false, message: "Réservé au Fondateur." };
     const e = getEntreprise();
@@ -207,22 +310,4 @@ export function virerAssocieHolding(nomMembre) {
     if (e.utilisateurActif === nomMembre) e.utilisateurActif = e.pdg;
     ajouterHistorique(`[Holding] Départ de ${nomMembre} (-${PECULE_DEPART_ASSOCIE.toLocaleString("fr-FR")} Ø)`, "depense");
     return { ok: true };
-}
-
-export function calculerValeurEntreprise() {
-    const e = getEntreprise();
-    let total = 0;
-
-    (e.commercesGPS || []).forEach(s => {
-        total += Number(s.prixAchat || 0);
-        if (s.biens) {
-            Object.values(s.biens).forEach(styles => {
-                Object.values(styles).forEach(b => {
-                    total += (b.quantite || 0) * (b.prixAchatMoyen || 0);
-                });
-            });
-        }
-    });
-
-    return Math.floor(total);
 }
