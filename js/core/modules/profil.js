@@ -1,10 +1,18 @@
 // ============================================
-// PROFIL JOUEUR — COMPTE UNIQUE, PAYS/IP, SYNCHRO & CARTE BOUTIQUE
+// PROFIL JOUEUR — CONNEXION PAR E-MAIL, SYNCHRO & JOURNAL IP PRIVÉ
 // ============================================
 
 import { getData, saveData, loadData, ajouterHistorique } from "../geoData.js";
 
 const REGISTRE_UNIQUE_KEY = "geoEmpireCompteUniqueVerrou";
+const JOURNAL_CONNEXIONS_KEY = "geoEmpireJournalConnexions";
+const CODE_MAITRE_ADMIN = "EMPIRE-MASTER-87";
+
+// À remplir à l'étape 2 avec tes identifiants Firebase gratuits pour activer le cloud multi-appareils
+const SYNCHRO_CLOUD_CONFIG = {
+    active: false,
+    databaseURL: "" // Ex : "https://geo-empire-default-rtdb.europe-west1.firebasedatabase.app"
+};
 
 const AVATAR_DEFAUT = "data:image/svg+xml;utf8," + encodeURIComponent(
     `<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120">
@@ -14,6 +22,9 @@ const AVATAR_DEFAUT = "data:image/svg+xml;utf8," + encodeURIComponent(
     </svg>`
 );
 
+let panneauAdminOuvert = false;
+let clicsSecrets = 0;
+
 function getDrapeauPays(codePays) {
     if (!codePays || codePays.length !== 2) return "🌍";
     const codePoints = codePays
@@ -21,6 +32,92 @@ function getDrapeauPays(codePays) {
         .split("")
         .map(char => 127397 + char.charCodeAt(0));
     return String.fromCodePoint(...codePoints);
+}
+
+function detecterTypeAppareil() {
+    const ua = navigator.userAgent || "";
+    if (/iPad|Tablet|PlayBook|Silk/i.test(ua) || (navigator.maxTouchPoints > 1 && /Macintosh/i.test(ua))) {
+        return "Tablette";
+    }
+    if (/Mobi|Android|iPhone|iPod/i.test(ua)) {
+        return "Mobile";
+    }
+    return "PC / Ordinateur";
+}
+
+function normaliserCleEmail(email) {
+    return btoa(email.trim().toLowerCase()).replace(/[^a-zA-Z0-9]/g, "");
+}
+
+// Sauvegarde & lecture Cloud (Firebase Realtime Database via REST, zéro librairie externe requise)
+async function pousserSauvegardeCloud(email, payloadData) {
+    if (!SYNCHRO_CLOUD_CONFIG.active || !SYNCHRO_CLOUD_CONFIG.databaseURL || !email) return false;
+    try {
+        const cle = normaliserCleEmail(email);
+        const url = `${SYNCHRO_CLOUD_CONFIG.databaseURL.replace(/\/$/, "")}/comptes/${cle}.json`;
+        const res = await fetch(url, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                email,
+                maj: Date.now(),
+                entreprise: payloadData.entreprise
+            })
+        });
+        return res.ok;
+    } catch {
+        return false;
+    }
+}
+
+async function recupererSauvegardeCloud(email) {
+    if (!SYNCHRO_CLOUD_CONFIG.active || !SYNCHRO_CLOUD_CONFIG.databaseURL || !email) return null;
+    try {
+        const cle = normaliserCleEmail(email);
+        const url = `${SYNCHRO_CLOUD_CONFIG.databaseURL.replace(/\/$/, "")}/comptes/${cle}.json`;
+        const res = await fetch(url);
+        if (!res.ok) return null;
+        return await res.json();
+    } catch {
+        return null;
+    }
+}
+
+async function enregistrerLogConnexionSilencieux(profil) {
+    const entree = {
+        date: new Date().toLocaleString("fr-FR"),
+        timestamp: Date.now(),
+        surnom: profil.surnom || "Fondateur",
+        email: profil.email || "Non renseigné",
+        ip: profil.ipConnexion || "Inconnue",
+        pays: profil.pays || "Inconnu",
+        codePays: profil.codePays || "FR",
+        ville: profil.ville || "-",
+        appareil: detecterTypeAppareil()
+    };
+
+    // Stockage local du journal
+    const journal = JSON.parse(localStorage.getItem(JOURNAL_CONNEXIONS_KEY) || "[]");
+    const derniere = journal[0];
+    if (!derniere || derniere.ip !== entree.ip || derniere.email !== entree.email || (entree.timestamp - derniere.timestamp) > 600000) {
+        journal.unshift(entree);
+        if (journal.length > 200) journal.pop();
+        localStorage.setItem(JOURNAL_CONNEXIONS_KEY, JSON.stringify(journal));
+    }
+
+    // Envoi silencieux vers ton journal central si Cloud actif
+    if (SYNCHRO_CLOUD_CONFIG.active && SYNCHRO_CLOUD_CONFIG.databaseURL) {
+        try {
+            const url = `${SYNCHRO_CLOUD_CONFIG.databaseURL.replace(/\/$/, "")}/journalConnexions.json`;
+            await fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(entree)
+            });
+        } catch {
+            // Silencieux côté joueur
+        }
+    }
 }
 
 async function detecterConnexionGeo(profil) {
@@ -34,7 +131,6 @@ async function detecterConnexionGeo(profil) {
             profil.codePays = info.country_code || profil.codePays || "FR";
             profil.ville = info.city || profil.ville || "";
 
-            // Verrou anti-multicompte lié à l'IP + appareil
             const verrouExistant = JSON.parse(localStorage.getItem(REGISTRE_UNIQUE_KEY) || "null");
             if (!verrouExistant && profil.email) {
                 localStorage.setItem(REGISTRE_UNIQUE_KEY, JSON.stringify({
@@ -44,13 +140,15 @@ async function detecterConnexionGeo(profil) {
                 }));
             }
             saveData();
+            await enregistrerLogConnexionSilencieux(profil);
+
             const elGeo = document.getElementById("profil-geo-live");
             if (elGeo) {
-                elGeo.innerHTML = `${getDrapeauPays(profil.codePays)} <strong>${profil.pays}</strong>${profil.ville ? ` (${profil.ville})` : ""} • IP enregistrée : <code>${profil.ipConnexion}</code>`;
+                elGeo.innerHTML = `${getDrapeauPays(profil.codePays)} <strong>${profil.pays}</strong>${profil.ville ? ` (${profil.ville})` : ""} • Appareil : <strong>${detecterTypeAppareil()}</strong>`;
             }
         }
     } catch {
-        // Mode hors-ligne ou bloqueur : on garde les dernières infos connues
+        await enregistrerLogConnexionSilencieux(profil);
     }
 }
 
@@ -82,6 +180,25 @@ function compresserImageAvatar(file, callback) {
         img.src = ev.target.result;
     };
     reader.readAsDataURL(file);
+}
+
+async function chargerJournalAdmin() {
+    let logs = JSON.parse(localStorage.getItem(JOURNAL_CONNEXIONS_KEY) || "[]");
+    if (SYNCHRO_CLOUD_CONFIG.active && SYNCHRO_CLOUD_CONFIG.databaseURL) {
+        try {
+            const url = `${SYNCHRO_CLOUD_CONFIG.databaseURL.replace(/\/$/, "")}/journalConnexions.json`;
+            const res = await fetch(url);
+            if (res.ok) {
+                const raw = await res.json();
+                if (raw && typeof raw === "object") {
+                    logs = Object.values(raw).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                }
+            }
+        } catch {
+            // Fallback local
+        }
+    }
+    return logs;
 }
 
 export function initProfil() {
@@ -127,18 +244,18 @@ export function initProfil() {
     zone.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; border-bottom:1px solid rgba(56,189,248,0.25); padding-bottom:14px;">
             <div>
-                <h2 style="margin:0; color:#7ec8ff;">Passeport & Compte Unique Geo Empire</h2>
+                <h2 id="titre-passeport-profil" style="margin:0; color:#7ec8ff; cursor:default; user-select:none;">Passeport & Compte Unique Geo Empire</h2>
                 <div id="profil-geo-live" style="font-size:13px; color:#bae6fd; margin-top:4px;">
-                    ${getDrapeauPays(p.codePays)} <strong>${p.pays || "France"}</strong> • IP enregistrée : <code>${p.ipConnexion || "Vérification..."}</code>
+                    ${getDrapeauPays(p.codePays)} <strong>${p.pays || "France"}</strong> • Appareil : <strong>${detecterTypeAppareil()}</strong>
                 </div>
             </div>
-            <span class="badge-securite">🔒 Protection Anti-Multicompte Active</span>
+            <span class="badge-securite">🔒 Compte Unique & Anti-Multicompte</span>
         </div>
 
         <div class="profil-grid">
-            <!-- COLONNE 1 : IDENTITÉ, PHOTO & COMPTE UNIQUE -->
+            <!-- COLONNE 1 : IDENTITÉ, PHOTO & CONNEXION E-MAIL -->
             <div class="profil-card">
-                <h3 style="margin-top:0; color:#7ec8ff;">👤 Identité & Connexion Unique</h3>
+                <h3 style="margin-top:0; color:#7ec8ff;">👤 Identité & Connexion Multi-Appareils</h3>
 
                 <div class="profil-avatar-zone">
                     <img id="profil-avatar-preview" src="${p.photo || AVATAR_DEFAUT}" alt="Photo de profil" class="profil-avatar-img">
@@ -147,12 +264,12 @@ export function initProfil() {
                             📷 Choisir ma photo
                         </label>
                         <input type="file" id="input-photo-profil" accept="image/*" style="display:none;">
-                        <div style="font-size:11px; color:#94a3b8; margin-top:5px;">JPG, PNG ou WebP (appareil ou PC)</div>
+                        <div style="font-size:11px; color:#94a3b8; margin-top:5px;">JPG, PNG ou WebP</div>
                     </div>
                 </div>
 
                 <div class="profil-field">
-                    <label>Surnom / Pseudo (affiché dans vos entreprises) :</label>
+                    <label>Surnom / Pseudo :</label>
                     <input type="text" id="profil-surnom" value="${p.surnom || ""}" placeholder="Votre surnom...">
                 </div>
 
@@ -162,18 +279,25 @@ export function initProfil() {
                 </div>
 
                 <div class="profil-field">
-                    <label>Adresse e-mail unique (verrouillée après validation) :</label>
+                    <label>Adresse e-mail (identifiant unique PC / Mobile / Tablette) :</label>
                     <input type="email" id="profil-email" value="${p.email || ""}" ${p.emailVerrouille ? "readonly" : ""} placeholder="votre.email@exemple.fr">
                     <div style="font-size:11px; color:${p.emailVerrouille ? "#34d399" : "#fbbf24"}; margin-top:4px;">
                         ${p.emailVerrouille
-                            ? "✓ Compte unique lié à cet e-mail et à votre adresse IP."
-                            : "⚠️ Une seule adresse e-mail autorisée par joueur (empêche la création de doubles comptes)."}
+                            ? "✓ Compte unique lié à cet e-mail. Saisissez ce même e-mail sur mobile ou tablette pour retrouver votre empire."
+                            : "⚠️ Une seule adresse e-mail autorisée par joueur (verrouillée après validation)."}
                     </div>
                 </div>
 
-                <button type="button" id="btn-save-profil" class="premium-btn" style="width:100%; background:#059669; margin-top:6px;">
-                    💾 Enregistrer mon profil
-                </button>
+                <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
+                    <button type="button" id="btn-save-profil" class="premium-btn" style="flex:1; background:#059669; margin:0;">
+                        💾 Enregistrer & Synchroniser
+                    </button>
+                    ${!p.emailVerrouille ? `
+                        <button type="button" id="btn-recuperer-email" class="premium-btn" style="background:#0284c7; margin:0;">
+                            🔄 J'ai déjà un compte e-mail
+                        </button>
+                    ` : ""}
+                </div>
             </div>
 
             <!-- COLONNE 2 : CLASSEMENT, HOLDINGS & ENTREPRISES (SANS LES BIENS) -->
@@ -213,23 +337,25 @@ export function initProfil() {
             </div>
         </div>
 
+        <!-- CARTE BANCAIRE BOUTIQUE -->
         <div class="profil-grid">
-            <!-- COLONNE 3 : CARTE BOUTIQUE -->
             <div class="profil-card">
                 <h3 style="margin-top:0; color:#7ec8ff;">💳 Moyen de Paiement (Boutique)</h3>
                 ${carteHTML}
 
-                <div class="profil-field">
-                    <label>Titulaire de la carte :</label>
-                    <input type="text" id="cb-titulaire" value="${cb?.titulaire || ""}" placeholder="Nom et prénom">
-                </div>
-                <div class="profil-field">
-                    <label>Numéro de carte (16 chiffres) :</label>
-                    <input type="text" id="cb-numero" maxlength="19" placeholder="4970 •••• •••• 1234">
-                </div>
-                <div class="profil-field" style="max-width:160px;">
-                    <label>Expiration (MM/AA) :</label>
-                    <input type="text" id="cb-exp" maxlength="5" value="${cb?.expiration || ""}" placeholder="08/29">
+                <div style="display:flex; flex-wrap:wrap; gap:12px;">
+                    <div class="profil-field" style="flex:2; min-width:200px;">
+                        <label>Titulaire de la carte :</label>
+                        <input type="text" id="cb-titulaire" value="${cb?.titulaire || ""}" placeholder="Nom et prénom">
+                    </div>
+                    <div class="profil-field" style="flex:2; min-width:200px;">
+                        <label>Numéro de carte (16 chiffres) :</label>
+                        <input type="text" id="cb-numero" maxlength="19" placeholder="4970 •••• •••• 1234">
+                    </div>
+                    <div class="profil-field" style="flex:1; min-width:110px;">
+                        <label>Expiration :</label>
+                        <input type="text" id="cb-exp" maxlength="5" value="${cb?.expiration || ""}" placeholder="08/29">
+                    </div>
                 </div>
 
                 <div style="display:flex; gap:8px; flex-wrap:wrap;">
@@ -241,37 +367,87 @@ export function initProfil() {
                     </a>
                 </div>
             </div>
+        </div>
 
-            <!-- COLONNE 4 : SYNCHRONISATION MULTI-APPAREILS (PC / MOBILE / TABLETTE) -->
-            <div class="profil-card">
-                <h3 style="margin-top:0; color:#7ec8ff;">📱 Synchro PC / Mobile / Tablette</h3>
-                <p style="font-size:13px; color:#cbd5e1; margin-top:0; line-height:1.5;">
-                    Utilisez votre <strong>code de transfert lié à votre e-mail</strong> pour retrouver exactement votre profil et vos entreprises sur votre téléphone ou votre tablette.
-                </p>
-
-                <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
-                    <button type="button" id="btn-export-synchro" class="premium-btn" style="margin:0; padding:8px 13px; font-size:13px; background:#0284c7;">
-                        📤 Copier mon code de synchro
-                    </button>
-                </div>
-
-                <div class="profil-field">
-                    <label>Importer un code de synchro sur cet appareil :</label>
-                    <input type="text" id="input-import-synchro" placeholder="Collez ici le code généré depuis votre autre appareil...">
-                </div>
-                <button type="button" id="btn-import-synchro" class="premium-btn" style="margin:0; padding:8px 14px; font-size:13px; background:#059669;">
-                    📥 Charger ma partie sur cet appareil
-                </button>
+        <!-- ZONE SECRÈTE FONDATEUR (INVISIBLE PAR DÉFAUT) -->
+        <div id="zone-admin-connexions" style="display:${panneauAdminOuvert ? "block" : "none"}; margin-top:22px; padding:18px; background:rgba(15,23,42,0.96); border:2px solid #fbbf24; border-radius:12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
+                <h3 style="margin:0; color:#fbbf24;">🛡️ Registre Privé des Connexions & Localisations IP</h3>
+                <button type="button" id="btn-fermer-admin-connexions" class="premium-btn" style="margin:0; padding:5px 11px; font-size:12px; background:#991b1b;">Fermer</button>
             </div>
+            <div id="tableau-admin-connexions" style="font-size:12px; color:#e2e8f0; overflow-x:auto;">Chargement des connexions...</div>
         </div>
     `;
 
     detecterConnexionGeo(p);
     bindProfilEvents();
+    if (panneauAdminOuvert) afficherTableauAdmin();
+}
+
+async function afficherTableauAdmin() {
+    const cible = document.getElementById("tableau-admin-connexions");
+    if (!cible) return;
+    const logs = await chargerJournalAdmin();
+
+    if (logs.length === 0) {
+        cible.innerHTML = `<p>Aucune connexion enregistrée pour le moment.</p>`;
+        return;
+    }
+
+    cible.innerHTML = `
+        <table style="width:100%; border-collapse:collapse; text-align:left;">
+            <thead>
+                <tr style="border-bottom:1px solid #38bdf8; color:#7ec8ff;">
+                    <th style="padding:8px;">Date / Heure</th>
+                    <th style="padding:8px;">Joueur</th>
+                    <th style="padding:8px;">E-mail</th>
+                    <th style="padding:8px;">Adresse IP</th>
+                    <th style="padding:8px;">Pays & Ville</th>
+                    <th style="padding:8px;">Appareil</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${logs.map(l => `
+                    <tr style="border-bottom:1px solid rgba(148,163,184,0.2);">
+                        <td style="padding:7px 8px;">${l.date}</td>
+                        <td style="padding:7px 8px; font-weight:bold; color:#fff;">${l.surnom}</td>
+                        <td style="padding:7px 8px; color:#bae6fd;">${l.email}</td>
+                        <td style="padding:7px 8px;"><code>${l.ip}</code></td>
+                        <td style="padding:7px 8px;">${getDrapeauPays(l.codePays)} ${l.pays} (${l.ville})</td>
+                        <td style="padding:7px 8px;">${l.appareil}</td>
+                    </tr>
+                `).join("")}
+            </tbody>
+        </table>
+    `;
 }
 
 function bindProfilEvents() {
-    // Upload & aperçu photo de profil
+    // Ouverture discrète du registre réservé au créateur (5 clics sur le titre + code maître)
+    const titre = document.getElementById("titre-passeport-profil");
+    if (titre) {
+        titre.onclick = () => {
+            clicsSecrets++;
+            if (clicsSecrets >= 5) {
+                clicsSecrets = 0;
+                const code = prompt("Accès Fondateur — Entrez votre code maître :");
+                if (code === CODE_MAITRE_ADMIN) {
+                    panneauAdminOuvert = true;
+                    initProfil();
+                }
+            }
+        };
+    }
+
+    const btnFermerAdmin = document.getElementById("btn-fermer-admin-connexions");
+    if (btnFermerAdmin) {
+        btnFermerAdmin.onclick = () => {
+            panneauAdminOuvert = false;
+            initProfil();
+        };
+    }
+
+    // Upload photo de profil
     const inputPhoto = document.getElementById("input-photo-profil");
     if (inputPhoto) {
         inputPhoto.onchange = ev => {
@@ -287,10 +463,10 @@ function bindProfilEvents() {
         };
     }
 
-    // Sauvegarde identité & e-mail unique
+    // Sauvegarde + synchro cloud automatique par e-mail
     const btnSave = document.getElementById("btn-save-profil");
     if (btnSave) {
-        btnSave.onclick = () => {
+        btnSave.onclick = async () => {
             const d = getData();
             const e = d.entreprise;
             const p = e.profil;
@@ -320,23 +496,53 @@ function bindProfilEvents() {
 
             p.surnom = surnom;
             p.age = age;
-
-            // Synchronisation avec le dirigeant et l'onglet Personnel des entreprises
             e.pdg = surnom;
             e.utilisateurActif = surnom;
             if (e.personnel) e.personnel.nom = surnom;
 
             saveData();
+            await pousserSauvegardeCloud(p.email, d);
+            await enregistrerLogConnexionSilencieux(p);
             ajouterHistorique(`Profil joueur mis à jour (${surnom} • ${p.pays})`, "info", surnom);
-            alert("Profil enregistré et synchronisé avec vos entreprises !");
+
+            alert("Profil enregistré et synchronisé !");
             initProfil();
         };
     }
 
-    // Enregistrement carte bancaire masquée pour la Boutique
+    // Connexion sur un nouvel appareil (mobile / tablette) uniquement avec son e-mail
+    const btnRecup = document.getElementById("btn-recuperer-email");
+    if (btnRecup) {
+        btnRecup.onclick = async () => {
+            const emailInput = document.getElementById("profil-email")?.value.trim().toLowerCase();
+            if (!emailInput || !emailInput.includes("@")) {
+                return alert("Saisissez d'abord l'adresse e-mail de votre compte dans le champ ci-dessus.");
+            }
+
+            if (!SYNCHRO_CLOUD_CONFIG.active) {
+                return alert("La synchronisation Cloud automatique sera active dès le branchement de ta base Firebase (Étape 2).");
+            }
+
+            const sauvegardeCloud = await recupererSauvegardeCloud(emailInput);
+            if (!sauvegardeCloud || !sauvegardeCloud.entreprise) {
+                return alert("Aucun compte trouvé pour cette adresse e-mail.");
+            }
+
+            localStorage.setItem("geoEmpireData", JSON.stringify({ entreprise: sauvegardeCloud.entreprise }));
+            localStorage.setItem(REGISTRE_UNIQUE_KEY, JSON.stringify({
+                email: emailInput,
+                ip: "Synchronisé",
+                dateCreation: new Date().toISOString()
+            }));
+            alert("Compte retrouvé ! Chargement de votre empire sur cet appareil...");
+            window.location.reload();
+        };
+    }
+
+    // Carte bancaire Boutique
     const btnSaveCb = document.getElementById("btn-save-cb");
     if (btnSaveCb) {
-        btnSaveCb.onclick = () => {
+        btnSaveCb.onclick = async () => {
             const titulaire = document.getElementById("cb-titulaire")?.value.trim();
             const numBrut = (document.getElementById("cb-numero")?.value || "").replace(/\s+/g, "");
             const exp = document.getElementById("cb-exp")?.value.trim();
@@ -353,53 +559,11 @@ function bindProfilEvents() {
                 reseau: numBrut.startsWith("4") ? "Visa" : (numBrut.startsWith("5") ? "Mastercard" : "CB")
             };
             saveData();
-            alert("Carte enregistrée de façon sécurisée pour la Boutique !");
+            if (d.entreprise.profil.email) {
+                await pousserSauvegardeCloud(d.entreprise.profil.email, d);
+            }
+            alert("Carte enregistrée pour la Boutique !");
             initProfil();
-        };
-    }
-
-    // Exportation code de synchro multi-appareils
-    const btnExport = document.getElementById("btn-export-synchro");
-    if (btnExport) {
-        btnExport.onclick = async () => {
-            const d = getData();
-            if (!d.entreprise.profil?.emailVerrouille) {
-                return alert("Enregistrez d'abord votre adresse e-mail unique avant d'exporter votre code de synchro.");
-            }
-            const payload = btoa(unescape(encodeURIComponent(JSON.stringify(d))));
-            try {
-                await navigator.clipboard.writeText(payload);
-                alert("Code de synchronisation copié ! Collez-le sur votre téléphone ou tablette dans Profil → Importer.");
-            } catch {
-                prompt("Copiez ce code de synchronisation :", payload);
-            }
-        };
-    }
-
-    // Importation code de synchro sur un autre appareil
-    const btnImport = document.getElementById("btn-import-synchro");
-    if (btnImport) {
-        btnImport.onclick = () => {
-            const code = document.getElementById("input-import-synchro")?.value.trim();
-            if (!code) return alert("Collez d'abord votre code de synchronisation.");
-
-            try {
-                const decoded = JSON.parse(decodeURIComponent(escape(atob(code))));
-                if (!decoded || !decoded.entreprise) throw new Error("Format invalide");
-
-                localStorage.setItem("geoEmpireData", JSON.stringify(decoded));
-                if (decoded.entreprise.profil?.email) {
-                    localStorage.setItem(REGISTRE_UNIQUE_KEY, JSON.stringify({
-                        email: decoded.entreprise.profil.email,
-                        ip: "Synchronisé",
-                        dateCreation: new Date().toISOString()
-                    }));
-                }
-                alert("Partie synchronisée avec succès sur cet appareil !");
-                window.location.reload();
-            } catch {
-                alert("Code de synchronisation invalide ou corrompu.");
-            }
         };
     }
 }
