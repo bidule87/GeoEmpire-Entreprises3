@@ -64,7 +64,7 @@ export function changerPhotoEntreprise(base64) {
 }
 
 // ============================================
-// CALCUL DES VALEURS & PLAFONDS DE PRIME (10 %)
+// CALCUL DES VALEURS & SUGGESTIONS DE PRIME (10 %)
 // ============================================
 export function calculerValeurSiege(siege) {
     if (!siege) return 0;
@@ -91,12 +91,8 @@ export function calculerValeurEntreprise() {
 export function verserPrimePdg(montant) {
     const e = getEntreprise();
     const valeur = Math.floor(Number(montant) || 0);
-    const maxAutorise = Math.max(500, Math.floor(calculerValeurEntreprise() * 0.10));
 
     if (valeur <= 0) return { ok: false, message: "Veuillez saisir un montant de prime supérieur à 0 Ø." };
-    if (valeur > maxAutorise) {
-        return { ok: false, message: `Prime trop élevée ! Maximum autorisé (10 % du patrimoine) : ${maxAutorise.toLocaleString("fr-FR")} Ø.` };
-    }
     if ((e.argent || 0) < valeur) {
         return { ok: false, message: `Trésorerie insuffisante (${(e.argent || 0).toLocaleString("fr-FR")} Ø disponibles).` };
     }
@@ -178,12 +174,8 @@ export function verserPrimeMembreSiege(id, nomMembre, montant) {
     if (!membre) return { ok: false, message: "Collaborateur introuvable." };
 
     const valeur = Math.floor(Number(montant) || 0);
-    const maxAutorise = Math.max(500, Math.floor(calculerValeurSiege(siege) * 0.10));
 
     if (valeur <= 0) return { ok: false, message: "Veuillez saisir un montant de prime supérieur à 0 Ø." };
-    if (valeur > maxAutorise) {
-        return { ok: false, message: `Maximum autorisé (10 % de la valeur de ${siege.nom}) : ${maxAutorise.toLocaleString("fr-FR")} Ø.` };
-    }
     if ((e.argent || 0) < valeur) {
         return { ok: false, message: `Trésorerie insuffisante (${(e.argent || 0).toLocaleString("fr-FR")} Ø disponibles).` };
     }
@@ -280,12 +272,8 @@ export function verserPrimeAssocieHolding(nomMembre, montant) {
     if (!a) return { ok: false, message: "Directeur Général introuvable." };
 
     const valeur = Math.floor(Number(montant) || 0);
-    const maxAutorise = Math.max(500, Math.floor(calculerValeurEntreprise() * 0.10));
 
     if (valeur <= 0) return { ok: false, message: "Veuillez saisir un montant de prime supérieur à 0 Ø." };
-    if (valeur > maxAutorise) {
-        return { ok: false, message: `Maximum autorisé (10 % du patrimoine global) : ${maxAutorise.toLocaleString("fr-FR")} Ø.` };
-    }
     if ((e.argent || 0) < valeur) {
         return { ok: false, message: `Trésorerie insuffisante (${(e.argent || 0).toLocaleString("fr-FR")} Ø disponibles).` };
     }
