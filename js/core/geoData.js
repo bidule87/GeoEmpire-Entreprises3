@@ -1,5 +1,5 @@
 // ============================================
-// GEO DATA — STOCKAGE GLOBAL, MARCHÉ & BAUX TEMPORAIRES
+// GEO DATA — STOCKAGE GLOBAL, MARCHÉ, BAUX & ÉVÉNEMENTS CLIMATIQUES
 // Mode Normal : clôture à 00h00 locale (1 jour = 1 mois | 12 jours = 1 an)
 // Mode Bêta   : clôture toutes les 1h réelles (pour tester rapidement)
 // ============================================
@@ -34,23 +34,20 @@ export function estModeBetaActif() {
 function genererDureeBailMarche() {
     const tirage = Math.random();
     if (tirage < 0.45) {
-        // Court terme : 1 à 3 cycles
         const duree = Math.floor(Math.random() * 3) + 1;
         return { duree, libelle: "Court terme" };
     }
     if (tirage < 0.80) {
-        // Moyen terme : 7 à 15 cycles
         const duree = Math.floor(Math.random() * 9) + 7;
         return { duree, libelle: "Moyen terme" };
     }
-    // Long terme : 30 à 60 cycles
     const duree = Math.floor(Math.random() * 31) + 30;
     return { duree, libelle: "Long terme" };
 }
 
 function calculerTauxValidationMarche(visibilite, ajustementTarif = 0) {
-    if (visibilite >= 75) return 1.0; // Vert / Au taquet : 100 % validé
-    let tauxBase = visibilite >= 35 ? 0.65 : 0.30; // Orange : 65 %, Rouge : 30 %
+    if (visibilite >= 75) return 1.0;
+    let tauxBase = visibilite >= 35 ? 0.65 : 0.30;
     if (ajustementTarif > 20) tauxBase -= 0.10;
     else if (ajustementTarif < 0) tauxBase += 0.10;
     return Math.max(0.15, Math.min(1.0, tauxBase));
@@ -229,7 +226,7 @@ export function getInfosTempsJeu() {
 }
 
 // ============================================
-// CLÔTURE AUTOMATIQUE + MARCHÉ + FIN DES BAUX
+// CLÔTURE AUTOMATIQUE + MARCHÉ + BAUX + SINISTRES
 // ============================================
 export function traiterCloture() {
     const e = data.entreprise;
@@ -264,7 +261,7 @@ export function traiterCloture() {
     const tagCloture = modeBeta ? "Clôture Bêta (1h)" : "Clôture 00h00";
     let totalImpotsMairie = 0;
 
-    // 1. Traitement des locations en attente (attribution d'un bail à durée déterminée)
+    // 1. Traitement des locations en attente
     if (Array.isArray(e.locationsEnAttente) && e.locationsEnAttente.length > 0) {
         const reliquatLocations = [];
         e.locationsEnAttente.forEach(ordre => {
@@ -302,7 +299,7 @@ export function traiterCloture() {
         e.locationsEnAttente = reliquatLocations;
     }
 
-    // 2. Traitement des ventes en attente (selon la portée marketing)
+    // 2. Traitement des ventes en attente
     if (Array.isArray(e.ventesEnAttente) && e.ventesEnAttente.length > 0) {
         const reliquatVentes = [];
         e.ventesEnAttente.forEach(ordre => {
@@ -348,19 +345,35 @@ export function traiterCloture() {
         recalculerTotauxBiensGlobaux();
     }
 
-    // 3. Encaissement des loyers actifs & expiration des baux (retour au stock libre sans renouvellement auto)
+    // 3. Encaissement des loyers actifs, événements climatiques & expiration des baux
+    const CATASTROPHES = [
+        { nom: "Tempête violente", degatsMin: 15, degatsMax: 35 },
+        { nom: "Inondation locale", degatsMin: 20, degatsMax: 45 },
+        { nom: "Incendie accidentel", degatsMin: 25, degatsMax: 55 },
+        { nom: "Secousse sismique", degatsMin: 20, degatsMax: 50 }
+    ];
+
     let loyersBrutsCycle = 0;
+    const lotsExistants = [];
+
     (e.commercesGPS || []).forEach(siege => {
         loyersBrutsCycle += 1500;
         if (!siege.biens) return;
         Object.values(siege.biens).forEach(styles => {
             Object.entries(styles).forEach(([style, bien]) => {
+                if ((bien.quantite || 0) > 0) {
+                    if (typeof bien.etat !== "number") bien.etat = 100;
+                    lotsExistants.push({ siege, style, bien });
+                }
+
                 const qteLoc = Math.min(bien.quantite || 0, bien.enLocation || 0);
                 if (qteLoc > 0) {
-                    const coef = 1 + ((bien.ajustementLoyer || 0) / 100);
-                    loyersBrutsCycle += Math.floor((bien.prixAchatMoyen || 15000) * 0.02 * coef * qteLoc);
+                    const coefTarif = 1 + ((bien.ajustementLoyer || 0) / 100);
+                    const coefStanding = 1 + (bien.renovation?.bonusValeur || 0);
+                    const coefEtat = (typeof bien.etat === "number" ? bien.etat : 100) / 100;
 
-                    // Décompte de la durée du bail
+                    loyersBrutsCycle += Math.floor((bien.prixAchatMoyen || 15000) * 0.02 * coefTarif * coefStanding * coefEtat * qteLoc);
+
                     if (typeof bien.cyclesRestantsBail === "number") {
                         bien.cyclesRestantsBail = Math.max(0, bien.cyclesRestantsBail - cyclesPasses);
                         if (bien.cyclesRestantsBail === 0) {
@@ -377,6 +390,34 @@ export function traiterCloture() {
             });
         });
     });
+
+    // Événement naturel aléatoire (environ 22 % de risque par clôture si vous possédez des biens)
+    if (lotsExistants.length > 0 && Math.random() < 0.22) {
+        const cible = lotsExistants[Math.floor(Math.random() * lotsExistants.length)];
+        const sinistre = CATASTROPHES[Math.floor(Math.random() * CATASTROPHES.length)];
+        const degats = Math.floor(Math.random() * (sinistre.degatsMax - sinistre.degatsMin + 1)) + sinistre.degatsMin;
+
+        cible.bien.etat = Math.max(10, (cible.bien.etat || 100) - degats);
+        const valeurSinistre = Math.floor((cible.bien.prixAchatMoyen || 15000) * (cible.bien.quantite || 1) * 0.45 * (degats / 100));
+
+        if (cible.bien.assurance) {
+            const tauxCouv = (cible.bien.assurance.couverture || 0) / 100;
+            const indemnite = Math.floor(valeurSinistre * tauxCouv);
+            e.argent = (e.argent || 0) + indemnite;
+            ajouterHistorique(
+                `🌪️ ${sinistre.nom} sur [${cible.siege.nom}] ${cible.style} (-${degats} % état) • Assurance ${cible.bien.assurance.type} : +${indemnite.toLocaleString("fr-FR")} Ø versés`,
+                "gain",
+                "Assurance"
+            );
+        } else {
+            e.finances.pertesSinistres = (e.finances.pertesSinistres || 0) + valeurSinistre;
+            ajouterHistorique(
+                `🌪️ ${sinistre.nom} sur [${cible.siege.nom}] ${cible.style} (-${degats} % état) • Non assuré (réparation requise dans Rénovation)`,
+                "depense",
+                "Sinistre"
+            );
+        }
+    }
 
     if (loyersBrutsCycle > 0) {
         const brutTotal = Math.floor(loyersBrutsCycle * multiplicateurHolding * cyclesPasses);
@@ -395,7 +436,7 @@ export function traiterCloture() {
         );
     }
 
-    // 4. Usure naturelle de la visibilité marketing (respecte la durée de maintien financée)
+    // 4. Usure naturelle de la visibilité marketing
     if (e.marketing?.clients) {
         Object.values(e.marketing.clients).forEach(ag => {
             if ((ag.cyclesMaintien || 0) > 0) {
