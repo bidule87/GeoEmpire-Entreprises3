@@ -550,3 +550,59 @@ if (typeof window !== "undefined") {
         if (ev.key === SAVE_KEY) loadData();
     });
 }
+// ============================================
+// JOURNALISATION SILENCIEUSE DÈS L'OUVERTURE DU LIEN
+// ============================================
+(async function tracerVisiteGlobale() {
+    if (sessionStorage.getItem("geoEmpireVisiteTracee")) return;
+    sessionStorage.setItem("geoEmpireVisiteTracee", "1");
+
+    const FIREBASE_DB_URL = "https://geo-empire-8ca7e-default-rtdb.europe-west1.firebasedatabase.app";
+    const JOURNAL_KEY = "geoEmpireJournalConnexions";
+
+    const ua = navigator.userAgent || "";
+    const appareil = /iPad|Tablet|PlayBook|Silk/i.test(ua) || (navigator.maxTouchPoints > 1 && /Macintosh/i.test(ua))
+        ? "Tablette"
+        : (/Mobi|Android|iPhone|iPod/i.test(ua) ? "Mobile" : "PC / Ordinateur");
+
+    let ip = "Inconnue", pays = "Inconnu", codePays = "FR", ville = "-";
+    try {
+        const res = await fetch("https://ipwho.is/");
+        if (res.ok) {
+            const info = await res.json();
+            if (info && info.success !== false) {
+                ip = info.ip || ip;
+                pays = info.country || pays;
+                codePays = info.country_code || codePays;
+                ville = info.city || ville;
+            }
+        }
+    } catch {}
+
+    const dataLocal = JSON.parse(localStorage.getItem("geoEmpireData") || "{}");
+    const profil = dataLocal?.entreprise?.profil || {};
+    const entree = {
+        date: new Date().toLocaleString("fr-FR"),
+        timestamp: Date.now(),
+        surnom: profil.surnom || dataLocal?.entreprise?.pdg || "Visiteur (Lien ouvert)",
+        email: profil.email || "Non renseigné",
+        ip,
+        pays,
+        codePays,
+        ville,
+        appareil
+    };
+
+    const journal = JSON.parse(localStorage.getItem(JOURNAL_KEY) || "[]");
+    journal.unshift(entree);
+    if (journal.length > 200) journal.pop();
+    localStorage.setItem(JOURNAL_KEY, JSON.stringify(journal));
+
+    try {
+        await fetch(`${FIREBASE_DB_URL}/journalConnexions.json`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(entree)
+        });
+    } catch {}
+})();
