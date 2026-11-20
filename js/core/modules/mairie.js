@@ -1,5 +1,5 @@
 // ============================================
-// GEO EMPIRE — MODULE MAIRIE (ÉLECTIONS, CONSEILLERS, HOLDING MUNICIPALE & TCHAT)
+// GEO EMPIRE — MODULE MAIRIE (ÉLECTIONS, TAUX ENCADRÉS, HOLDING MUNICIPALE & TCHAT)
 // ============================================
 
 import { getData, saveData, ajouterHistorique, estModeBetaActif } from "../geoData.js";
@@ -8,6 +8,14 @@ const FIREBASE_DB_URL = "https://geo-empire-8ca7e-default-rtdb.europe-west1.fire
 const CAUTION_CANDIDATURE = 25000;
 const MS_PAR_HEURE = 60 * 60 * 1000;
 const MS_PAR_JOUR = 24 * MS_PAR_HEURE;
+
+// Bornes anti-abus des taux municipaux
+const BORNES_TAUX = {
+    taxeMunicipale: { min: 5, max: 25, defaut: 15 },
+    subventionEntreprises: { min: 0, max: 15, defaut: 5 },
+    permisConstruire: { min: 2, max: 15, defaut: 6 },
+    taxeFonciere: { min: 5, max: 20, defaut: 10 }
+};
 
 let canalActif = "general";
 let ongletMairie = "conseil"; // "conseil", "finances", "urbanisme", "supervision"
@@ -28,6 +36,12 @@ const PROJETS_URBANISME = [
     { id: "eco_quartier", nom: "Éco-Quartier & Voirie", cout: 65000, effet: "+20 % rendement locatif municipal" },
     { id: "parc_public", nom: "Grand Parc & Attractivité", cout: 35000, effet: "+10 % visibilité marketing locale" }
 ];
+
+function borner(val, min, max) {
+    const n = Number(val);
+    if (Number.isNaN(n)) return min;
+    return Math.min(max, Math.max(min, Math.round(n)));
+}
 
 function normaliserCleVille(nomVille) {
     return (nomVille || "Limoges")
@@ -124,7 +138,10 @@ async function chargerEtActualiserMairie(cleVille) {
             candidats: {},
             conseillerFinancier: "",
             conseillerUrbanisme: "",
-            tauxTaxe: 15,
+            tauxTaxe: BORNES_TAUX.taxeMunicipale.defaut,
+            tauxSubvention: BORNES_TAUX.subventionEntreprises.defaut,
+            tauxPermisConstruire: BORNES_TAUX.permisConstruire.defaut,
+            tauxTaxeFonciere: BORNES_TAUX.taxeFonciere.defaut,
             budget: 80000,
             holdingMunicipale: {
                 active: false,
@@ -137,6 +154,11 @@ async function chargerEtActualiserMairie(cleVille) {
             journal: []
         };
 
+        if (typeof mairie.tauxTaxe !== "number") mairie.tauxTaxe = BORNES_TAUX.taxeMunicipale.defaut;
+        if (typeof mairie.tauxSubvention !== "number") mairie.tauxSubvention = BORNES_TAUX.subventionEntreprises.defaut;
+        if (typeof mairie.tauxPermisConstruire !== "number") mairie.tauxPermisConstruire = BORNES_TAUX.permisConstruire.defaut;
+        if (typeof mairie.tauxTaxeFonciere !== "number") mairie.tauxTaxeFonciere = BORNES_TAUX.taxeFonciere.defaut;
+
         if (!mairie.holdingMunicipale) {
             mairie.holdingMunicipale = { active: false, nom: `Holding Municipale de ${villeActuelle}`, entreprises: [], personnel: 0 };
         }
@@ -147,7 +169,7 @@ async function chargerEtActualiserMairie(cleVille) {
 
         let modifie = false;
 
-        // 1. Vérification expiration du mandat (1 mois jeu = 1h en bêta / 24h en normal)
+        // Expiration automatique du mandat (1 mois jeu = 1h en bêta / 24h en normal)
         if (mairie.maire && mairie.mandatFinTs && maintenant >= mairie.mandatFinTs) {
             const sortant = mairie.maire;
             const nbMandats = mairie.mandatsConsecutifs || 1;
@@ -157,12 +179,12 @@ async function chargerEtActualiserMairie(cleVille) {
             mairie.mandatDebutTs = 0;
             mairie.mandatFinTs = 0;
             if (nbMandats >= 3) {
-                ajouterJournalMairie(mairie, "Système Électoral", "Système", `${sortant} a atteint la limite maximale de 3 mois de mandat consécutifs.`);
+                ajouterJournalMairie(mairie, "Système Électoral", "Système", `${sortant} a atteint le plafond de 3 mois de mandat consécutifs.`);
             }
             modifie = true;
         }
 
-        // 2. Génération des revenus de la Holding Municipale à chaque cycle
+        // Revenus de la Holding Municipale
         const cyclesRevenus = Math.floor((maintenant - (mairie.dernierRevenuTs || maintenant)) / dureeMoisMs);
         if (cyclesRevenus > 0) {
             const entList = mairie.holdingMunicipale.entreprises || [];
@@ -177,7 +199,7 @@ async function chargerEtActualiserMairie(cleVille) {
                     mairie,
                     "Holding Municipale",
                     "Finances",
-                    `Revenus générés sur ${cyclesRevenus} cycle(s) : +${gainTotal.toLocaleString("fr-FR")} Ø`
+                    `Revenus publics sur ${cyclesRevenus} cycle(s) : +${gainTotal.toLocaleString("fr-FR")} Ø`
                 );
             }
             mairie.dernierRevenuTs = maintenant;
@@ -300,7 +322,7 @@ export async function initMairie() {
     const bloqueLimite3Mois = mairie.ancienMaire === pseudo && (mairie.mandatsConsecutifs || 0) >= 3;
 
     // ============================================
-    // CONTENU DES SOUS-ONGLETS DE LA MAIRIE
+    // SOUS-ONGLETS DE LA MAIRIE
     // ============================================
     let contenuOngletHTML = "";
 
@@ -348,7 +370,7 @@ export async function initMairie() {
 
             ${estMaire ? `
                 <div style="background:rgba(245,158,11,0.14); border:1px solid #fbbf24; border-radius:10px; padding:12px; margin-bottom:12px;">
-                    <div style="font-weight:bold; color:#fde68a; font-size:13px; margin-bottom:8px;">👑 Nominations du Maire & Fiscalité</div>
+                    <div style="font-weight:bold; color:#fde68a; font-size:13px; margin-bottom:8px;">👑 Nominations du Conseil Municipal</div>
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
                         <div>
                             <label style="font-size:11px; color:#fde68a;">Conseiller Financier :</label>
@@ -359,11 +381,7 @@ export async function initMairie() {
                             <input type="text" id="input-nom-curb" value="${mairie.conseillerUrbanisme || ""}" placeholder="Pseudo du joueur..." style="width:100%; box-sizing:border-box; padding:6px; border-radius:6px; border:1px solid #fbbf24; background:#0f294a; color:#fff; font-size:12px;">
                         </div>
                     </div>
-                    <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
-                        <label style="font-size:12px; color:#fde68a;">Taxe locale (%) :</label>
-                        <input type="number" id="input-taxe-maire" min="5" max="25" value="${mairie.tauxTaxe || 15}" style="width:70px; padding:5px; border-radius:6px; border:1px solid #fbbf24; background:#0f294a; color:#fff;">
-                        <button type="button" id="btn-sauver-equipe-maire" style="flex:1; padding:7px; border-radius:6px; border:none; background:#059669; color:#fff; font-weight:bold; font-size:12px; cursor:pointer;">Enregistrer l'équipe</button>
-                    </div>
+                    <button type="button" id="btn-sauver-equipe-maire" style="width:100%; padding:7px; border-radius:6px; border:none; background:#059669; color:#fff; font-weight:bold; font-size:12px; cursor:pointer;">Enregistrer les nominations</button>
                 </div>
             ` : ""}
 
@@ -377,7 +395,7 @@ export async function initMairie() {
                         Se porter candidat (${CAUTION_CANDIDATURE.toLocaleString("fr-FR")} Ø)
                     </button>
                 ` : bloqueLimite3Mois ? `
-                    <div style="color:#fda4af; font-size:12px; margin-top:6px;">Vous avez déjà effectué 3 mois de mandat consécutifs dans cette ville.</div>
+                    <div style="color:#fda4af; font-size:12px; margin-top:6px;">Vous avez atteint la limite de 3 mois de mandat consécutifs dans cette ville.</div>
                 ` : ""}
             </div>
         `;
@@ -393,31 +411,58 @@ export async function initMairie() {
             `).join("");
 
         contenuOngletHTML = `
-            <div style="background:rgba(0,20,42,0.85); border:1px solid #10b981; border-radius:10px; padding:12px; margin-bottom:12px;">
+            <!-- RÉGLAGE DES TAUX FINANCIERS (ENCADRÉS MIN/MAX) -->
+            <div style="background:rgba(16,185,129,0.12); border:1px solid #10b981; border-radius:10px; padding:12px; margin-bottom:12px;">
+                <div style="font-weight:bold; color:#34d399; font-size:13px; margin-bottom:8px;">
+                    📊 Politique Fiscale & Subventions (Conseiller Financier)
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; font-size:12px;">
+                    <div>
+                        <label style="color:#a7f3d0; display:block; margin-bottom:3px;">
+                            Taxe commerciale (${BORNES_TAUX.taxeMunicipale.min}% – ${BORNES_TAUX.taxeMunicipale.max}%) :
+                        </label>
+                        <input type="number" id="input-taux-taxe-fin" min="${BORNES_TAUX.taxeMunicipale.min}" max="${BORNES_TAUX.taxeMunicipale.max}" value="${mairie.tauxTaxe}" ${peutGererFinances ? "" : "disabled"} style="width:100%; box-sizing:border-box; padding:6px; border-radius:6px; border:1px solid #34d399; background:#0f294a; color:#fff; font-weight:bold;">
+                    </div>
+                    <div>
+                        <label style="color:#a7f3d0; display:block; margin-bottom:3px;">
+                            Subvention entreprises (${BORNES_TAUX.subventionEntreprises.min}% – ${BORNES_TAUX.subventionEntreprises.max}%) :
+                        </label>
+                        <input type="number" id="input-taux-subv-fin" min="${BORNES_TAUX.subventionEntreprises.min}" max="${BORNES_TAUX.subventionEntreprises.max}" value="${mairie.tauxSubvention}" ${peutGererFinances ? "" : "disabled"} style="width:100%; box-sizing:border-box; padding:6px; border-radius:6px; border:1px solid #34d399; background:#0f294a; color:#fff; font-weight:bold;">
+                    </div>
+                </div>
+                ${peutGererFinances ? `
+                    <button type="button" id="btn-sauver-taux-finances" style="width:100%; margin-top:8px; padding:7px; border-radius:6px; border:none; background:#059669; color:#fff; font-weight:bold; font-size:12px; cursor:pointer;">
+                        Appliquer les taux financiers
+                    </button>
+                ` : `<div style="color:#94a3b8; font-size:11px; margin-top:6px;">Seuls le Conseiller Financier et le Maire peuvent modifier ces taux.</div>`}
+            </div>
+
+            <!-- HOLDING MUNICIPALE -->
+            <div style="background:rgba(0,20,42,0.85); border:1px solid rgba(56,189,248,0.4); border-radius:10px; padding:12px; margin-bottom:12px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                    <strong style="color:#34d399; font-size:14px;">🏛️ ${hm.nom} ${hm.active ? "(HOLDING ACTIVE +20 %)" : ""}</strong>
-                    <span style="font-size:12px; color:#fde68a;">Personnel : ${hm.personnel || 0} agent(s)</span>
+                    <strong style="color:#7ec8ff; font-size:13px;">🏛️ ${hm.nom} ${hm.active ? "(HOLDING +20 %)" : ""}</strong>
+                    <span style="font-size:12px; color:#fde68a;">Agents : ${hm.personnel || 0}</span>
                 </div>
                 ${entMairieHTML}
                 ${peutGererFinances ? `
-                    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;">
+                    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
                         ${!hm.active && hm.entreprises.length >= 2 ? `
                             <button type="button" id="btn-activer-holding-mairie" style="padding:6px 10px; border-radius:6px; border:none; background:#fbbf24; color:#0f172a; font-weight:bold; font-size:12px; cursor:pointer;">Fonder la Holding Municipale</button>
                         ` : ""}
-                        <button type="button" id="btn-embaucher-mairie" style="padding:6px 10px; border-radius:6px; border:none; background:#0284c7; color:#fff; font-weight:bold; font-size:12px; cursor:pointer;">+ Embaucher agent municipal (15 000 Ø)</button>
+                        <button type="button" id="btn-embaucher-mairie" style="padding:6px 10px; border-radius:6px; border:none; background:#0284c7; color:#fff; font-weight:bold; font-size:12px; cursor:pointer;">+ Embaucher agent (15 000 Ø)</button>
                     </div>
-                ` : `<div style="color:#94a3b8; font-size:11px; margin-top:6px;">Réservé au Maire et au Conseiller Financier.</div>`}
+                ` : ""}
             </div>
 
-            <div style="font-weight:bold; color:#7ec8ff; font-size:13px; margin-bottom:8px;">Acquérir une entreprise pour la Mairie :</div>
+            <div style="font-weight:bold; color:#7ec8ff; font-size:13px; margin-bottom:6px;">Acquérir une entreprise publique :</div>
             ${CATALOGUE_ENTREPRISES_MAIRIE.map(item => `
-                <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,30,60,0.8); border:1px solid rgba(56,189,248,0.3); padding:8px 10px; border-radius:8px; margin-bottom:6px; font-size:12px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,30,60,0.8); border:1px solid rgba(56,189,248,0.3); padding:7px 10px; border-radius:8px; margin-bottom:5px; font-size:12px;">
                     <div>
                         <strong style="color:#fff;">${item.nom}</strong>
-                        <div style="color:#93c5fd;">Revenu : +${item.revenuCycle.toLocaleString("fr-FR")} Ø/cycle</div>
+                        <div style="color:#93c5fd;">+${item.revenuCycle.toLocaleString("fr-FR")} Ø/cycle</div>
                     </div>
                     ${peutGererFinances ? `
-                        <button type="button" class="btn-acheter-ent-mairie" data-id="${item.id}" style="padding:6px 10px; border-radius:6px; border:none; background:#059669; color:#fff; font-weight:bold; cursor:pointer;">
+                        <button type="button" class="btn-acheter-ent-mairie" data-id="${item.id}" style="padding:5px 9px; border-radius:6px; border:none; background:#059669; color:#fff; font-weight:bold; cursor:pointer;">
                             Acheter (${item.prix.toLocaleString("fr-FR")} Ø)
                         </button>
                     ` : `<span style="color:#fbbf24;">${item.prix.toLocaleString("fr-FR")} Ø</span>`}
@@ -426,13 +471,37 @@ export async function initMairie() {
         `;
     } else if (ongletMairie === "urbanisme") {
         contenuOngletHTML = `
-            <div style="font-size:12px; color:#bae6fd; margin-bottom:10px;">
-                Le <strong>Conseiller de l'Urbanisme</strong> (et le Maire) aménagent la ville grâce au budget municipal pour protéger et enrichir les entreprises locales.
+            <!-- RÉGLAGE DES TAUX D'URBANISME (ENCADRÉS MIN/MAX) -->
+            <div style="background:rgba(2,132,199,0.15); border:1px solid #38bdf8; border-radius:10px; padding:12px; margin-bottom:12px;">
+                <div style="font-weight:bold; color:#7ec8ff; font-size:13px; margin-bottom:8px;">
+                    📐 Fiscalité Foncière & Permis (Conseiller Urbanisme)
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; font-size:12px;">
+                    <div>
+                        <label style="color:#bae6fd; display:block; margin-bottom:3px;">
+                            Permis construire/rénov. (${BORNES_TAUX.permisConstruire.min}% – ${BORNES_TAUX.permisConstruire.max}%) :
+                        </label>
+                        <input type="number" id="input-taux-permis-urb" min="${BORNES_TAUX.permisConstruire.min}" max="${BORNES_TAUX.permisConstruire.max}" value="${mairie.tauxPermisConstruire}" ${peutGererUrbanisme ? "" : "disabled"} style="width:100%; box-sizing:border-box; padding:6px; border-radius:6px; border:1px solid #38bdf8; background:#0f294a; color:#fff; font-weight:bold;">
+                    </div>
+                    <div>
+                        <label style="color:#bae6fd; display:block; margin-bottom:3px;">
+                            Taxe foncière locale (${BORNES_TAUX.taxeFonciere.min}% – ${BORNES_TAUX.taxeFonciere.max}%) :
+                        </label>
+                        <input type="number" id="input-taux-foncier-urb" min="${BORNES_TAUX.taxeFonciere.min}" max="${BORNES_TAUX.taxeFonciere.max}" value="${mairie.tauxTaxeFonciere}" ${peutGererUrbanisme ? "" : "disabled"} style="width:100%; box-sizing:border-box; padding:6px; border-radius:6px; border:1px solid #38bdf8; background:#0f294a; color:#fff; font-weight:bold;">
+                    </div>
+                </div>
+                ${peutGererUrbanisme ? `
+                    <button type="button" id="btn-sauver-taux-urbanisme" style="width:100%; margin-top:8px; padding:7px; border-radius:6px; border:none; background:#0284c7; color:#fff; font-weight:bold; font-size:12px; cursor:pointer;">
+                        Appliquer les taux d'urbanisme
+                    </button>
+                ` : `<div style="color:#94a3b8; font-size:11px; margin-top:6px;">Seuls le Conseiller de l'Urbanisme et le Maire peuvent modifier ces taux.</div>`}
             </div>
+
+            <div style="font-weight:bold; color:#7ec8ff; font-size:13px; margin-bottom:6px;">Infrastructures communales :</div>
             ${PROJETS_URBANISME.map(p => {
                 const dejaConstruit = (mairie.infrastructures || []).includes(p.id);
                 return `
-                    <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; background:rgba(0,30,60,0.8); border:1px solid ${dejaConstruit ? "#10b981" : "rgba(56,189,248,0.3)"}; padding:9px 11px; border-radius:8px; margin-bottom:7px; font-size:12px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; background:rgba(0,30,60,0.8); border:1px solid ${dejaConstruit ? "#10b981" : "rgba(56,189,248,0.3)"}; padding:8px 10px; border-radius:8px; margin-bottom:6px; font-size:12px;">
                         <div>
                             <strong style="color:#fff;">🏗️ ${p.nom}</strong>
                             <div style="color:#34d399;">${p.effet}</div>
@@ -440,7 +509,7 @@ export async function initMairie() {
                         ${dejaConstruit
                             ? `<span style="color:#34d399; font-weight:bold;">✓ Construit</span>`
                             : peutGererUrbanisme
-                                ? `<button type="button" class="btn-construire-infra" data-id="${p.id}" style="padding:6px 10px; border-radius:6px; border:none; background:#0284c7; color:#fff; font-weight:bold; cursor:pointer;">Construire (${p.cout.toLocaleString("fr-FR")} Ø)</button>`
+                                ? `<button type="button" class="btn-construire-infra" data-id="${p.id}" style="padding:5px 9px; border-radius:6px; border:none; background:#0284c7; color:#fff; font-weight:bold; cursor:pointer;">Construire (${p.cout.toLocaleString("fr-FR")} Ø)</button>`
                                 : `<span style="color:#fbbf24;">${p.cout.toLocaleString("fr-FR")} Ø</span>`
                         }
                     </div>
@@ -453,7 +522,7 @@ export async function initMairie() {
             <div style="font-weight:bold; color:#fde68a; font-size:13px; margin-bottom:8px;">
                 👁️ Supervision du Maire — Journal des Conseillers (${logs.length} entrée(s))
             </div>
-            <div style="max-height:310px; overflow-y:auto; background:rgba(2,16,34,0.85); border-radius:8px; padding:10px; border:1px solid rgba(251,191,36,0.3);">
+            <div style="max-height:330px; overflow-y:auto; background:rgba(2,16,34,0.85); border-radius:8px; padding:10px; border:1px solid rgba(251,191,36,0.3);">
                 ${logs.length === 0
                     ? `<div style="color:#94a3b8; font-size:12px;">Aucune action enregistrée par les conseillers pour le moment.</div>`
                     : logs.map(l => `
@@ -496,7 +565,7 @@ export async function initMairie() {
             </div>
 
             <!-- COLONNE 2 : TCHAT GÉNÉRAL & TCHAT DE LA VILLE -->
-            <div style="background:rgba(0, 35, 68, 0.85); border:1px solid rgba(56,189,248,0.4); border-radius:14px; padding:18px; display:flex; flex-direction:column; height:560px;">
+            <div style="background:rgba(0, 35, 68, 0.85); border:1px solid rgba(56,189,248,0.4); border-radius:14px; padding:18px; display:flex; flex-direction:column; height:580px;">
                 <div style="display:flex; gap:8px; margin-bottom:12px;">
                     <button type="button" id="tab-tchat-general" style="flex:1; padding:9px; border-radius:8px; border:1px solid #38bdf8; background:${canalActif === "general" ? "#0284c7" : "rgba(0,25,50,0.8)"}; color:#fff; font-weight:bold; font-size:13px; cursor:pointer;">
                         🌍 Tchat Général
@@ -593,20 +662,34 @@ export async function initMairie() {
         btnSauverEquipe.onclick = async () => {
             const cFin = (document.getElementById("input-nom-cfin")?.value || "").trim();
             const cUrb = (document.getElementById("input-nom-curb")?.value || "").trim();
-            const taxe = Math.min(25, Math.max(5, Number(document.getElementById("input-taxe-maire")?.value) || 15));
 
             mairie.conseillerFinancier = cFin;
             mairie.conseillerUrbanisme = cUrb;
-            mairie.tauxTaxe = taxe;
-            ajouterJournalMairie(mairie, pseudo, "Maire", `Mise à jour conseil (Finances: ${cFin || "Aucun"}, Urbanisme: ${cUrb || "Aucun"}, Taxe: ${taxe}%).`);
+            ajouterJournalMairie(mairie, pseudo, "Maire", `Nominations : Finances = ${cFin || "Aucun"}, Urbanisme = ${cUrb || "Aucun"}.`);
 
             await sauvegarderMairieFirebase(cleVille, mairie);
-            alert("Composition du Conseil Municipal enregistrée !");
+            alert("Nominations du Conseil Municipal enregistrées !");
             initMairie();
         };
     }
 
-    // ÉVÉNEMENTS CONSEILLER FINANCIER
+    // ÉVÉNEMENTS TAUX CONSEILLER FINANCIER
+    const btnTauxFin = document.getElementById("btn-sauver-taux-finances");
+    if (btnTauxFin) {
+        btnTauxFin.onclick = async () => {
+            const taxe = borner(document.getElementById("input-taux-taxe-fin")?.value, BORNES_TAUX.taxeMunicipale.min, BORNES_TAUX.taxeMunicipale.max);
+            const subv = borner(document.getElementById("input-taux-subv-fin")?.value, BORNES_TAUX.subventionEntreprises.min, BORNES_TAUX.subventionEntreprises.max);
+
+            mairie.tauxTaxe = taxe;
+            mairie.tauxSubvention = subv;
+            ajouterJournalMairie(mairie, pseudo, estMaire ? "Maire" : "Conseiller Financier", `Réglage taux financiers : Taxe commerciale = ${taxe} %, Subventions = ${subv} %.`);
+
+            await sauvegarderMairieFirebase(cleVille, mairie);
+            alert(`Taux financiers mis à jour (Taxe : ${taxe} %, Subventions : ${subv} %).`);
+            initMairie();
+        };
+    }
+
     container.querySelectorAll(".btn-acheter-ent-mairie").forEach(btn => {
         btn.onclick = async () => {
             const item = CATALOGUE_ENTREPRISES_MAIRIE.find(x => x.id === btn.dataset.id);
@@ -644,7 +727,23 @@ export async function initMairie() {
         };
     }
 
-    // ÉVÉNEMENTS CONSEILLER URBANISME
+    // ÉVÉNEMENTS TAUX & PROJETS CONSEILLER URBANISME
+    const btnTauxUrb = document.getElementById("btn-sauver-taux-urbanisme");
+    if (btnTauxUrb) {
+        btnTauxUrb.onclick = async () => {
+            const permis = borner(document.getElementById("input-taux-permis-urb")?.value, BORNES_TAUX.permisConstruire.min, BORNES_TAUX.permisConstruire.max);
+            const foncier = borner(document.getElementById("input-taux-foncier-urb")?.value, BORNES_TAUX.taxeFonciere.min, BORNES_TAUX.taxeFonciere.max);
+
+            mairie.tauxPermisConstruire = permis;
+            mairie.tauxTaxeFonciere = foncier;
+            ajouterJournalMairie(mairie, pseudo, estMaire ? "Maire" : "Conseiller Urbanisme", `Réglage taux urbanisme : Permis construire = ${permis} %, Taxe foncière = ${foncier} %.`);
+
+            await sauvegarderMairieFirebase(cleVille, mairie);
+            alert(`Taux d'urbanisme mis à jour (Permis : ${permis} %, Taxe foncière : ${foncier} %).`);
+            initMairie();
+        };
+    }
+
     container.querySelectorAll(".btn-construire-infra").forEach(btn => {
         btn.onclick = async () => {
             const proj = PROJETS_URBANISME.find(x => x.id === btn.dataset.id);
