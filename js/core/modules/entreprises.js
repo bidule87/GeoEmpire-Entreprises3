@@ -1,10 +1,11 @@
 // =======================================
-// GEO EMPIRE — MODULE ENTREPRISES (HIÉRARCHIE, PRIMES & PHOTOS)
+// GEO EMPIRE — MODULE ENTREPRISES (HIÉRARCHIE, PRIMES, COFFRE-FORT & PHOTOS)
 // =======================================
 
 import {
     SEUIL_HOLDING,
     PECULE_DEPART_ASSOCIE,
+    COUTS_COFFRE_FORT,
     getEntreprise,
     changerNomEntreprise,
     changerNomJoueur,
@@ -26,7 +27,8 @@ import {
     virerAssocieHolding,
     calculerValeurEntreprise,
     calculerValeurSiege,
-    verserPrimePdg
+    verserPrimePdg,
+    ameliorerCoffreFortSiege
 } from "../entrepriseCore.js";
 import { getInfosTempsJeu, saveData } from "../geoData.js";
 
@@ -252,6 +254,7 @@ export function initEntreprise() {
             const biensDuSiege = compterBiensDuSiege(s, e);
             const valeurSiege = calculerValeurSiege(s);
             const baseDixPourcentSiege = Math.floor(valeurSiege * 0.10);
+            const nivCoffre = Number(s.niveauCoffre || 0);
 
             const biensHTML = biensDuSiege.length === 0
                 ? `<span style="color:#94a3b8; font-size:13px;">Aucun bien acheté sur cette structure</span>`
@@ -362,6 +365,18 @@ export function initEntreprise() {
                 <div style="margin-bottom:12px;">
                     <div style="font-size:12px; color:#7ec8ff; margin-bottom:4px;">Biens rattachés exclusivement à cette entreprise :</div>
                     <div>${biensHTML}</div>
+                </div>
+
+                <div style="margin-bottom:12px; padding:10px; border-radius:8px; background:rgba(15,23,42,0.75); border:1px solid rgba(251,191,36,0.35); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                    <div style="font-size:12px;">
+                        <strong style="color:#fde68a;">🔐 Coffre-fort & Blindage : Niveau ${nivCoffre} / 5</strong>
+                        <span style="color:#94a3b8; margin-left:6px;">(Protection butin : ${Math.min(90, nivCoffre * 18)} %)</span>
+                    </div>
+                    ${nivCoffre < 5 ? `
+                        <button type="button" class="btn-upgrade-coffre" data-id="${String(s.id)}" style="padding:5px 10px; border-radius:6px; border:none; background:#d97706; color:#fff; font-weight:bold; font-size:12px; cursor:pointer;">
+                            Renforcer Niv.${nivCoffre + 1} (${COUTS_COFFRE_FORT[nivCoffre + 1].toLocaleString("fr-FR")} Ø)
+                        </button>
+                    ` : `<span style="color:#34d399; font-size:12px; font-weight:bold;">✓ Sécurité maximale</span>`}
                 </div>
 
                 <button type="button" class="btn-save-siege premium-btn" style="margin:0; padding:8px 16px; font-size:13px; background:#0284c7;">Enregistrer cette entreprise</button>
@@ -620,6 +635,17 @@ export function initEntreprise() {
                 initEntreprise();
             };
         });
+
+        const btnCoffre = bloc.querySelector(".btn-upgrade-coffre");
+        if (btnCoffre) {
+            btnCoffre.onclick = () => {
+                const res = ameliorerCoffreFortSiege(id);
+                if (!res.ok) return alert(res.message);
+                majSoldeTopbar();
+                alert(`Coffre-fort renforcé au Niveau ${res.niveau}/5 !`);
+                initEntreprise();
+            };
+        }
 
         const btnSaveSiege = bloc.querySelector(".btn-save-siege");
         if (btnSaveSiege) {
