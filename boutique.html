@@ -97,9 +97,10 @@
         <a href="index.html">Accueil</a>
         <a href="carte.html">Carte GPS</a>
         <a href="entreprises.html">Entreprises</a>
+        <a href="mairie.html">Mairie & Tchat</a>
         <a href="historique.html">Historique</a>
-        <a href="prestige.html">Loterie & Prestige</a>
         <a href="profil.html">Profil</a>
+        <a href="regles.html">Règles du jeu</a>
     </nav>
 </header>
 
@@ -113,13 +114,75 @@
     <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
         <div>
             <h2 style="color: #7ec8ff; margin: 0;">Boutique Officielle Geo Empire</h2>
-            <p style="font-size: 14px; color: #bae6fd; margin: 6px 0 0 0;">Débloquez le Passe Prestige, rechargez vos Tokens (GT) ou accélérez votre expansion.</p>
+            <p style="font-size: 14px; color: #bae6fd; margin: 6px 0 0 0;">Rechargez vos cartes de téléportation, votre trésorerie ou vos Tokens (GT).</p>
         </div>
         <div id="info-carte-boutique" style="font-size: 13px;"></div>
     </div>
 
+    <div style="margin-top:12px; padding:10px 14px; background:rgba(0,38,72,0.85); border-radius:10px; border:1px solid rgba(56,189,248,0.35); display:flex; flex-wrap:wrap; gap:16px; font-size:13px;">
+        <span><strong>Votre sac de voyage :</strong></span>
+        <span>🚌 Bus (≤ 50 km) : <strong id="stock-bus" style="color:#34d399;">0</strong></span>
+        <span>🚆 Train (≤ 500 km) : <strong id="stock-train" style="color:#38bdf8;">0</strong></span>
+        <span>✈️ Avion (Monde) : <strong id="stock-avion" style="color:#fbbf24;">0</strong></span>
+        <span style="color:#93c5fd; font-size:12px;">(Des cartes gratuites apparaissent aussi toutes les heures sur la Carte GPS !)</span>
+    </div>
+
     <div class="boutique-grid">
-        <!-- CARTE 1 : PASSE PRESTIGE -->
+        <!-- CARTE TELEPORTATION BUS -->
+        <div class="pack-card">
+            <div>
+                <span class="pack-badge" style="background:rgba(16,185,129,0.2); color:#34d399; border:1px solid #34d399;">TÉLÉPORTATION • 50 KM</span>
+                <h3 style="margin: 8px 0; color: #fff;">🚌 Carte Bus Régionale</h3>
+                <p style="font-size: 13px; line-height: 1.5;">
+                    Permet de voyager vers une ville située jusqu'à <strong>50 km</strong> autour de vous pour explorer ou repérer des cibles.
+                </p>
+            </div>
+            <div>
+                <div style="font-size: 14px; font-weight: bold; color: #34d399;">Coût : 15 000 Ø (ou 2 GT)</div>
+                <div style="display:flex; gap:6px;">
+                    <button class="btn-pack vert" data-tp-achat="bus-geo">15 000 Ø</button>
+                    <button class="btn-pack" data-tp-achat="bus-gt">2 GT</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- CARTE TELEPORTATION TRAIN -->
+        <div class="pack-card">
+            <div>
+                <span class="pack-badge" style="background:rgba(56,189,248,0.2); color:#38bdf8; border:1px solid #38bdf8;">TÉLÉPORTATION • 500 KM</span>
+                <h3 style="margin: 8px 0; color: #fff;">🚆 Carte Train Grande Ligne</h3>
+                <p style="font-size: 13px; line-height: 1.5;">
+                    Permet de vous téléporter dans n'importe quelle grande ville jusqu'à <strong>500 km</strong> de distance.
+                </p>
+            </div>
+            <div>
+                <div style="font-size: 14px; font-weight: bold; color: #38bdf8;">Coût : 45 000 Ø (ou 5 GT)</div>
+                <div style="display:flex; gap:6px;">
+                    <button class="btn-pack vert" data-tp-achat="train-geo">45 000 Ø</button>
+                    <button class="btn-pack" data-tp-achat="train-gt">5 GT</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- CARTE TELEPORTATION AVION -->
+        <div class="pack-card premium">
+            <div>
+                <span class="pack-badge" style="background:#fbbf24; color:#0f172a;">TÉLÉPORTATION • MONDE</span>
+                <h3 style="margin: 8px 0; color: #fde68a;">✈️ Carte Avion Internationale</h3>
+                <p style="font-size: 13px; line-height: 1.5;">
+                    Voyagez instantanément dans <strong>n'importe quelle ville du monde entier</strong> sans limite de distance.
+                </p>
+            </div>
+            <div>
+                <div style="font-size: 14px; font-weight: bold; color: #fbbf24;">Coût : 120 000 Ø (ou 12 GT)</div>
+                <div style="display:flex; gap:6px;">
+                    <button class="btn-pack vert" data-tp-achat="avion-geo">120 000 Ø</button>
+                    <button class="btn-pack or" data-tp-achat="avion-gt">12 GT</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- PASSE PRESTIGE -->
         <div class="pack-card premium">
             <div>
                 <span class="pack-badge" style="background:#fbbf24; color:#0f172a;">PASSE PRESTIGE • 9,99 €</span>
@@ -136,13 +199,13 @@
             </div>
         </div>
 
-        <!-- CARTE 2 : PACK 30 TOKENS (GT) -->
+        <!-- PACK 30 TOKENS (GT) -->
         <div class="pack-card">
             <div>
                 <span class="pack-badge" style="background:rgba(245,158,11,0.2); color:#fbbf24; border:1px solid #fbbf24;">TOKENS GT • 4,99 €</span>
                 <h3 style="margin: 8px 0; color: #fff;">Pack Relance +30 Tokens (GT)</h3>
                 <p style="font-size: 13px; line-height: 1.5;">
-                    Idéal pour débloquer immédiatement une modification d'assurance avant minuit (25 GT) ou accélérer vos opérations.
+                    Rechargez vos Tokens (GT) pour acheter des cartes de téléportation ou débloquer vos opérations.
                 </p>
             </div>
             <div>
@@ -151,22 +214,7 @@
             </div>
         </div>
 
-        <!-- CARTE 3 : PACK 100 TOKENS (GT) -->
-        <div class="pack-card">
-            <div>
-                <span class="pack-badge" style="background:rgba(245,158,11,0.2); color:#fbbf24; border:1px solid #fbbf24;">TOKENS GT • 12,99 €</span>
-                <h3 style="margin: 8px 0; color: #fff;">Coffre Stratège +100 Tokens (GT)</h3>
-                <p style="font-size: 13px; line-height: 1.5;">
-                    Réserve complète de <strong>100 GT</strong> pour gérer toutes vos urgences d'assurance et vos échanges en toute liberté.
-                </p>
-            </div>
-            <div>
-                <div style="font-size: 14px; font-weight: bold; color: #fbbf24;">Achat Carte Bancaire (12,99 €)</div>
-                <button class="btn-pack or btn-achat-tokens" data-gt="100" data-prix="12,99 €">💳 Acheter 100 GT (12,99 €)</button>
-            </div>
-        </div>
-
-        <!-- CARTE 4 : INJECTION DE CAPITAL -->
+        <!-- INJECTION DE CAPITAL -->
         <div class="pack-card">
             <div>
                 <span class="pack-badge" style="background:rgba(52,211,153,0.2); color:#34d399; border:1px solid #34d399;">TRÉSORERIE</span>
@@ -178,35 +226,6 @@
             <div>
                 <div style="font-size: 15px; font-weight: bold; color: #34d399;">Coût : 5 Tokens (GT)</div>
                 <button class="btn-pack vert" data-achat="capital-50k">Échanger 5 GT</button>
-            </div>
-        </div>
-
-        <!-- CARTE 5 : FONDS HOLDING -->
-        <div class="pack-card">
-            <div>
-                <span class="pack-badge" style="background:rgba(56,189,248,0.2); color:#38bdf8; border:1px solid #38bdf8;">EXPANSION</span>
-                <h3 style="margin: 8px 0; color: #fff;">Fonds Holding +250 000 Ø</h3>
-                <p style="font-size: 13px; line-height: 1.5;">
-                    Ajoute <strong>250 000 Ø</strong> à votre groupe (non comptabilisé dans le Score Classement).
-                </p>
-            </div>
-            <div>
-                <div style="font-size: 15px; font-weight: bold; color: #38bdf8;">Coût : 20 Tokens (GT)</div>
-                <button class="btn-pack" data-achat="capital-250k">Échanger 20 GT</button>
-            </div>
-        </div>
-
-        <!-- CARTE 6 : TICKET LOTERIE PRESTIGE -->
-        <div class="pack-card">
-            <div>
-                <span class="pack-badge" style="background:rgba(168,85,247,0.2); color:#d8b4fe; border:1px solid #a855f7;">LOTERIE & PRESTIGE</span>
-                <h3 style="margin: 8px 0; color: #fff;">Accès Loterie Crowns (CRW)</h3>
-                <p style="font-size: 13px; line-height: 1.5;">
-                    Les <strong>Crowns (CRW)</strong> ne s'achètent pas : ils se gagnent exclusivement à la loterie dans <strong>Loterie & Prestige</strong>.
-                </p>
-            </div>
-            <div>
-                <a href="prestige.html" class="btn-pack" style="display:block; text-align:center; text-decoration:none; background:linear-gradient(90deg, #7e22ce, #a855f7);">Aller à Loterie & Prestige →</a>
             </div>
         </div>
     </div>
@@ -261,9 +280,15 @@
     function majAffichage() {
         loadData();
         const e = getData().entreprise;
+        if (!e.inventaire) e.inventaire = { carteBus: 0, carteTrain: 0, carteAvion: 0 };
+
         document.getElementById("solde").textContent = (e.argent || 0).toLocaleString("fr-FR");
         document.getElementById("tokens").textContent = (e.tokens || 0).toLocaleString("fr-FR");
         document.getElementById("crowns").textContent = (e.crowns || 0).toLocaleString("fr-FR");
+
+        document.getElementById("stock-bus").textContent = e.inventaire.carteBus || 0;
+        document.getElementById("stock-train").textContent = e.inventaire.carteTrain || 0;
+        document.getElementById("stock-avion").textContent = e.inventaire.carteAvion || 0;
 
         const infoCarte = document.getElementById("info-carte-boutique");
         const cb = e.profil?.carteBancaire;
@@ -286,7 +311,41 @@
         }
     }
 
-    // Achat Passe Prestige via la carte enregistrée dans le Profil
+    // Achat des cartes de téléportation (Bus / Train / Avion)
+    document.querySelectorAll("[data-tp-achat]").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const e = getData().entreprise;
+            if (!e.inventaire) e.inventaire = { carteBus: 0, carteTrain: 0, carteAvion: 0 };
+            const code = btn.dataset.tpAchat;
+
+            const tarifs = {
+                "bus-geo":   { cle: "carteBus",   nom: "Carte Bus (50 km)",    devise: "geo", prix: 15000 },
+                "bus-gt":    { cle: "carteBus",   nom: "Carte Bus (50 km)",    devise: "gt",  prix: 2 },
+                "train-geo": { cle: "carteTrain", nom: "Carte Train (500 km)", devise: "geo", prix: 45000 },
+                "train-gt":  { cle: "carteTrain", nom: "Carte Train (500 km)", devise: "gt",  prix: 5 },
+                "avion-geo": { cle: "carteAvion", nom: "Carte Avion (Monde)",  devise: "geo", prix: 120000 },
+                "avion-gt":  { cle: "carteAvion", nom: "Carte Avion (Monde)",  devise: "gt",  prix: 12 }
+            };
+
+            const t = tarifs[code];
+            if (!t) return;
+
+            if (t.devise === "geo") {
+                if ((e.argent || 0) < t.prix) return alert(`Fonds insuffisants (${t.prix.toLocaleString("fr-FR")} Ø requis).`);
+                e.argent -= t.prix;
+            } else {
+                if ((e.tokens || 0) < t.prix) return alert(`Tokens insuffisants (${t.prix} GT requis).`);
+                e.tokens -= t.prix;
+            }
+
+            e.inventaire[t.cle] = (e.inventaire[t.cle] || 0) + 1;
+            logBoutique(`Achat Boutique : +1 ${t.nom}`);
+            saveData();
+            majAffichage();
+            alert(`+1 ${t.nom} ajoutée à votre inventaire ! Rendez-vous sur la Carte GPS pour l'utiliser.`);
+        });
+    });
+
     document.getElementById("btn-pack-premium").addEventListener("click", () => {
         const e = getData().entreprise;
         if (estPassePrestigeActif()) return;
@@ -311,10 +370,9 @@
         logBoutique(`Achat Passe Prestige via carte •••• ${cb.derniersChiffres} (+50 000 Ø et +15 GT)`);
         saveData();
         majAffichage();
-        alert("Passe Prestige activé ! Rayons 10/20 km, Assurance Ultime, +50 000 Ø et +15 GT crédités.");
+        alert("Passe Prestige activé !");
     });
 
-    // Achat de Tokens (GT) via Carte Bancaire du Profil
     document.querySelectorAll(".btn-achat-tokens").forEach(btn => {
         btn.addEventListener("click", () => {
             const e = getData().entreprise;
@@ -340,7 +398,6 @@
         });
     });
 
-    // Échanges Tokens (GT) -> Géo (Ø) (neutralisés au classement)
     document.querySelectorAll("[data-achat]").forEach(btn => {
         btn.addEventListener("click", () => {
             const e = getData().entreprise;
@@ -352,12 +409,6 @@
                 e.argent = (e.argent || 0) + 50000;
                 enregistrerCapitalBoutique(50000);
                 logBoutique("Échange Boutique : +50 000 Ø contre 5 GT (hors classement)");
-            } else if (type === "capital-250k") {
-                if ((e.tokens || 0) < 20) return alert("Tokens (GT) insuffisants (20 GT requis).");
-                e.tokens -= 20;
-                e.argent = (e.argent || 0) + 250000;
-                enregistrerCapitalBoutique(250000);
-                logBoutique("Échange Boutique : +250 000 Ø contre 20 GT (hors classement)");
             }
 
             saveData();
@@ -365,7 +416,6 @@
         });
     });
 
-    // Validation du code Testeur Bêta
     document.getElementById("btn-valider-beta").addEventListener("click", () => {
         const saisie = document.getElementById("input-code-beta").value.trim().toUpperCase();
         if (saisie === CODE_BETA_VALIDE) {
@@ -375,7 +425,7 @@
             logBoutique("Activation de l'accès Testeur Bêta");
             saveData();
             majAffichage();
-            alert("Code Bêta validé ! Les rayons 10 km et 20 km sont débloqués sur la Carte GPS.");
+            alert("Code Bêta validé !");
         } else {
             alert("Code Bêta invalide.");
         }
