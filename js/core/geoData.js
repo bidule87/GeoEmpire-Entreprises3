@@ -101,8 +101,13 @@ const defaultData = {
             catastrophe: false
         },
 
-        inventaire: {
-            cartesTeleportation: 0
+      inventaire: {
+            cartesTeleportation: 0,
+            carteBus: 0,
+            carteTrain: 0,
+            carteAvion: 0,
+            dernierSpawnCartes: 0,
+            cartesSurCarte: []
         },
 
         ventesEnAttente: [],
