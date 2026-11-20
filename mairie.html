@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geo Empire – Mairie & Tchat</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<header style="padding: 15px 30px;">
+    <h1 style="color: white; text-shadow: 0 2px 10px rgba(0,0,0,0.8); margin-bottom: 10px;">Mairie & Tchat</h1>
+    <nav style="display: flex; flex-wrap: wrap; gap: 10px;">
+        <a href="index.html">Accueil</a>
+        <a href="carte.html">Carte GPS</a>
+        <a href="entreprises.html">Entreprises</a>
+        <a href="boutique.html">Boutique</a>
+        <a href="historique.html">Historique</a>
+        <a href="profil.html">Profil</a>
+        <a href="regles.html">Règles du jeu</a>
+    </nav>
+</header>
+
+<div id="topbar">
+    <span id="solde">50 000</span> Ø
+    | Tokens : <span id="tokens">10</span> GT
+    | Crowns : <span id="crowns">0</span> CRW
+</div>
+
+<main id="mairie-container" style="max-width: 1150px; margin: 20px auto; padding: 15px;"></main>
+
+<script type="module">
+    import { getData } from "./js/core/geoData.js";
+    import { initMairie } from "./js/core/modules/mairie.js";
+
+    const e = getData().entreprise;
+    document.getElementById("solde").textContent = (e.argent || 0).toLocaleString("fr-FR");
+    document.getElementById("tokens").textContent = (e.tokens || 0).toLocaleString("fr-FR");
+    document.getElementById("crowns").textContent = (e.crowns || 0).toLocaleString("fr-FR");
+
+    initMairie();
+</script>
+
+</body>
+</html>
