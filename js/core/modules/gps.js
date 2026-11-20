@@ -1,5 +1,9 @@
 import { getData, saveData, removeArgent, ajouterHistorique, loadData } from "../geoData.js";
 
+const FIREBASE_DB_URL = "https://geo-empire-8ca7e-default-rtdb.europe-west1.firebasedatabase.app";
+const MS_PAR_HEURE = 60 * 60 * 1000;
+const COOLDOWN_BRAQUAGE_MS = 15 * 60 * 1000; // 15 minutes entre deux braquages
+
 const latEl = document.getElementById("lat");
 const lngEl = document.getElementById("lng");
 const statutEl = document.getElementById("statut-gps");
@@ -21,7 +25,6 @@ const ficheBadgeSecteur = document.getElementById("fiche-badge-secteur");
 const ficheNom = document.getElementById("fiche-nom");
 const ficheBody = document.getElementById("fiche-body");
 
-const MS_PAR_HEURE = 60 * 60 * 1000;
 let dernieresOpportunites = [];
 let positionReelleGPS = null;
 let positionActuelle = null;
@@ -33,6 +36,16 @@ const VISUELS_SECTEUR = {
     "Commerce & Distribution": "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=800&q=80",
     "Hôtellerie & Services": "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80"
 };
+
+function normaliserCleVille(nomVille) {
+    return (nomVille || "Limoges")
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9]+/g, "_")
+        .replace(/^_+|_+$/g, "") || "limoges";
+}
 
 window.addEventListener("storage", () => {
     loadData();
@@ -183,9 +196,6 @@ function majBarreTeleportation() {
     }
 }
 
-// ============================================
-// SPAWN HORAIRE DES CARTES DE TÉLÉPORTATION SUR LA MAP
-// ============================================
 function verifierEtGenererCartesHoraire(latCentre, lngCentre) {
     const e = getData().entreprise;
     if (!e.inventaire) e.inventaire = { carteBus: 0, carteTrain: 0, carteAvion: 0, dernierSpawnCartes: 0, cartesSurCarte: [] };
@@ -196,12 +206,10 @@ function verifierEtGenererCartesHoraire(latCentre, lngCentre) {
     if (!Array.isArray(e.inventaire.cartesSurCarte) || (maintenant - dernierSpawn) >= MS_PAR_HEURE) {
         const rayonKm = Number(rayonSelect.value) || 5;
         const nouvellesCartes = [];
-        // 3 à 4 cartes générées toutes les heures dans le cercle
         const nbCartes = Math.floor(Math.random() * 2) + 3;
 
         for (let i = 0; i < nbCartes; i++) {
             const tirage = Math.random();
-            // Bus beaucoup plus fréquent (65 %), Train moyen (27 %), Avion rare (8 %)
             let type = "carteBus";
             let emoji = "🚌";
             let label = "Carte Bus (50 km)";
@@ -246,7 +254,7 @@ function verifierEtGenererCartesHoraire(latCentre, lngCentre) {
 
 function afficherCartesSurMap() {
     layerCartesTP.clearLayers();
-    if (enModeTeleportation) return; // Les cartes apparaissent uniquement autour de votre position réelle
+    if (enModeTeleportation) return;
 
     const e = getData().entreprise;
     const cartes = e.inventaire?.cartesSurCarte || [];
@@ -282,7 +290,7 @@ async function executerTeleportation() {
 
     if (!destination) return alert("Saisissez le nom de la ville où vous voulez vous téléporter.");
     if ((e.inventaire[typeCarte] || 0) <= 0) {
-        return alert("Vous n'avez aucune carte de ce type ! Ramassez-en une sur la carte (largage toutes les heures) ou achetez-en une dans la Boutique.");
+        return alert("Vous n'avez aucune carte de ce type ! Ramassez-en une sur la carte ou achetez-en une dans la Boutique.");
     }
 
     const limites = {
@@ -330,6 +338,89 @@ async function executerTeleportation() {
     }
 }
 
+// ============================================
+// LOGIQUE DE BRAQUAGE & COFFRE-FORT
+// ============================================
+async function tenterBraquageCible(item) {
+    loadData();
+    const e = getData().entreprise;
+    const maintenant = Date.now();
+    const dernierBraquage = e.dernierBraquageTs || 0;
+
+    if (maintenant - dernierBraquage < COOLDOWN_BRAQUAGE_MS) {
+        const minRestantes = Math.ceil((COOLDOWN_BRAQUAGE_MS - (maintenant - dernierBraquage)) / 60000);
+        return alert(`🚓 La police surveille le secteur ! Attendez encore ${minRestantes} minute(s) avant de tenter un nouveau braquage.`);
+    }
+
+    const villeCible = localStorage.getItem("geoEmpireVilleActuelle") || "Limoges";
+    const cleVille = normaliserCleVille(villeCible);
+
+    let aCommissariat = false;
+    try {
+        const resMairie = await fetch(`${FIREBASE_DB_URL}/mairies/${cleVille}.json`);
+        if (resMairie.ok) {
+            const mData = await resMairie.json();
+            if (mData && Array.isArray(mData.infrastructures) && mData.infrastructures.includes("commissariat")) {
+                aCommissariat = true;
+            }
+        }
+    } catch {}
+
+    const niveauCoffreCible = Number(item.niveauCoffre || 1);
+    const chanceReussite = Math.max(15, 62 - (niveauCoffreCible * 7) - (aCommissariat ? 25 : 0));
+    const capitalCoffre = item.capitalCible || Math.round(item.prix * 1.25);
+    const butinEstime = Math.floor(capitalCoffre * 0.45);
+    const amendeEchec = Math.floor(capitalCoffre * 0.25);
+
+    const msgConfirm =
+        `🦹 BRAQUAGE DE "${item.nom}" (${villeCible})\n\n` +
+        `• Capital dans le coffre : ${capitalCoffre.toLocaleString("fr-FR")} Ø\n` +
+        `• Butin estimé en cas de succès : +${butinEstime.toLocaleString("fr-FR")} Ø\n` +
+        `• Amende municipale en cas d'échec : -${amendeEchec.toLocaleString("fr-FR")} Ø\n` +
+        `• Sécurité détectée : Coffre Niv.${niveauCoffreCible}${aCommissariat ? " + 🚓 Commissariat municipal (-25 %)" : ""}\n` +
+        `• Probabilité de réussite : ${chanceReussite} %\n\n` +
+        `Lancer l'opération ?`;
+
+    if (!confirm(msgConfirm)) return;
+
+    e.dernierBraquageTs = maintenant;
+    const tirage = Math.random() * 100;
+
+    if (tirage <= chanceReussite) {
+        e.argent = (e.argent || 0) + butinEstime;
+        ajouterHistorique(`🦹 Braquage réussi sur "${item.nom}" (${villeCible}) : +${butinEstime.toLocaleString("fr-FR")} Ø`, "gain");
+        saveData();
+        majTopbar();
+        modalFiche.classList.remove("active");
+        alert(`💰 BRAQUAGE RÉUSSI ! Vous avez fracturé le coffre de "${item.nom}" et empoché +${butinEstime.toLocaleString("fr-FR")} Ø !`);
+    } else {
+        const amendePayee = Math.min(e.argent || 0, amendeEchec);
+        e.argent = Math.max(0, (e.argent || 0) - amendePayee);
+        e.caisseMairie = (e.caisseMairie || 0) + amendePayee;
+
+        try {
+            const resM = await fetch(`${FIREBASE_DB_URL}/mairies/${cleVille}.json`);
+            if (resM.ok) {
+                const mData = await resM.json();
+                if (mData) {
+                    mData.budget = (mData.budget || 0) + amendePayee;
+                    await fetch(`${FIREBASE_DB_URL}/mairies/${cleVille}.json`, {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ budget: mData.budget })
+                    });
+                }
+            }
+        } catch {}
+
+        ajouterHistorique(`🚓 Braquage déjoué sur "${item.nom}" (${villeCible}) : amende de -${amendePayee.toLocaleString("fr-FR")} Ø versée à la Mairie`, "depense");
+        saveData();
+        majTopbar();
+        modalFiche.classList.remove("active");
+        alert(`🚓 ALERTE POLICE ! Le coffre a résisté. Vous avez été interpellé et condamné à une amende de ${amendePayee.toLocaleString("fr-FR")} Ø reversée à la Mairie de ${villeCible}.`);
+    }
+}
+
 function creerIcone(couleur, type = "dispo") {
     if (type === "joueur") {
         return L.divIcon({
@@ -374,6 +465,7 @@ function classifierSecteur(tags, idNum = 1) {
     const office = tags.office || "";
     const adresse = [tags["addr:housenumber"], tags["addr:street"], tags["addr:city"]].filter(Boolean).join(" ") || "Secteur local";
     const varCapital = (Number(idNum) % 7) * 4500;
+    const niveauCoffre = (Number(idNum) % 3) + 1;
 
     if (["restaurant", "fast_food", "cafe", "bar", "pub"].includes(amenity) ||
         ["bakery", "butcher", "supermarket", "convenience", "greengrocer", "pastry"].includes(shop)) {
@@ -383,7 +475,8 @@ function classifierSecteur(tags, idNum = 1) {
             categoriesDebloquees: "Restaurants & Commerces alimentaires",
             adresse,
             prix: 15000,
-            capitalCible: 18000 + varCapital
+            capitalCible: 18000 + varCapital,
+            niveauCoffre
         };
     }
 
@@ -395,7 +488,8 @@ function classifierSecteur(tags, idNum = 1) {
             categoriesDebloquees: "Appartements, Maisons & Bureaux",
             adresse,
             prix: 25000,
-            capitalCible: 32000 + varCapital
+            capitalCible: 32000 + varCapital,
+            niveauCoffre
         };
     }
 
@@ -407,7 +501,8 @@ function classifierSecteur(tags, idNum = 1) {
             categoriesDebloquees: "Hôtels & Services",
             adresse,
             prix: 30000,
-            capitalCible: 40000 + varCapital
+            capitalCible: 40000 + varCapital,
+            niveauCoffre
         };
     }
 
@@ -418,7 +513,8 @@ function classifierSecteur(tags, idNum = 1) {
             categoriesDebloquees: "Commerces & Entrepôts",
             adresse,
             prix: 18000,
-            capitalCible: 22000 + varCapital
+            capitalCible: 22000 + varCapital,
+            niveauCoffre
         };
     }
 
@@ -440,8 +536,8 @@ function ouvrirFicheEtablissement(item, estDejaAcquis = false) {
         ficheBody.innerHTML = `
             <div class="fiche-row"><span>Statut :</span><strong style="color:#38bdf8;">Entreprise acquise</strong></div>
             <div class="fiche-row"><span>Fondateur référent :</span><strong>${item.pdg || item.directeur || e.pdg || "Fondateur"}</strong></div>
+            <div class="fiche-row"><span>Coffre-fort :</span><strong style="color:#fde68a;">Niveau ${item.niveauCoffre || 0} / 5</strong></div>
             <div class="fiche-row"><span>Valeur d'acquisition :</span><strong>${(item.prixAchat || 0).toLocaleString("fr-FR")} Ø</strong></div>
-            <div class="fiche-row"><span>Date d'acquisition :</span><strong>${item.dateAchat || "Aujourd'hui"}</strong></div>
             <div class="fiche-actions">
                 <a href="entreprises.html" class="btn-fiche-achat" style="text-align:center; text-decoration:none; background:linear-gradient(90deg, #0284c7, #38bdf8);">Gérer dans Entreprises →</a>
             </div>
@@ -452,12 +548,15 @@ function ouvrirFicheEtablissement(item, estDejaAcquis = false) {
         ficheBody.innerHTML = `
             <div class="fiche-row"><span>Localisation :</span><strong>${item.adresse || "Secteur local"} (${item.distance.toFixed(2)} km)</strong></div>
             <div class="fiche-row"><span>Catalogue débloqué :</span><strong style="color:#7ec8ff;">${item.categoriesDebloquees}</strong></div>
-            <div class="fiche-row"><span>💰 Capital estimé du coffre :</span><strong style="color:#f43f5e;">${capitalCible.toLocaleString("fr-FR")} Ø</strong></div>
+            <div class="fiche-row"><span>💰 Capital du coffre :</span><strong style="color:#f43f5e;">${capitalCible.toLocaleString("fr-FR")} Ø (Coffre Niv.${item.niveauCoffre || 1})</strong></div>
             <div class="fiche-row"><span>Coût d'implantation :</span><strong style="color:#fbbf24;">${item.prix.toLocaleString("fr-FR")} Ø</strong></div>
             <div class="fiche-row"><span>Votre trésorerie :</span><strong style="color:${peutPayer ? "#34d399" : "#f87171"};">${(e.argent || 0).toLocaleString("fr-FR")} Ø</strong></div>
-            <div class="fiche-actions">
+            <div class="fiche-actions" style="flex-wrap:wrap;">
                 <button id="btn-confirmer-achat-fiche" class="btn-fiche-achat" ${peutPayer ? "" : "style='opacity:0.6;'"}>
-                    Acheter ce siège (${item.prix.toLocaleString("fr-FR")} Ø)
+                    Acheter (${item.prix.toLocaleString("fr-FR")} Ø)
+                </button>
+                <button id="btn-braquer-fiche" class="btn-fiche-achat" style="background:linear-gradient(90deg, #be123c, #f43f5e);">
+                    🦹 Braquer le coffre
                 </button>
             </div>
         `;
@@ -465,6 +564,10 @@ function ouvrirFicheEtablissement(item, estDejaAcquis = false) {
         document.getElementById("btn-confirmer-achat-fiche").onclick = () => {
             acheterSiege(item);
             modalFiche.classList.remove("active");
+        };
+
+        document.getElementById("btn-braquer-fiche").onclick = () => {
+            tenterBraquageCible(item);
         };
     }
 
@@ -591,7 +694,7 @@ function afficherOpportunitesDisponibles(liste) {
 
     disponibles.forEach(c => {
         const marker = L.marker([c.lat, c.lng], { icon: creerIcone(c.couleur, "dispo") }).addTo(layerDisponibles);
-        marker.bindTooltip(`<strong>${c.nom}</strong><br>Capital cible : ${(c.capitalCible || c.prix).toLocaleString("fr-FR")} Ø`);
+        marker.bindTooltip(`<strong>${c.nom}</strong><br>Capital coffre : ${(c.capitalCible || c.prix).toLocaleString("fr-FR")} Ø`);
         marker.on("click", () => ouvrirFicheEtablissement(c, false));
 
         const item = document.createElement("div");
@@ -603,7 +706,7 @@ function afficherOpportunitesDisponibles(liste) {
             <div style="font-size:12px; color:#fda4af; margin-top:3px;">💰 Capital coffre : <strong>${(c.capitalCible || c.prix).toLocaleString("fr-FR")} Ø</strong></div>
             <div style="font-size:12px; color:#fbbf24; font-weight:bold; margin-top:2px;">Achat : ${c.prix.toLocaleString("fr-FR")} Ø</div>
             <div class="volet-item-actions">
-                <button class="btn-mini-fiche">Voir fiche</button>
+                <button class="btn-mini-fiche">Voir / Braquer</button>
                 <button class="btn-mini-acheter">Acheter</button>
             </div>
         `;
@@ -640,6 +743,7 @@ function acheterSiege(siege) {
         lat: siege.lat,
         lng: siege.lng,
         prixAchat: siege.prix,
+        niveauCoffre: 1,
         pdg: e.pdg || "Fondateur",
         directeur: e.pdg || "Fondateur",
         associes: [],
