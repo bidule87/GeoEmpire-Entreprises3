@@ -21,7 +21,11 @@ const ficheBadgeSecteur = document.getElementById("fiche-badge-secteur");
 const ficheNom = document.getElementById("fiche-nom");
 const ficheBody = document.getElementById("fiche-body");
 
+const MS_PAR_HEURE = 60 * 60 * 1000;
 let dernieresOpportunites = [];
+let positionReelleGPS = null;
+let positionActuelle = null;
+let enModeTeleportation = false;
 
 const VISUELS_SECTEUR = {
     "Alimentaire & Restauration": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80",
@@ -33,6 +37,7 @@ const VISUELS_SECTEUR = {
 window.addEventListener("storage", () => {
     loadData();
     majTopbar();
+    majBarreTeleportation();
     afficherEmpireSurCarte();
     afficherOpportunitesDisponibles(dernieresOpportunites);
 });
@@ -71,7 +76,6 @@ function majTopbar() {
 function majOptionsRayon() {
     const e = getData().entreprise;
     const estAutorise = e.prestigePack === true || e.betaTesteur === true;
-
     const opt10 = rayonSelect.querySelector('option[value="10"]');
     const opt20 = rayonSelect.querySelector('option[value="20"]');
 
@@ -100,12 +104,12 @@ btnReset.addEventListener("click", () => {
     if (confirm("Réinitialiser la partie avec le capital de départ de 50 000 Ø ?")) {
         localStorage.removeItem("geoEmpireData");
         localStorage.removeItem("immoState");
+        localStorage.removeItem("geoEmpireVilleActuelle");
         location.reload();
     }
 });
 
 const map = L.map("map").setView([46.8, 2.4], 6);
-
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 19,
     attribution: "© OpenStreetMap"
@@ -115,7 +119,216 @@ let markerJoueur = null;
 let cercleRayon = null;
 let layerDisponibles = L.layerGroup().addTo(map);
 let layerEmpire = L.layerGroup().addTo(map);
-let positionActuelle = null;
+let layerCartesTP = L.layerGroup().addTo(map);
+
+// ============================================
+// BARRE DE TÉLÉPORTATION (BUS / TRAIN / AVION)
+// ============================================
+function injecterBarreTeleportation() {
+    const wrapper = document.querySelector(".carte-wrapper");
+    const legende = document.querySelector(".legende-map");
+    if (!wrapper || !legende || document.getElementById("barre-teleportation")) return;
+
+    const barre = document.createElement("div");
+    barre.id = "barre-teleportation";
+    barre.style.cssText = "display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px; margin-bottom:12px; padding:11px 15px; background:rgba(15, 23, 42, 0.88); border:1px solid rgba(251, 191, 36, 0.45); border-radius:10px; font-size:13px;";
+    barre.innerHTML = `
+        <div style="display:flex; flex-wrap:wrap; align-items:center; gap:10px;">
+            <strong style="color:#fde68a;">🧭 Téléportation :</strong>
+            <span id="compteurs-tp">🚌 Bus : 0 | 🚆 Train : 0 | ✈️ Avion : 0</span>
+            <span id="timer-spawn-tp" style="color:#93c5fd; font-size:12px;"></span>
+        </div>
+        <div style="display:flex; flex-wrap:wrap; align-items:center; gap:7px;">
+            <select id="select-type-tp" style="padding:6px 9px; border-radius:7px; background:#0f294a; color:#fff; border:1px solid #fbbf24; font-weight:bold; font-size:12px;">
+                <option value="carteBus">🚌 Bus (≤ 50 km)</option>
+                <option value="carteTrain">🚆 Train (≤ 500 km)</option>
+                <option value="carteAvion">✈️ Avion (Monde entier)</option>
+            </select>
+            <input type="text" id="input-destination-tp" placeholder="Ville cible (ex: Bordeaux, Paris, Tokyo)..." style="padding:6px 10px; border-radius:7px; border:1px solid #38bdf8; background:rgba(0,20,45,0.95); color:#fff; font-size:12px; min-width:210px;">
+            <button type="button" id="btn-utiliser-tp" style="padding:6px 12px; border-radius:7px; border:none; background:linear-gradient(90deg, #d97706, #fbbf24); color:#0f172a; font-weight:bold; font-size:12px; cursor:pointer;">Se téléporter</button>
+            <button type="button" id="btn-retour-gps" style="display:none; padding:6px 11px; border-radius:7px; border:1px solid #38bdf8; background:rgba(2,132,199,0.3); color:#bae6fd; font-weight:bold; font-size:12px; cursor:pointer;">📍 Position réelle</button>
+        </div>
+    `;
+    wrapper.insertBefore(barre, legende);
+
+    document.getElementById("btn-utiliser-tp").addEventListener("click", executerTeleportation);
+    document.getElementById("btn-retour-gps").addEventListener("click", () => {
+        if (!positionReelleGPS) return;
+        enModeTeleportation = false;
+        document.getElementById("btn-retour-gps").style.display = "none";
+        majPosition(positionReelleGPS.lat, positionReelleGPS.lng, true);
+    });
+}
+
+function majBarreTeleportation() {
+    injecterBarreTeleportation();
+    const e = getData().entreprise;
+    if (!e.inventaire) e.inventaire = { carteBus: 0, carteTrain: 0, carteAvion: 0 };
+
+    const el = document.getElementById("compteurs-tp");
+    if (el) {
+        el.innerHTML = `
+            <span style="color:#34d399; font-weight:bold;">🚌 Bus : ${e.inventaire.carteBus || 0}</span> •
+            <span style="color:#38bdf8; font-weight:bold;">🚆 Train : ${e.inventaire.carteTrain || 0}</span> •
+            <span style="color:#fbbf24; font-weight:bold;">✈️ Avion : ${e.inventaire.carteAvion || 0}</span>
+        `;
+    }
+
+    const timerEl = document.getElementById("timer-spawn-tp");
+    if (timerEl) {
+        const dernier = e.inventaire.dernierSpawnCartes || Date.now();
+        const resteMs = Math.max(0, (dernier + MS_PAR_HEURE) - Date.now());
+        const min = Math.floor(resteMs / 60000);
+        timerEl.textContent = `(Prochain largage sur carte dans ${min} min)`;
+    }
+}
+
+// ============================================
+// SPAWN HORAIRE DES CARTES DE TÉLÉPORTATION SUR LA MAP
+// ============================================
+function verifierEtGenererCartesHoraire(latCentre, lngCentre) {
+    const e = getData().entreprise;
+    if (!e.inventaire) e.inventaire = { carteBus: 0, carteTrain: 0, carteAvion: 0, dernierSpawnCartes: 0, cartesSurCarte: [] };
+
+    const maintenant = Date.now();
+    const dernierSpawn = e.inventaire.dernierSpawnCartes || 0;
+
+    if (!Array.isArray(e.inventaire.cartesSurCarte) || (maintenant - dernierSpawn) >= MS_PAR_HEURE) {
+        const rayonKm = Number(rayonSelect.value) || 5;
+        const nouvellesCartes = [];
+        // 3 à 4 cartes générées toutes les heures dans le cercle
+        const nbCartes = Math.floor(Math.random() * 2) + 3;
+
+        for (let i = 0; i < nbCartes; i++) {
+            const tirage = Math.random();
+            // Bus beaucoup plus fréquent (65 %), Train moyen (27 %), Avion rare (8 %)
+            let type = "carteBus";
+            let emoji = "🚌";
+            let label = "Carte Bus (50 km)";
+            let couleur = "#10b981";
+
+            if (tirage >= 0.92) {
+                type = "carteAvion";
+                emoji = "✈️";
+                label = "Carte Avion (Monde)";
+                couleur = "#fbbf24";
+            } else if (tirage >= 0.65) {
+                type = "carteTrain";
+                emoji = "🚆";
+                label = "Carte Train (500 km)";
+                couleur = "#38bdf8";
+            }
+
+            const angle = Math.random() * 2 * Math.PI;
+            const distKm = (0.15 + Math.random() * 0.78) * rayonKm;
+            const dLat = (distKm / 111) * Math.cos(angle);
+            const dLng = (distKm / (111 * Math.cos(latCentre * Math.PI / 180))) * Math.sin(angle);
+
+            nouvellesCartes.push({
+                id: `tp_${maintenant}_${i}`,
+                type,
+                emoji,
+                label,
+                couleur,
+                lat: latCentre + dLat,
+                lng: lngCentre + dLng
+            });
+        }
+
+        e.inventaire.cartesSurCarte = nouvellesCartes;
+        e.inventaire.dernierSpawnCartes = maintenant;
+        saveData();
+    }
+
+    afficherCartesSurMap();
+    majBarreTeleportation();
+}
+
+function afficherCartesSurMap() {
+    layerCartesTP.clearLayers();
+    if (enModeTeleportation) return; // Les cartes apparaissent uniquement autour de votre position réelle
+
+    const e = getData().entreprise;
+    const cartes = e.inventaire?.cartesSurCarte || [];
+
+    cartes.forEach(c => {
+        const icon = L.divIcon({
+            className: "",
+            html: `<div title="${c.label} — Cliquez pour ramasser" style="width:32px; height:32px; border-radius:50%; background:rgba(15,23,42,0.95); border:2px solid ${c.couleur}; box-shadow:0 0 12px ${c.couleur}; display:flex; align-items:center; justify-content:center; font-size:17px; cursor:pointer;">${c.emoji}</div>`,
+            iconSize: [32, 32],
+            iconAnchor: [16, 16]
+        });
+
+        const marker = L.marker([c.lat, c.lng], { icon }).addTo(layerCartesTP);
+        marker.on("click", () => {
+            const data = getData().entreprise;
+            data.inventaire[c.type] = (data.inventaire[c.type] || 0) + 1;
+            data.inventaire.cartesSurCarte = (data.inventaire.cartesSurCarte || []).filter(item => item.id !== c.id);
+            ajouterHistorique(`🧭 Carte ramassée sur la map : +1 ${c.label}`, "gain");
+            saveData();
+            afficherCartesSurMap();
+            majBarreTeleportation();
+            alert(`Vous avez ramassé : +1 ${c.label} !`);
+        });
+    });
+}
+
+async function executerTeleportation() {
+    const e = getData().entreprise;
+    if (!e.inventaire) e.inventaire = { carteBus: 0, carteTrain: 0, carteAvion: 0 };
+
+    const typeCarte = document.getElementById("select-type-tp").value;
+    const destination = (document.getElementById("input-destination-tp").value || "").trim();
+
+    if (!destination) return alert("Saisissez le nom de la ville où vous voulez vous téléporter.");
+    if ((e.inventaire[typeCarte] || 0) <= 0) {
+        return alert("Vous n'avez aucune carte de ce type ! Ramassez-en une sur la carte (largage toutes les heures) ou achetez-en une dans la Boutique.");
+    }
+
+    const limites = {
+        carteBus: { maxKm: 50, nom: "Carte Bus" },
+        carteTrain: { maxKm: 500, nom: "Carte Train" },
+        carteAvion: { maxKm: Infinity, nom: "Carte Avion" }
+    };
+    const infoCarte = limites[typeCarte];
+
+    try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(destination)}`);
+        const results = await res.json();
+        if (!results || results.length === 0) {
+            return alert(`Ville "${destination}" introuvable.`);
+        }
+
+        const destLat = parseFloat(results[0].lat);
+        const destLng = parseFloat(results[0].lon);
+        const nomVillePropre = results[0].display_name.split(",")[0].trim();
+
+        const baseLat = positionReelleGPS ? positionReelleGPS.lat : positionActuelle.lat;
+        const baseLng = positionReelleGPS ? positionReelleGPS.lng : positionActuelle.lng;
+        const distanceKm = calcDistance(baseLat, baseLng, destLat, destLng);
+
+        if (distanceKm > infoCarte.maxKm) {
+            return alert(`Distance trop élevée (${Math.round(distanceKm)} km) ! La ${infoCarte.nom} est limitée à ${infoCarte.maxKm} km.`);
+        }
+
+        if (!confirm(`Utiliser 1× ${infoCarte.nom} pour vous téléporter à ${nomVillePropre} (${Math.round(distanceKm)} km) ?`)) {
+            return;
+        }
+
+        e.inventaire[typeCarte] -= 1;
+        enModeTeleportation = true;
+        localStorage.setItem("geoEmpireVilleActuelle", nomVillePropre);
+        ajouterHistorique(`🧭 Téléportation (${infoCarte.nom}) vers ${nomVillePropre} (${Math.round(distanceKm)} km)`, "info");
+        saveData();
+
+        majBarreTeleportation();
+        document.getElementById("btn-retour-gps").style.display = "inline-block";
+        map.setView([destLat, destLng], 13);
+        majPosition(destLat, destLng, true);
+    } catch {
+        alert("Erreur lors de la recherche de la destination.");
+    }
+}
 
 function creerIcone(couleur, type = "dispo") {
     if (type === "joueur") {
@@ -154,12 +367,13 @@ function calcDistance(lat1, lon1, lat2, lon2) {
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-function classifierSecteur(tags) {
+function classifierSecteur(tags, idNum = 1) {
     const shop = tags.shop || "";
     const amenity = tags.amenity || "";
     const tourism = tags.tourism || "";
     const office = tags.office || "";
     const adresse = [tags["addr:housenumber"], tags["addr:street"], tags["addr:city"]].filter(Boolean).join(" ") || "Secteur local";
+    const varCapital = (Number(idNum) % 7) * 4500;
 
     if (["restaurant", "fast_food", "cafe", "bar", "pub"].includes(amenity) ||
         ["bakery", "butcher", "supermarket", "convenience", "greengrocer", "pastry"].includes(shop)) {
@@ -168,7 +382,8 @@ function classifierSecteur(tags) {
             couleur: "#34d399",
             categoriesDebloquees: "Restaurants & Commerces alimentaires",
             adresse,
-            prix: 15000
+            prix: 15000,
+            capitalCible: 18000 + varCapital
         };
     }
 
@@ -179,7 +394,8 @@ function classifierSecteur(tags) {
             couleur: "#fbbf24",
             categoriesDebloquees: "Appartements, Maisons & Bureaux",
             adresse,
-            prix: 25000
+            prix: 25000,
+            capitalCible: 32000 + varCapital
         };
     }
 
@@ -190,7 +406,8 @@ function classifierSecteur(tags) {
             couleur: "#f43f5e",
             categoriesDebloquees: "Hôtels & Services",
             adresse,
-            prix: 30000
+            prix: 30000,
+            capitalCible: 40000 + varCapital
         };
     }
 
@@ -200,7 +417,8 @@ function classifierSecteur(tags) {
             couleur: "#a855f7",
             categoriesDebloquees: "Commerces & Entrepôts",
             adresse,
-            prix: 18000
+            prix: 18000,
+            capitalCible: 22000 + varCapital
         };
     }
 
@@ -230,9 +448,11 @@ function ouvrirFicheEtablissement(item, estDejaAcquis = false) {
         `;
     } else {
         const peutPayer = (e.argent || 0) >= item.prix;
+        const capitalCible = item.capitalCible || Math.round(item.prix * 1.25);
         ficheBody.innerHTML = `
             <div class="fiche-row"><span>Localisation :</span><strong>${item.adresse || "Secteur local"} (${item.distance.toFixed(2)} km)</strong></div>
             <div class="fiche-row"><span>Catalogue débloqué :</span><strong style="color:#7ec8ff;">${item.categoriesDebloquees}</strong></div>
+            <div class="fiche-row"><span>💰 Capital estimé du coffre :</span><strong style="color:#f43f5e;">${capitalCible.toLocaleString("fr-FR")} Ø</strong></div>
             <div class="fiche-row"><span>Coût d'implantation :</span><strong style="color:#fbbf24;">${item.prix.toLocaleString("fr-FR")} Ø</strong></div>
             <div class="fiche-row"><span>Votre trésorerie :</span><strong style="color:${peutPayer ? "#34d399" : "#f87171"};">${(e.argent || 0).toLocaleString("fr-FR")} Ø</strong></div>
             <div class="fiche-actions">
@@ -284,11 +504,17 @@ async function scannerCommercesReels(lat, lng, rayonKm) {
 
     if (cercleRayon) map.removeLayer(cercleRayon);
     cercleRayon = L.circle([lat, lng], {
-        color: "#00f2fe",
-        fillColor: "#00f2fe",
+        color: enModeTeleportation ? "#fbbf24" : "#00f2fe",
+        fillColor: enModeTeleportation ? "#fbbf24" : "#00f2fe",
         fillOpacity: 0.05,
         radius: rayonKm * 1000
     }).addTo(map);
+
+    if (!enModeTeleportation) {
+        verifierEtGenererCartesHoraire(lat, lng);
+    } else {
+        layerCartesTP.clearLayers();
+    }
 
     const rayonMetres = rayonKm * 1000;
     const query = `
@@ -312,7 +538,7 @@ async function scannerCommercesReels(lat, lng, rayonKm) {
 
         const detectees = [];
         elements.forEach(el => {
-            const infos = classifierSecteur(el.tags || {});
+            const infos = classifierSecteur(el.tags || {}, el.id);
             if (!infos) return;
 
             const dist = calcDistance(lat, lng, el.lat, el.lon);
@@ -353,7 +579,7 @@ function afficherOpportunitesDisponibles(liste) {
     });
 
     const rayonActuel = Number(rayonSelect.value) || 5;
-    statutEl.textContent = `${disponibles.length} opportunité(s) disponible(s) dans un rayon de ${rayonActuel} km.`;
+    statutEl.textContent = `${disponibles.length} opportunité(s) dans un rayon de ${rayonActuel} km${enModeTeleportation ? " (Mode Téléportation)" : ""}.`;
 
     const spanCompteur = document.getElementById("compteur-dispo");
     if (spanCompteur) spanCompteur.textContent = disponibles.length;
@@ -365,6 +591,7 @@ function afficherOpportunitesDisponibles(liste) {
 
     disponibles.forEach(c => {
         const marker = L.marker([c.lat, c.lng], { icon: creerIcone(c.couleur, "dispo") }).addTo(layerDisponibles);
+        marker.bindTooltip(`<strong>${c.nom}</strong><br>Capital cible : ${(c.capitalCible || c.prix).toLocaleString("fr-FR")} Ø`);
         marker.on("click", () => ouvrirFicheEtablissement(c, false));
 
         const item = document.createElement("div");
@@ -373,7 +600,8 @@ function afficherOpportunitesDisponibles(liste) {
         item.innerHTML = `
             <div style="font-weight:bold; color:#fff; font-size:14px;">${c.nom}</div>
             <div style="font-size:12px; color:${c.couleur}; margin-top:2px;">${c.secteur} • ${c.distance.toFixed(2)} km</div>
-            <div style="font-size:13px; color:#fbbf24; font-weight:bold; margin-top:4px;">${c.prix.toLocaleString("fr-FR")} Ø</div>
+            <div style="font-size:12px; color:#fda4af; margin-top:3px;">💰 Capital coffre : <strong>${(c.capitalCible || c.prix).toLocaleString("fr-FR")} Ø</strong></div>
+            <div style="font-size:12px; color:#fbbf24; font-weight:bold; margin-top:2px;">Achat : ${c.prix.toLocaleString("fr-FR")} Ø</div>
             <div class="volet-item-actions">
                 <button class="btn-mini-fiche">Voir fiche</button>
                 <button class="btn-mini-acheter">Acheter</button>
@@ -423,7 +651,7 @@ function acheterSiege(siege) {
     majTopbar();
     afficherEmpireSurCarte();
     afficherOpportunitesDisponibles(dernieresOpportunites);
-    alert(`Entreprise "${siege.nom}" acquise ! Elle est maintenant disponible dans Entreprises et dans le Catalogue d'achat.`);
+    alert(`Entreprise "${siege.nom}" acquise !`);
 }
 
 export function majPosition(lat, lng, lancerScan = false) {
@@ -456,19 +684,27 @@ btnScanner.addEventListener("click", () => {
     }
 });
 
+injecterBarreTeleportation();
+majBarreTeleportation();
+
 if ("geolocation" in navigator) {
     navigator.geolocation.watchPosition(
         pos => {
-            majPosition(pos.coords.latitude, pos.coords.longitude, false);
+            positionReelleGPS = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+            if (!enModeTeleportation) {
+                majPosition(pos.coords.latitude, pos.coords.longitude, false);
+            }
         },
         err => {
             console.error("Erreur GPS :", err);
             statutEl.textContent = "GPS indisponible. Position par défaut : Limoges.";
-            majPosition(45.8336, 1.2611, true);
+            positionReelleGPS = { lat: 45.8336, lng: 1.2611 };
+            if (!enModeTeleportation) majPosition(45.8336, 1.2611, true);
         },
         { enableHighAccuracy: true, maximumAge: 15000 }
     );
 } else {
     statutEl.textContent = "Géolocalisation non supportée.";
+    positionReelleGPS = { lat: 45.8336, lng: 1.2611 };
     majPosition(45.8336, 1.2611, true);
 }
