@@ -13,7 +13,7 @@
             flex-wrap: wrap;
             gap: 10px;
             margin: 15px auto 8px auto;
-            max-width: 1050px;
+            max-width: 1150px;
             padding: 10px 14px;
             background: rgba(0, 25, 45, 0.82);
             border: 1px solid rgba(56, 189, 248, 0.4);
@@ -43,7 +43,7 @@
             flex-wrap: wrap;
             gap: 8px;
             margin: 0 auto 16px auto;
-            max-width: 1050px;
+            max-width: 1150px;
             padding: 8px 12px;
             background: rgba(0, 15, 30, 0.78);
             border-radius: 10px;
@@ -75,6 +75,7 @@
         <a href="index.html">Accueil</a>
         <a href="carte.html">Carte GPS</a>
         <a href="boutique.html">Boutique</a>
+        <a href="regles.html">Règles du jeu</a>
     </nav>
 </header>
 
@@ -86,6 +87,7 @@
 
 <div class="pole-bar">
     <button class="pole-btn actif" data-pole="empire">🏛️ Mon Empire & Holding</button>
+    <button class="pole-btn" data-pole="bourse">📈 Bourse & Cessation</button>
     <button class="pole-btn" data-pole="biens">🏢 Catalogue & Gestion</button>
     <button class="pole-btn" data-pole="operations">⚙️ Opérations</button>
     <button class="pole-btn" data-pole="compta">📊 Comptabilité</button>
@@ -111,6 +113,7 @@
 
 <main id="entreprises-container">
     <div id="entreprise" class="tab"></div>
+    <div id="bourse" class="tab" style="display:none;"></div>
 
     <select id="filtre-acheter" style="display:none;"></select>
     <div id="acheter" class="tab" style="display:none;">
@@ -137,6 +140,7 @@
 <script type="module">
     import { getData } from "./js/core/geoData.js";
     import { initEntreprise } from "./js/core/modules/entreprises.js";
+    import { initBourse } from "./js/core/modules/bourse.js";
 
     function majTopbar() {
         const e = getData().entreprise;
@@ -177,6 +181,10 @@
             initEntreprise();
             return;
         }
+        if (target === "bourse") {
+            initBourse();
+            return;
+        }
         const fnName = "init" + target.charAt(0).toUpperCase() + target.slice(1);
         if (typeof window[fnName] === "function") {
             window[fnName]();
@@ -192,6 +200,8 @@
             const pole = btn.dataset.pole;
             if (pole === "empire") {
                 ouvrirOnglet("entreprise");
+            } else if (pole === "bourse") {
+                ouvrirOnglet("bourse");
             } else {
                 const sm = document.getElementById(`sous-menu-${pole}`);
                 if (sm) {
