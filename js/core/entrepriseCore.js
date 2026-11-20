@@ -1,11 +1,12 @@
 // ============================================
-// ENTREPRISE CORE — GOUVERNANCE, HIÉRARCHIE, PRIMES & HOLDING
+// ENTREPRISE CORE — GOUVERNANCE, HIÉRARCHIE, PRIMES, HOLDING & COFFRE-FORT
 // ============================================
 
 import { getData, saveData, ajouterHistorique } from "./geoData.js";
 
 export const SEUIL_HOLDING = 10;
 export const PECULE_DEPART_ASSOCIE = 15000;
+export const COUTS_COFFRE_FORT = [0, 15000, 35000, 75000, 150000, 300000];
 
 export function getEntreprise() {
     const e = getData().entreprise;
@@ -102,6 +103,32 @@ export function verserPrimePdg(montant) {
     ajouterHistorique(`Prime versée au Fondateur ${e.pdg} (-${valeur.toLocaleString("fr-FR")} Ø)`, "depense", e.pdg);
     saveData();
     return { ok: true };
+}
+
+// ============================================
+// SÉCURITÉ & COFFRE-FORT PAR ENTREPRISE
+// ============================================
+export function ameliorerCoffreFortSiege(id) {
+    const e = getEntreprise();
+    const siege = (e.commercesGPS || []).find(s => String(s.id) === String(id));
+    if (!siege) return { ok: false, message: "Entreprise introuvable." };
+
+    const niveauActuel = Number(siege.niveauCoffre || 0);
+    if (niveauActuel >= 5) {
+        return { ok: false, message: "Ce coffre-fort est déjà au niveau maximum (Niveau 5)." };
+    }
+
+    const prochainNiveau = niveauActuel + 1;
+    const cout = COUTS_COFFRE_FORT[prochainNiveau];
+    if ((e.argent || 0) < cout) {
+        return { ok: false, message: `Fonds insuffisants (${cout.toLocaleString("fr-FR")} Ø requis).` };
+    }
+
+    e.argent -= cout;
+    siege.niveauCoffre = prochainNiveau;
+    ajouterHistorique(`[${siege.nom}] Coffre-fort amélioré au Niveau ${prochainNiveau}/5 (-${cout.toLocaleString("fr-FR")} Ø)`, "depense");
+    saveData();
+    return { ok: true, niveau: prochainNiveau };
 }
 
 // ============================================
@@ -298,31 +325,4 @@ export function virerAssocieHolding(nomMembre) {
     if (e.utilisateurActif === nomMembre) e.utilisateurActif = e.pdg;
     ajouterHistorique(`[Holding] Départ de ${nomMembre} (-${PECULE_DEPART_ASSOCIE.toLocaleString("fr-FR")} Ø)`, "depense");
     return { ok: true };
-}
-// ============================================
-// SÉCURITÉ & COFFRE-FORT PAR ENTREPRISE
-// ============================================
-export const COUTS_COFFRE_FORT = [0, 15000, 35000, 75000, 150000, 300000];
-
-export function ameliorerCoffreFortSiege(id) {
-    const e = getEntreprise();
-    const siege = (e.commercesGPS || []).find(s => String(s.id) === String(id));
-    if (!siege) return { ok: false, message: "Entreprise introuvable." };
-
-    const niveauActuel = Number(siege.niveauCoffre || 0);
-    if (niveauActuel >= 5) {
-        return { ok: false, message: "Ce coffre-fort est déjà au niveau maximum (Niveau 5)." };
-    }
-
-    const prochainNiveau = niveauActuel + 1;
-    const cout = COUTS_COFFRE_FORT[prochainNiveau];
-    if ((e.argent || 0) < cout) {
-        return { ok: false, message: `Fonds insuffisants (${cout.toLocaleString("fr-FR")} Ø requis).` };
-    }
-
-    e.argent -= cout;
-    siege.niveauCoffre = prochainNiveau;
-    ajouterHistorique(`[${siege.nom}] Coffre-fort amélioré au Niveau ${prochainNiveau}/5 (-${cout.toLocaleString("fr-FR")} Ø)`, "depense");
-    saveData();
-    return { ok: true, niveau: prochainNiveau };
 }
