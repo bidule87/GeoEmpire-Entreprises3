@@ -339,9 +339,18 @@ async function executerTeleportation() {
 }
 
 // ============================================
-// LOGIQUE DE BRAQUAGE & COFFRE-FORT
+// MINI-JEU DE CROCHETAGE DE CADENAS (FAÇON NEOPOLIS)
 // ============================================
-async function tenterBraquageCible(item) {
+function melangerTableau(arr) {
+    const copie = [...arr];
+    for (let i = copie.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copie[i], copie[j]] = [copie[j], copie[i]];
+    }
+    return copie;
+}
+
+async function ouvrirMiniJeuCadenas(item) {
     loadData();
     const e = getData().entreprise;
     const maintenant = Date.now();
@@ -349,7 +358,7 @@ async function tenterBraquageCible(item) {
 
     if (maintenant - dernierBraquage < COOLDOWN_BRAQUAGE_MS) {
         const minRestantes = Math.ceil((COOLDOWN_BRAQUAGE_MS - (maintenant - dernierBraquage)) / 60000);
-        return alert(`🚓 La police surveille le secteur ! Attendez encore ${minRestantes} minute(s) avant de tenter un nouveau braquage.`);
+        return alert(`🚓 La police surveille le secteur ! Attendez encore ${minRestantes} minute(s) avant de crocheter un nouveau coffre.`);
     }
 
     const villeCible = localStorage.getItem("geoEmpireVilleActuelle") || "Limoges";
@@ -367,58 +376,134 @@ async function tenterBraquageCible(item) {
     } catch {}
 
     const niveauCoffreCible = Number(item.niveauCoffre || 1);
-    const chanceReussite = Math.max(15, 62 - (niveauCoffreCible * 7) - (aCommissariat ? 25 : 0));
+    const nbCadenas = Math.min(6, Math.max(3, 2 + niveauCoffreCible + (aCommissariat ? 1 : 0)));
     const capitalCoffre = item.capitalCible || Math.round(item.prix * 1.25);
     const butinEstime = Math.floor(capitalCoffre * 0.45);
     const amendeEchec = Math.floor(capitalCoffre * 0.25);
 
-    const msgConfirm =
-        `🦹 BRAQUAGE DE "${item.nom}" (${villeCible})\n\n` +
-        `• Capital dans le coffre : ${capitalCoffre.toLocaleString("fr-FR")} Ø\n` +
-        `• Butin estimé en cas de succès : +${butinEstime.toLocaleString("fr-FR")} Ø\n` +
-        `• Amende municipale en cas d'échec : -${amendeEchec.toLocaleString("fr-FR")} Ø\n` +
-        `• Sécurité détectée : Coffre Niv.${niveauCoffreCible}${aCommissariat ? " + 🚓 Commissariat municipal (-25 %)" : ""}\n` +
-        `• Probabilité de réussite : ${chanceReussite} %\n\n` +
-        `Lancer l'opération ?`;
+    // Génération d'une combinaison aléatoire des cadenas (1..nbCadenas)
+    const combinaisonSecrete = melangerTableau(Array.from({ length: nbCadenas }, (_, i) => i + 1));
+    let etapeActuelle = 0;
+    let essaisRestants = 3;
+    let operationTerminee = false;
 
-    if (!confirm(msgConfirm)) return;
+    const rendreInterfaceCrochetage = (messageStatut = "Trouvez l'ordre aléatoire des cadenas en cliquant dessus !", couleurStatut = "#bae6fd") => {
+        const cadenasHTML = Array.from({ length: nbCadenas }, (_, idx) => {
+            const num = idx + 1;
+            const estOuvert = combinaisonSecrete.slice(0, etapeActuelle).includes(num);
+            return `
+                <button type="button" class="btn-cadenas-lock" data-num="${num}" ${estOuvert || operationTerminee ? "disabled" : ""} style="
+                    padding: 14px 8px;
+                    border-radius: 10px;
+                    border: 2px solid ${estOuvert ? "#10b981" : "#fbbf24"};
+                    background: ${estOuvert ? "rgba(16,185,129,0.25)" : "rgba(15,23,42,0.9)"};
+                    color: ${estOuvert ? "#34d399" : "#fde68a"};
+                    font-weight: bold;
+                    font-size: 14px;
+                    cursor: ${estOuvert || operationTerminee ? "default" : "pointer"};
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 4px;
+                    box-shadow: ${estOuvert ? "0 0 12px rgba(16,185,129,0.4)" : "none"};
+                ">
+                    <span style="font-size:22px;">${estOuvert ? "🔓" : "🔒"}</span>
+                    <span>Cadenas #${num}</span>
+                </button>
+            `;
+        }).join("");
 
-    e.dernierBraquageTs = maintenant;
-    const tirage = Math.random() * 100;
+        ficheBody.innerHTML = `
+            <div style="background:rgba(15,23,42,0.85); border:1px solid rgba(251,191,36,0.4); border-radius:10px; padding:11px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; font-size:13px; margin-bottom:6px;">
+                    <span style="color:#fde68a; font-weight:bold;">🔐 Crochetage du coffre (${etapeActuelle}/${nbCadenas})</span>
+                    <span style="color:${essaisRestants === 1 ? "#f87171" : "#34d399"}; font-weight:bold;">Essais : ${"❤️".repeat(essaisRestants)}${"🖤".repeat(3 - essaisRestants)}</span>
+                </div>
+                <div style="font-size:12px; color:#94a3b8; margin-bottom:8px;">
+                    Butin : <strong style="color:#34d399;">+${butinEstime.toLocaleString("fr-FR")} Ø</strong> •
+                    Amende si alarme : <strong style="color:#f87171;">-${amendeEchec.toLocaleString("fr-FR")} Ø</strong>
+                    ${aCommissariat ? `<br><span style="color:#38bdf8;">🚓 Commissariat municipal actif (+1 cadenas de sécurité)</span>` : ""}
+                </div>
+                <div style="padding:7px 10px; border-radius:7px; background:rgba(0,30,60,0.8); color:${couleurStatut}; font-size:12px; font-weight:bold; text-align:center; margin-bottom:10px;">
+                    ${messageStatut}
+                </div>
+                <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:8px;">
+                    ${cadenasHTML}
+                </div>
+            </div>
+            <div class="fiche-actions">
+                <button type="button" id="btn-abandonner-braquage" class="btn-fiche-achat" style="background:#334155;">Annuler / Quitter</button>
+            </div>
+        `;
 
-    if (tirage <= chanceReussite) {
-        e.argent = (e.argent || 0) + butinEstime;
-        ajouterHistorique(`🦹 Braquage réussi sur "${item.nom}" (${villeCible}) : +${butinEstime.toLocaleString("fr-FR")} Ø`, "gain");
-        saveData();
-        majTopbar();
-        modalFiche.classList.remove("active");
-        alert(`💰 BRAQUAGE RÉUSSI ! Vous avez fracturé le coffre de "${item.nom}" et empoché +${butinEstime.toLocaleString("fr-FR")} Ø !`);
-    } else {
-        const amendePayee = Math.min(e.argent || 0, amendeEchec);
-        e.argent = Math.max(0, (e.argent || 0) - amendePayee);
-        e.caisseMairie = (e.caisseMairie || 0) + amendePayee;
+        document.getElementById("btn-abandonner-braquage").onclick = () => {
+            ouvrirFicheEtablissement(item, false);
+        };
 
-        try {
-            const resM = await fetch(`${FIREBASE_DB_URL}/mairies/${cleVille}.json`);
-            if (resM.ok) {
-                const mData = await resM.json();
-                if (mData) {
-                    mData.budget = (mData.budget || 0) + amendePayee;
-                    await fetch(`${FIREBASE_DB_URL}/mairies/${cleVille}.json`, {
-                        method: "PATCH",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ budget: mData.budget })
-                    });
+        ficheBody.querySelectorAll(".btn-cadenas-lock").forEach(btn => {
+            btn.onclick = async () => {
+                if (operationTerminee) return;
+                const numClique = Number(btn.dataset.num);
+                const attendu = combinaisonSecrete[etapeActuelle];
+
+                if (numClique === attendu) {
+                    etapeActuelle += 1;
+                    if (etapeActuelle >= nbCadenas) {
+                        // COFFRE OUVERT !
+                        operationTerminee = true;
+                        loadData();
+                        const data = getData().entreprise;
+                        data.dernierBraquageTs = Date.now();
+                        data.argent = (data.argent || 0) + butinEstime;
+                        ajouterHistorique(`🔓 Coffre fracturé sur "${item.nom}" (${villeCible}) : +${butinEstime.toLocaleString("fr-FR")} Ø`, "gain");
+                        saveData();
+                        majTopbar();
+                        rendreInterfaceCrochetage(`💰 COFFRE OUVERT ! Vous empochez +${butinEstime.toLocaleString("fr-FR")} Ø !`, "#34d399");
+                    } else {
+                        rendreInterfaceCrochetage(`✅ Clic ! Cadenas #${numClique} levé (${etapeActuelle}/${nbCadenas}). Continuez !`, "#34d399");
+                    }
+                } else {
+                    // MAUVAIS CADENAS -> REVERROUILLAGE
+                    essaisRestants -= 1;
+                    etapeActuelle = 0;
+
+                    if (essaisRestants <= 0) {
+                        operationTerminee = true;
+                        loadData();
+                        const data = getData().entreprise;
+                        data.dernierBraquageTs = Date.now();
+                        const amendePayee = Math.min(data.argent || 0, amendeEchec);
+                        data.argent = Math.max(0, (data.argent || 0) - amendePayee);
+                        data.caisseMairie = (data.caisseMairie || 0) + amendePayee;
+
+                        try {
+                            const resM = await fetch(`${FIREBASE_DB_URL}/mairies/${cleVille}.json`);
+                            if (resM.ok) {
+                                const mData = await resM.json();
+                                if (mData) {
+                                    mData.budget = (mData.budget || 0) + amendePayee;
+                                    await fetch(`${FIREBASE_DB_URL}/mairies/${cleVille}.json`, {
+                                        method: "PATCH",
+                                        headers: { "Content-Type": "application/json" },
+                                        body: JSON.stringify({ budget: mData.budget })
+                                    });
+                                }
+                            }
+                        } catch {}
+
+                        ajouterHistorique(`🚓 Alarme déclenchée sur "${item.nom}" (${villeCible}) : amende de -${amendePayee.toLocaleString("fr-FR")} Ø versée à la Mairie`, "depense");
+                        saveData();
+                        majTopbar();
+                        rendreInterfaceCrochetage(`🚨 ALARME DÉCLENCHÉE ! La police vous inflige -${amendePayee.toLocaleString("fr-FR")} Ø d'amende.`, "#f87171");
+                    } else {
+                        rendreInterfaceCrochetage(`❌ Mauvais cadenas (#${numClique}) ! Tous les cadenas se sont reverrouillés.`, "#fbbf24");
+                    }
                 }
-            }
-        } catch {}
+            };
+        });
+    };
 
-        ajouterHistorique(`🚓 Braquage déjoué sur "${item.nom}" (${villeCible}) : amende de -${amendePayee.toLocaleString("fr-FR")} Ø versée à la Mairie`, "depense");
-        saveData();
-        majTopbar();
-        modalFiche.classList.remove("active");
-        alert(`🚓 ALERTE POLICE ! Le coffre a résisté. Vous avez été interpellé et condamné à une amende de ${amendePayee.toLocaleString("fr-FR")} Ø reversée à la Mairie de ${villeCible}.`);
-    }
+    rendreInterfaceCrochetage();
 }
 
 function creerIcone(couleur, type = "dispo") {
@@ -556,7 +641,7 @@ function ouvrirFicheEtablissement(item, estDejaAcquis = false) {
                     Acheter (${item.prix.toLocaleString("fr-FR")} Ø)
                 </button>
                 <button id="btn-braquer-fiche" class="btn-fiche-achat" style="background:linear-gradient(90deg, #be123c, #f43f5e);">
-                    🦹 Braquer le coffre
+                    🔓 Crocheter le coffre
                 </button>
             </div>
         `;
@@ -567,7 +652,7 @@ function ouvrirFicheEtablissement(item, estDejaAcquis = false) {
         };
 
         document.getElementById("btn-braquer-fiche").onclick = () => {
-            tenterBraquageCible(item);
+            ouvrirMiniJeuCadenas(item);
         };
     }
 
@@ -706,7 +791,7 @@ function afficherOpportunitesDisponibles(liste) {
             <div style="font-size:12px; color:#fda4af; margin-top:3px;">💰 Capital coffre : <strong>${(c.capitalCible || c.prix).toLocaleString("fr-FR")} Ø</strong></div>
             <div style="font-size:12px; color:#fbbf24; font-weight:bold; margin-top:2px;">Achat : ${c.prix.toLocaleString("fr-FR")} Ø</div>
             <div class="volet-item-actions">
-                <button class="btn-mini-fiche">Voir / Braquer</button>
+                <button class="btn-mini-fiche">Voir / Crocheter</button>
                 <button class="btn-mini-acheter">Acheter</button>
             </div>
         `;
