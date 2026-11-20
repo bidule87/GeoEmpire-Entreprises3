@@ -59,6 +59,15 @@ export function initialiserAgencesMarketing(entreprise) {
     }
 
     let modifie = false;
+
+    // Nettoyage des éventuelles anciennes agences obsolètes de la sauvegarde
+    for (const cleExistante of Object.keys(entreprise.marketing.clients)) {
+        if (!AGENCES_DEFAUT[cleExistante]) {
+            delete entreprise.marketing.clients[cleExistante];
+            modifie = true;
+        }
+    }
+
     for (const [nomAgence, cfg] of Object.entries(AGENCES_DEFAUT)) {
         const existant = entreprise.marketing.clients[nomAgence];
         if (!existant || !Array.isArray(existant.categories)) {
@@ -113,15 +122,13 @@ function calculerEffetCampagne(agence, montantInvesti) {
     const taquet = agence.montantTaquet || 18000;
     const ratio = montantInvesti / taquet;
 
-    // Progression de visibilité selon le montant investi
     const gainVisibilite = Math.min(100, Math.round(ratio * 85));
     const nouvelleVisibilite = Math.min(100, Math.max(agence.visibilite || 0, (agence.visibilite || 0) + gainVisibilite));
 
-    // Si le joueur investit au-delà du taquet, l'algorithme prolonge la durée de maintien (de 1 à 14 cycles)
     let dureeMaintien = 0;
     if (ratio >= 1.0) {
         const surplus = ratio - 1.0;
-        const aleaDuree = Math.floor(Math.random() * 4) + 1; // 1 à 4 cycles de base au taquet
+        const aleaDuree = Math.floor(Math.random() * 4) + 1;
         const bonusSurplus = Math.min(14, Math.floor(surplus * 5));
         dureeMaintien = Math.max(agence.cyclesMaintien || 0, aleaDuree + bonusSurplus);
     } else if (ratio >= 0.5) {
@@ -168,7 +175,7 @@ export function initMarketing() {
                         ${Object.entries(agences).map(([nom, ag]) => `
                             <tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
                                 <td style="padding:5px;">${nom}</td>
-                                <td style="padding:5px;"><strong>${ag.visibilite} %</strong></td>
+                                <td style="padding:5px;"><strong>${ag.visibilite || 0} %</strong></td>
                                 <td style="padding:5px;">${ag.cyclesMaintien || 0} cycle(s)</td>
                                 <td style="padding:5px;">${(ag.totalVerse || 0).toLocaleString("fr-FR")} Ø</td>
                             </tr>
@@ -207,6 +214,7 @@ export function initMarketing() {
                     const etat = getNiveauDiffusionJoueur(vis);
                     const minInv = ag.investissementMin || 2500;
                     const taquet = ag.montantTaquet || 18000;
+                    const secteursLabel = Array.isArray(ag.categories) ? ag.categories.join(" & ") : "Tous secteurs";
 
                     return `
                     <div class="premium-box" style="border-left: 4px solid ${etat.couleur}; margin-bottom:0;">
@@ -214,9 +222,9 @@ export function initMarketing() {
                             <div>
                                 <div style="font-size:17px; font-weight:bold; color:#fff;">📢 ${nom}</div>
                                 <div style="font-size:12px; color:#7ec8ff; margin-top:2px;">
-                                    Secteurs couverts : <strong>${ag.categories.join(" & ")}</strong>
+                                    Secteurs couverts : <strong>${secteursLabel}</strong>
                                 </div>
-                                <div style="font-size:13px; color:#cbd5e1; margin-top:4px;">${ag.description}</div>
+                                <div style="font-size:13px; color:#cbd5e1; margin-top:4px;">${ag.description || ""}</div>
                             </div>
                             <span style="background:${etat.fond}; color:${etat.couleur}; border:1px solid ${etat.couleur}; padding:4px 10px; border-radius:6px; font-size:12px; font-weight:bold;">
                                 ${etat.badge}
@@ -297,6 +305,7 @@ export function initMarketing() {
         agence.totalVerse = (agence.totalVerse || 0) + montant;
 
         ent.marketing.totalInvestissements = (ent.marketing.totalInvestissements || 0) + montant;
+        if (!ent.finances) ent.finances = {};
         ent.finances.depensesMarketing = (ent.finances.depensesMarketing || 0) + montant;
 
         const auteur = ent.utilisateurActif || ent.pdg || "Fondateur";
